@@ -17,7 +17,7 @@ export async function main() {
  * @returns -Promise< NextResponse< { message; posts[]; } > | NextResponse< { message; error; } > >
  */
 export const GET = async (req: Request, res: NextResponse) => {
-	console.log("\n\n🫴🎁~~~   GEEEEEEEEEET!!!💣💣💣💥💥💥\n");
+	console.log("\n\n🫴🎁~~~   GEEEEEEEEEET!!!🤩🤩🤩📦📦📦\n");
 	try {
 		await main();
 		const posts = await prisma.post.findMany();
@@ -38,7 +38,7 @@ export const GET = async (req: Request, res: NextResponse) => {
  */
 
 export const POST = async (req: Request, res: NextResponse) => {
-	console.log("\n\n~~~📨📮   POOOOOOOOOOST!!!💣💣💣💥💥💥\n");
+	console.log("\n\n~~~📨📮   POOOOOOOOOST!!!🚀🚀🚀🆕🆕🆕\n");
 	try {
 		const { title, description } = await req.json();
 

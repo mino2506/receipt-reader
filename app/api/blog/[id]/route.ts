@@ -11,7 +11,7 @@ import { main } from "../route";
  * @returns - Promise< NextResponse< { message; post; } > | NextResponse< { message; error; } > >
  */
 export const GET = async (req: Request, res: NextResponse) => {
-	console.log("\n\n🫴🎁~~~   GEEEEEEEEEET!!!💣💣💣💥💥💥\n");
+	console.log("\n\n🫴🎁~~~   GEEEEEEEEEET!!!🤩🤩🤩📦📦📦\n");
 	try {
 		const id: number =
 			req.url && typeof req.url === "string"
@@ -29,7 +29,7 @@ export const GET = async (req: Request, res: NextResponse) => {
 };
 
 export const PUT = async (req: Request, res: NextResponse) => {
-	console.log("\n\n~~~💪📝  PUUUUUUUUUUT!!!💣💣💣💥💥💥\n");
+	console.log("\n\n~~~🔄📝  UPDAAAAAAATE!!!⚡⚡⚡🔥🔥🔥\n");
 	try {
 		const id: number =
 			req.url && typeof req.url === "string"
@@ -51,7 +51,7 @@ export const PUT = async (req: Request, res: NextResponse) => {
 };
 
 export const DELETE = async (req: Request, res: NextResponse) => {
-	console.log("\n\n~~~🤯🤯  DELEEEEEEEEEETE!!!💣💣💣💥💥💥\n");
+	console.log("\n\n~~~💀❌   DELEEEEEEETE!!!☠️☠️☠️💢💢💢\n");
 	try {
 		const id: number =
 			req.url && typeof req.url === "string"
