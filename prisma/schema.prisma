@@ -20,3 +20,42 @@ model Post{
   description String
   date DateTime @default(now())
 }
+
+model User {
+  id String    @id @db.Uuid
+  email String    @unique
+  display_name String?
+  avatar_url String?
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  provider String?
+  receipts Receipt[]
+}
+
+model Receipt{
+  id Int @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  totalPrice Int
+  receiptDetailId String
+  receiptDetails ReceiptDetail[]
+  userId String @db.Uuid
+  user User @relation(fields: [userId], references: [id])
+}
+
+model ReceiptDetail{
+  id Int @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  item String
+  amount String
+  unitPrice Int
+  subTotalPrice Int
+  tax Int
+  currency String
+  category Int
+  receiptId Int
+  receipt Receipt @relation(fields: [receiptId], references: [id])
+}
