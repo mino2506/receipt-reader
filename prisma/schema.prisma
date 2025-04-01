@@ -22,12 +22,12 @@ model Post{
 }
 
 model User {
-  id String    @id @db.Uuid
-  email String    @unique
+  id String @id @db.Uuid
+  email String @unique
   display_name String?
   avatar_url String?
-  created_at DateTime  @default(now())
-  updated_at DateTime  @updatedAt
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
   provider String?
   receipts Receipt[]
 }
@@ -36,7 +36,7 @@ model Receipt{
   id Int @id @default(autoincrement())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  deletedAt DateTime?
+  deletedAt DateTime? 
   totalPrice Int
   receiptDetailId String
   receiptDetails ReceiptDetail[]
