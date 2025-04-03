@@ -1,13 +1,10 @@
-import { createClient as createServerClient } from "@/lib/supabase/server";
+import { getSession } from "@/lib/supabase/auth";
+import SignOutButton from "../components/SignOutButton";
 
 export default async function DashboardPage() {
-	// リクエストごとに新しいサーバークライアントを生成（最新のクッキー情報を取得）
-	const supabase = await createServerClient();
-	const {
-		data: { session },
-	} = await supabase.auth.getSession();
+	const session = await getSession();
+	console.log("session", session);
 
-	// サインインしていない場合の処理
 	if (!session) {
 		return (
 			<div>
@@ -17,9 +14,9 @@ export default async function DashboardPage() {
 		);
 	}
 
-	// サインインしている場合、セッション情報に基づいてコンテンツを表示
 	return (
 		<div>
+			<SignOutButton />
 			<h1>ダッシュボード</h1>
 			<p>ようこそ、{session.user.email} さん！</p>
 			<pre>{JSON.stringify(session, null, 2)}</pre>
