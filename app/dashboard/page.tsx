@@ -1,5 +1,6 @@
 "use client";
 
+import SignOutButton from "@/app/components/SignOutButton";
 import { createClient as createBrowserClient } from "@/utils/supabase/client";
 import { useEffect, useState } from "react";
 
@@ -47,6 +48,7 @@ export default function DashboardPage() {
 
 	return (
 		<div>
+			<SignOutButton />
 			<h1>ダッシュボード</h1>
 			<p>ようこそ、{session.user.email} さん！</p>
 		</div>

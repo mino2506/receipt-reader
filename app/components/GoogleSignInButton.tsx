@@ -10,7 +10,7 @@ export default function GoogleSignInButton() {
 	const handleGoogleSignIn = async () => {
 		setError(null);
 		const { error } = await signInWithGoogle(
-			`${window.location.origin}/dashboard`,
+			`${window.location.origin}/auth/callback?next=/dashboard`,
 		);
 		if (error) {
 			setError(error.message);

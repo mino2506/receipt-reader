@@ -1,27 +1,24 @@
 // app/auth/callback/route.ts
-import { createClient } from "@/utils/supabase/server"; // サーバー用クライアントをインポート
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { createClient as createServerClient } from "@/utils/supabase/server";
+import { type NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
-	const { searchParams, origin } = new URL(request.url);
-	const code = searchParams.get("code");
-	// if "next" is in param, use it as the redirect URL
-	const next = searchParams.get("next") ?? "/dashboard"; // デフォルトのリダイレクト先
+	const requestUrl = new URL(request.url);
+	const origin = requestUrl.origin;
+	const next = requestUrl.searchParams.get("next") ?? "/dashboard";
+	const code = requestUrl.searchParams.get("code");
+
+	console.log("💩💩💩app/auth/callback/route.ts");
+	console.log("requestUrl: ", requestUrl);
+	console.log("origin: ", origin);
+	console.log("next: ", next);
+	console.log("code: ", code);
 
 	if (code) {
-		const supabase = await createClient(); // サーバー用クライアントを作成
-		const { error } = await supabase.auth.exchangeCodeForSession(code); // コードをセッションに交換
-		if (!error) {
-			// セッション交換成功後、指定された `next` パスまたはデフォルトパスにリダイレクト
-			return NextResponse.redirect(
-				`<span class="math-inline">\{origin\}</span>{next}`,
-			);
-		}
-		console.error("Error exchanging code for session:", error.message);
+		const supabase = await createServerClient();
+
+		await supabase.auth.exchangeCodeForSession(code);
 	}
 
-	// return the user to an error page with instructions
-	// コード交換失敗時やコードがない場合はエラーページ等にリダイレクト
-	return NextResponse.redirect(`${origin}/auth/auth-code-error`); // エラーページのパスに適宜変更してください
+	return NextResponse.redirect(`${origin}${next}`);
 }
