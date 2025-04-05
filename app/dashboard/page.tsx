@@ -1,5 +1,5 @@
+import SignOutButton from "@/app/components/SignOutButton";
 import { getSession } from "@/utils/supabase/auth";
-import SignOutButton from "../components/SignOutButton";
 
 export default async function DashboardPage() {
 	const session = await getSession();
