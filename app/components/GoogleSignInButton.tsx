@@ -1,3 +1,5 @@
+// app/components/GoogleSignInButton.tsx
+
 "use client";
 
 import { signInWithGoogle } from "@/utils/supabase/auth";

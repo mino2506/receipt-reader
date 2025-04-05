@@ -1,3 +1,5 @@
+// app/dashboard/page.tsx
+
 "use client";
 
 import SignOutButton from "@/app/components/SignOutButton";
