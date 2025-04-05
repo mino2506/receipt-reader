@@ -9,12 +9,17 @@ export default function SignOutButton() {
 
 	const handleSignOut = async () => {
 		const supabase = createClient();
+
+		// ✅ セッション削除
 		const { error } = await supabase.auth.signOut();
+
 		if (error) {
-			console.error("サインアウトエラー:", error.message);
+			console.error("サインアウト失敗:", error.message);
 			return;
 		}
-		router.push("/login"); // ログアウト後はログイン画面へ
+
+		// ✅ サインアウト後はログインページへリダイレクト
+		router.push("/login");
 	};
 
 	return (
