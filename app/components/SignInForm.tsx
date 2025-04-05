@@ -1,6 +1,6 @@
 "use client";
 
-import { signInWithEmail, signInWithGoogle } from "@/lib/supabase/auth";
+import { signInWithEmail, signInWithGoogle } from "@/utils/supabase/auth";
 import { useState } from "react";
 
 export default function SignInPage() {

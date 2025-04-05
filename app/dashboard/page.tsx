@@ -1,4 +1,4 @@
-import { getSession } from "@/lib/supabase/auth";
+import { getSession } from "@/utils/supabase/auth";
 import SignOutButton from "../components/SignOutButton";
 
 export default async function DashboardPage() {
