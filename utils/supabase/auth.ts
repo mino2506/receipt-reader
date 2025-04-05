@@ -38,28 +38,16 @@ export async function signInWithEmail(email: string, password: string) {
  * クライアント側でGoogle OAuth経由のサインインを行う
  * @param redirectTo サインイン完了後にリダイレクトするURL（任意）
  */
-export async function signInWithGoogle(redirectTo: string) {
+export async function signInWithGoogle(redirectUrl: string) {
 	const supabase = createBrowserClient();
-	try {
-		const { data, error } = await supabase.auth.signInWithOAuth({
-			provider: "google",
-			options: {
-				redirectTo,
-				scopes: "email profile",
-			},
-		});
+	const { data, error } = await supabase.auth.signInWithOAuth({
+		provider: "google",
+		options: {
+			redirectTo: redirectUrl,
+		},
+	});
 
-		// リダイレクト後のセッション確認を追加
-		if (!error && data) {
-			// セッションの保存を確実に
-			localStorage.setItem("supabase.auth.token", JSON.stringify(data));
-		}
-
-		return { data, error };
-	} catch (err) {
-		console.error("Google認証エラー:", err);
-		return { error: err as Error };
-	}
+	return { data, error };
 }
 
 /**
