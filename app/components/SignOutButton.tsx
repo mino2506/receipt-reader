@@ -1,18 +1,20 @@
+// app/components/SignOutButton.tsx
 "use client";
 
-import { signOut } from "@/utils/supabase/auth";
+import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 
 export default function SignOutButton() {
 	const router = useRouter();
 
 	const handleSignOut = async () => {
-		const { error } = await signOut();
+		const supabase = createClient();
+		const { error } = await supabase.auth.signOut();
 		if (error) {
-			console.error("Sign out error:", error);
+			console.error("サインアウトエラー:", error.message);
 			return;
 		}
-		router.push("/signin");
+		router.push("/login"); // ログアウト後はログイン画面へ
 	};
 
 	return (
