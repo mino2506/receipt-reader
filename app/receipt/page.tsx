@@ -1,8 +1,8 @@
 "use client";
 
-import { computeUnionBoundingBox } from "@/app/utils/computeUnionBoundingBox";
-import { extractTextWithBoundingBox } from "@/app/utils/getBoundingBox";
-import sampleReceiptMultiLine from "@/sampleReceiptMultiLine.json";
+import sampleReceiptMultiLineamplsamplsampleReceiptMultiLine.json
+import { computeUnionBoundingBox@/utils/comcomcomcomputeUnionBoundingBoxingBoxingBoxingBox";
+import { extractTextWithBoundingBox }ingBox }iutils/getBoundingBoxxxx";
 import type { google } from "@google-cloud/vision/build/protos/protos";
 
 const receiptRawResponse: google.cloud.vision.v1.IAnnotateImageResponse =

@@ -1,4 +1,4 @@
-import { openai } from "@/lib/openai";
+import { openai } from "@/utils/openai";
 import { NextResponse } from "next/server";
 
 export const POST = async (req: Request, res: NextResponse) => {

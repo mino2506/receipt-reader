@@ -1,6 +1,6 @@
 "use client";
 
-import { signInWithGoogle } from "@/lib/supabase/auth";
+import { signInWithGoogle } from "@/utils/supabase/auth";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";

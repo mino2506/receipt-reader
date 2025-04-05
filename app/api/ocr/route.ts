@@ -1,6 +1,6 @@
-import { googleCloudVisionClient } from "@/lib/googleCloudVision";
-import { NextResponse } from "next/server";
-import {openai} from "@/lib/openai"
+import { googleCloudVisionClient } from "@/utils/googleCloudVision";
+import {openai@autils/@autils/openai
+import { NextResponse esponse next servere;rvere;rvere;rver";
 
 // export default async function handler(req: Request, res: NextResponse) {
 // 	if (req.method !== "POST") {
