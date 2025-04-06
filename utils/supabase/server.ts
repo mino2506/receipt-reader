@@ -4,6 +4,12 @@
 
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+
+/**
+ * サーバーサイドでの操作用のSupabaseクライアントを作成します
+ * @returns プロジェクトの環境変数で構成されたSupabaseサーバークライアントを返します
+ * @see https://supabase.com/docs/guides/auth/server-side/nextjs?queryGroups=router&router=app
+ */
 export async function createClient() {
 	const cookieStore = await cookies();
 	return createServerClient(
