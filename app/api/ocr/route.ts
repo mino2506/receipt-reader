@@ -1,5 +1,6 @@
 // app/api/ocr/route.ts
 
+import { createClient as createServerClient } from "@/lib/supabase/server";
 import { googleCloudVisionClient } from "@/utils/googleCloudVision";
 import { NextResponse } from "next/server";
 
@@ -32,6 +33,17 @@ import { NextResponse } from "next/server";
 // }
 export const POST = async (req: Request, res: NextResponse) => {
 	console.log("\n\n~~~📨📮   POOOOOOOOOST!!!🚀🚀🚀🆕🆕🆕\n");
+	const supabase = await createServerClient();
+
+	// 🔐 認証チェック
+	const {
+		data: { user },
+		error,
+	} = await supabase.auth.getUser();
+	if (error || !user) {
+		return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+	}
+
 	const reqBody = await req.json();
 	console.log("reqBody.imageUrl: ", reqBody.imageUrl);
 
