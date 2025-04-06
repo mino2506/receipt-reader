@@ -67,6 +67,7 @@ export async function signInWithEmail(email: string, password: string) {
 		email,
 		password,
 	});
+
 	return { data, error };
 }
 
@@ -107,5 +108,5 @@ export async function signInWithGoogle(redirectUrl?: string) {
 export async function signOut() {
 	const supabase = createBrowserClient();
 	const { error } = await supabase.auth.signOut();
-	return error;
+	return { error };
 }

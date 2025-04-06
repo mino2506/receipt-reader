@@ -1,22 +1,17 @@
 // app/login/page.tsx
 
+import EmailSignInForm from "@/app/components/EmailSignInForm";
 import GoogleSignInButton from "@/app/components/GoogleSignInButton";
-import { login, signup } from "./actions";
 
 export default function LoginPage() {
 	return (
-		<form>
-			<GoogleSignInButton />
-			<label htmlFor="email">Email:</label>
-			<input id="email" name="email" type="email" required />
-			<label htmlFor="password">Password:</label>
-			<input id="password" name="password" type="password" required />
-			<button type="submit" formAction={login}>
-				Log in
-			</button>
-			<button type="submit" formAction={signup}>
-				Sign up
-			</button>
-		</form>
+		<div className="h-screen flex items-center justify-center bg-gray-700">
+			<div className="m-2 p-3 rounded shadow-md max-w-md w-full bg-gray-300">
+				<form className="p-3 rounded shadow-lg max-w-md w-full bg-gray-300">
+					<GoogleSignInButton />
+					<EmailSignInForm />
+				</form>
+			</div>
+		</div>
 	);
 }
