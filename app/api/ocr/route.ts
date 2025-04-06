@@ -1,6 +1,7 @@
+// app/api/ocr/route.ts
+
 import { googleCloudVisionClient } from "@/utils/googleCloudVision";
-import {openai@autils/@autils/openai
-import { NextResponse esponse next servere;rvere;rvere;rver";
+import { NextResponse } from "next/server";
 
 // export default async function handler(req: Request, res: NextResponse) {
 // 	if (req.method !== "POST") {
@@ -31,8 +32,10 @@ import { NextResponse esponse next servere;rvere;rvere;rver";
 // }
 export const POST = async (req: Request, res: NextResponse) => {
 	console.log("\n\n~~~📨📮   POOOOOOOOOST!!!🚀🚀🚀🆕🆕🆕\n");
+	const reqBody = await req.json();
+	console.log("reqBody.imageUrl: ", reqBody.imageUrl);
 
-	const { imageUrl } = await req.json();
+	const { imageUrl } = reqBody;
 	if (typeof imageUrl === "undefined") {
 		return NextResponse.json(
 			{ message: "imageUrl is required in request body" },
@@ -45,7 +48,10 @@ export const POST = async (req: Request, res: NextResponse) => {
 			await googleCloudVisionClient.documentTextDetection(imageUrl);
 		const fullTextAnnotation = result.fullTextAnnotation;
 		const rawText = result.fullTextAnnotation?.text;
-		console.log(rawText);
+
+		console.dir(result, { depth: null });
+		console.log("fullTextAnnotation: ", fullTextAnnotation);
+		console.log("rawText: ", rawText);
 		// return fullTextAnnotation?.text;
 
 		return NextResponse.json(
