@@ -10,7 +10,14 @@ import { type NextRequest, NextResponse } from "next/server";
  * @see https://supabase.com/docs/guides/auth/server-side/nextjs?queryGroups=router&router=app
  */
 export async function updateSession(request: NextRequest) {
-	let supabaseResponse = NextResponse.next({
+	console.log("\n\n");
+	console.log("🌑🌒🌓🌔🌕🌖🌗🌘🌑");
+	console.log("MIDDLEWARE: Supabase");
+	console.log("[middleware] request.url: ", request.url);
+	console.log("[middleware] request.redirect: ", request.redirect);
+	console.log("\n");
+
+	const supabaseResponse = NextResponse.next({
 		request,
 	});
 
@@ -19,21 +26,16 @@ export async function updateSession(request: NextRequest) {
 		process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "",
 		{
 			cookies: {
-				getAll() {
-					return request.cookies.getAll();
-				},
-				setAll(cookiesToSet) {
-					// biome-ignore lint/complexity/noForEach: <explanation>
-					cookiesToSet.forEach(({ name, value, options }) =>
-						request.cookies.set(name, value),
-					);
-					supabaseResponse = NextResponse.next({
-						request,
-					});
-					// biome-ignore lint/complexity/noForEach: <explanation>
-					cookiesToSet.forEach(({ name, value, options }) =>
-						supabaseResponse.cookies.set(name, value, options),
-					);
+				getAll: () => request.cookies.getAll(),
+				setAll: (cookiesToSet) => {
+					for (const cookie of cookiesToSet) {
+						request.cookies.set(cookie.name, cookie.value);
+						supabaseResponse.cookies.set(
+							cookie.name,
+							cookie.value,
+							cookie.options,
+						);
+					}
 				},
 			},
 		},
@@ -52,11 +54,19 @@ export async function updateSession(request: NextRequest) {
 		data: { user },
 	} = await supabase.auth.getUser();
 
+	console.log("[middleware] supabaseResponse.ok: ", supabaseResponse.ok);
+	console.log("[middleware] user?.email: ", user?.email);
+	console.log("\n");
+
 	if (
 		!user &&
 		!request.nextUrl.pathname.startsWith("/login") &&
 		!request.nextUrl.pathname.startsWith("/auth")
 	) {
+		console.log("💀☠️💀☠️💀☠️💀☠️💀");
+		console.log("[middleware] WARN: User is not logged in");
+		console.log("[middleware] log: redirecting to /login");
+		console.log("\n");
 		// no user, potentially respond by redirecting the user to the login page
 		// ユーザーがいない場合、ユーザーをログインページにリダイレクトすることで応答する可能性があります
 		const url = request.nextUrl.clone();

@@ -1,7 +1,31 @@
 // utils/supabase/auth.ts
 
+import type { Session } from "@supabase/supabase-js";
 import { createClient as createBrowserClient } from "./client";
 import { createClient as createServerClient } from "./server";
+
+/**
+ * クライアント側で現在の Supabase セッションを取得する
+ *
+ * @returns - セッションオブジェクト。未ログイン時は null
+ *
+ * @example
+ * const session = await getClientSession();
+ * if (!session) router.push("/login");
+ */
+export async function getClientSession(): Promise<Session | null> {
+	const supabase = createBrowserClient();
+	const {
+		data: { session },
+		error,
+	} = await supabase.auth.getSession();
+
+	if (error) {
+		console.error("セッション取得エラー:", error.message);
+	}
+
+	return session;
+}
 
 /**
  * サーバー側で現在の Supabase ユーザー情報を取得する
@@ -12,7 +36,7 @@ import { createClient as createServerClient } from "./server";
  * const user = await getUser();
  * if (!user) redirect("/login");
  */
-export async function getUser() {
+export async function getServerUser() {
 	const supabase = await createServerClient();
 	const {
 		data: { user },
