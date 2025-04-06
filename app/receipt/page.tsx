@@ -24,10 +24,22 @@ const Recipt = () => {
 				Button
 			</button>
 			<div>
-				{receiptObject.map((item) => (
+				{receiptObject.map((item, index) => (
 					<>
-						<div key={"text"}>{item.text}</div>
-						<div key={"vertices"}>
+						<div
+							key={`text-${
+								// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+								index
+							}`}
+						>
+							{item.text}
+						</div>
+						<div
+							key={`boundingBox-${
+								// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+								index
+							}`}
+						>
 							{JSON.stringify(item.boundingBox?.vertices)}
 						</div>
 					</>

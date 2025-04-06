@@ -32,13 +32,20 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 			setSession(session);
 			setLoading(false);
 		};
+		// console.log("fetchSession START");
 		fetchSession();
+		// console.log("fetchSession END");
+		// console.log("[SessionProvider] session:", session);
 
+		// console.log("\n\n");
+		// console.log("listenSessionChange START");
 		const {
 			data: { subscription },
 		} = supabase.auth.onAuthStateChange((_event, session) => {
 			setSession(session);
 		});
+		// console.log("listenSessionChange END");
+		// console.log("[SessionProvider] subscription:", subscription);
 
 		return () => subscription.unsubscribe();
 	}, [supabase]);

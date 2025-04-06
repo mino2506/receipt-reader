@@ -1,3 +1,5 @@
+// app/layout.tsx
+
 import { SessionProvider } from "@/context/SessionProvider";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
