@@ -9,7 +9,8 @@ export async function GET(request: NextRequest) {
 	const next = requestUrl.searchParams.get("next") ?? "/dashboard";
 	const code = requestUrl.searchParams.get("code");
 
-	console.log("💩💩💩app/auth/callback/route.ts");
+	console.log("🍪🍩🎂🍰🍫🍬🍭");
+	console.log("RUNNING: app/auth/callback/route.ts");
 	console.log("requestUrl: ", requestUrl);
 	console.log("origin: ", origin);
 	console.log("next: ", next);
