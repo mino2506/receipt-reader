@@ -1,6 +1,6 @@
 "use client";
 
-import { createClient as createBrowserClient } from "@/utils/supabase/client";
+import { createClient as createBrowserClient } from "@/lib/supabase/client";
 import type { Session } from "@supabase/supabase-js";
 import {
 	type ReactNode,
