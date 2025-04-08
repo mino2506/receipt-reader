@@ -1,6 +1,7 @@
 // app/api/ocr/route.ts
 
 import { createClient as createServerClient } from "@/lib/supabase/server";
+import { isBase64DataUrl, stripBase64Prefix } from "@/utils/base64";
 import { googleCloudVisionClient } from "@/utils/googleCloudVision";
 import { NextResponse } from "next/server";
 
@@ -34,18 +35,20 @@ import { NextResponse } from "next/server";
 export const POST = async (req: Request, res: NextResponse) => {
 	console.log("\n\n~~~📨📮   POOOOOOOOOST!!!🚀🚀🚀🆕🆕🆕\n");
 	const supabase = await createServerClient();
-
-	// 🔐 認証チェック
-	const {
-		data: { user },
-		error,
-	} = await supabase.auth.getUser();
-	if (error || !user) {
-		return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+	if (process.env.NODE_ENV === "development") {
+		// 🔐 認証チェック
+		console.log("🔐 開発環境です。認証をスキップしました。");
+	} else {
+		const {
+			data: { user },
+			error,
+		} = await supabase.auth.getUser();
+		if (error || !user) {
+			return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+		}
 	}
 
 	const reqBody = await req.json();
-	console.log("reqBody.imageUrl: ", reqBody.imageUrl);
 
 	const { imageUrl } = reqBody;
 	if (typeof imageUrl === "undefined") {
@@ -55,9 +58,34 @@ export const POST = async (req: Request, res: NextResponse) => {
 		);
 	}
 
+	let requestToGCV;
+	if (isBase64DataUrl(imageUrl)) {
+		const cleanedBase64 = stripBase64Prefix(imageUrl);
+		console.log("[log]request type: ", "Base64");
+		console.log(
+			"stripBase64Prefix: ",
+			stripBase64Prefix(imageUrl).slice(0, 100),
+		);
+		requestToGCV = {
+			image: { content: cleanedBase64 },
+		};
+	} else if (imageUrl.startsWith("http")) {
+		console.log("request type: ", "Url");
+
+		requestToGCV = {
+			image: { source: { imageUri: imageUrl } },
+		};
+	} else {
+		console.warn("⚠️ imageUrl がURLでもBase64でもありません");
+		return NextResponse.json(
+			{ message: "Invalid image format" },
+			{ status: 400 },
+		);
+	}
+
 	try {
 		const [result] =
-			await googleCloudVisionClient.documentTextDetection(imageUrl);
+			await googleCloudVisionClient.documentTextDetection(requestToGCV);
 		const fullTextAnnotation = result.fullTextAnnotation;
 		const rawText = result.fullTextAnnotation?.text;
 

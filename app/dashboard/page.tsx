@@ -22,12 +22,12 @@ export default function Dashboard() {
 
 	if (session) {
 		return (
-			<div className="w-screen h-screen flex flex-col items-center justify-center p-3 bg-gray-100">
-				<SignOutButton />
+			<div className="w-screen h-screen flex flex-col items-center p-3 bg-gray-100">
 				<div className="flex-wrap m-3 bg-gray-500 max-w-full break-words">
 					ようこそ、{session.user.email} さん！aaaaaaaaaaaaaaaaaaa
 				</div>
 				<ReceiptImage />
+				<SignOutButton />
 			</div>
 		);
 	}
