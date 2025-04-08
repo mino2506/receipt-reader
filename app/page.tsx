@@ -1,5 +1,11 @@
 // app/page.tsx
 
+import Dashboard from "./dashboard/page";
+
 export default function Home() {
-	return <div>teeeeeeest</div>;
+	return (
+		<div>
+			<Dashboard />
+		</div>
+	);
 }
