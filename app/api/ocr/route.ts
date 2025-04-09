@@ -43,8 +43,18 @@ export const POST = async (req: Request, res: NextResponse) => {
 			data: { user },
 			error,
 		} = await supabase.auth.getUser();
-		if (error || !user) {
-			return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+
+		if (error) {
+			return NextResponse.json(
+				{ message: "failed in fetch user from supabase", error },
+				{ status: 500 },
+			);
+		}
+		if (!user) {
+			return NextResponse.json(
+				{ message: "user is not found" },
+				{ status: 400 },
+			);
 		}
 	}
 
@@ -94,10 +104,7 @@ export const POST = async (req: Request, res: NextResponse) => {
 		console.log("rawText: ", rawText);
 		// return fullTextAnnotation?.text;
 
-		return NextResponse.json(
-			{ message: "Success", fullTextAnnotation },
-			{ status: 200 },
-		);
+		return NextResponse.json({ message: "Success", result }, { status: 200 });
 	} catch (error) {
 		return NextResponse.json({ message: "Error", error }, { status: 500 });
 	}
