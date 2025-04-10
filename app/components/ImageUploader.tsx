@@ -2,14 +2,16 @@
 
 import { GCVFeatureType } from "@/lib/googleCloudVision/schema";
 import {
-  type Base64Image,
-  Base64ImageSchema,
-  type PureBase64Image,
+	type Base64Image,
+	Base64ImageSchema,
+	type PureBase64Image,
 	ToPureBase64ImageSchema,
-  type Url,
-  UrlSchema,
+	type Url,
+	UrlSchema,
 	convertToBase64,
-	toPureBase64,
+	isPureBase64ImageBrand,
+	isUrl,
+	toPureBase64Image,
 } from "@/utils/base64";
 import {
 	type GCVResponse,
@@ -22,18 +24,17 @@ import { enumKeys } from "@/utils/generics";
 import { useState } from "react";
 import { z } from "zod";
 
-const ToImageInputSchema = z.union([
-	ToPureBase64ImageSchema,
-	UrlSchema,
-]);
+export const ImageInputSchema = z.union([Base64ImageSchema, UrlSchema]);
 
-const defaultGCVFeatures = [
+export const ToImageInputSchema = z.union([ToPureBase64ImageSchema, UrlSchema]);
+
+export const DEFAULT_GCV_FEATURES = [
 	{ type: GCVFeatureType.DOCUMENT_TEXT_DETECTION },
 	{ type: GCVFeatureType.LABEL_DETECTION },
 ];
 
-export function validateImageInput(input: unknown) {
-	const parsed = ToImageInputSchema.safeParse(input);
+export function validateImageInput(input: unknown): Base64Image | Url {
+	const parsed = ImageInputSchema.safeParse(input);
 	if (!parsed.success) {
 		const errorMessage = parsed.error.errors[0]?.message ?? "Invalid input";
 		throw new Error(errorMessage);
@@ -41,23 +42,25 @@ export function validateImageInput(input: unknown) {
 	return parsed.data;
 }
 
-type GCVRequest  ={
-	image: {
-		content: PureBase64Image;
-	};
-	features: {
-		type: GCVFeatureType;
-	}[];
-}|{
-	image: {
-		source: {
-			imageUri: Url;
-		};
-	};
-	features: {
-		type: GCVFeatureType;
-	}[];
-};
+export type GCVRequest =
+	| {
+			image: {
+				content: PureBase64Image;
+			};
+			features: {
+				type: GCVFeatureType;
+			}[];
+	  }
+	| {
+			image: {
+				source: {
+					imageUri: Url;
+				};
+			};
+			features: {
+				type: GCVFeatureType;
+			}[];
+	  };
 
 export function createGCVRequest(input: Base64Image | Url): GCVRequest {
 	const parsed = ToImageInputSchema.safeParse(input);
@@ -65,35 +68,75 @@ export function createGCVRequest(input: Base64Image | Url): GCVRequest {
 		const errorMessage = parsed.error.errors[0]?.message ?? "Invalid input";
 		throw new Error(errorMessage);
 	}
+
 	const data = parsed.data;
 
-	if (ToPureBase64ImageSchema.safeParse(data).success) {
+	if (isUrl(data)) {
 		return {
 			image: {
-				content: toPureBase64(data),
+				source: {
+					imageUri: data as Url,
+				},
 			},
-			features: defaultGCVFeatures,
+			features: DEFAULT_GCV_FEATURES,
 		};
 	}
 
-	return {
-		image: {
-			source: {
-				imageUri: data,
+	if (isPureBase64ImageBrand(data)) {
+		return {
+			image: {
+				content: data,
 			},
-		},
-		features: defaultGCVFeatures,
-	};
+			features: DEFAULT_GCV_FEATURES,
+		};
+	}
+
+	throw new Error(
+		"Unexpected: input passed validation but did not match any known type (Url or PureBase64Image)",
+	);
 }
 
 type GCVResult =
 	| { success: true; result: GCVResponse }
 	| { success: false; error: string };
 
-export function fetchGCVResult(input: unknown): Promise<GCVResult> {
-  try{
-    const gcvRequest = createGCVRequest(input)
-  }
+export const OCR_API_ENDPOINT = "/api/ocr";
+export async function fetchGCVResult(input: GCVRequest): Promise<GCVResult> {
+	try {
+		const res = await fetch(OCR_API_ENDPOINT, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({ request: input }),
+		});
+
+		if (!res.ok) {
+			return {
+				success: false,
+				error: `GCV API returned non-200 status: ${res.status} ${res.statusText}`,
+			};
+		}
+
+		const json = await res.json();
+
+		if (!isGCVResponse(json)) {
+			return {
+				success: false,
+				error: "GCV response is not in the expected format.",
+			};
+		}
+
+		return {
+			success: true,
+			result: parseGCVResponse(json),
+		};
+	} catch (error) {
+		return {
+			success: false,
+			error: error instanceof Error ? error.message : String(error),
+		};
+	}
 }
 
 export default function ImageUploader() {

@@ -4,6 +4,7 @@ import {
 	base64ImageRegex,
 	base64PrefixRegex,
 	base64Regex,
+	pureBase64Regex,
 } from ".";
 
 export type Base64 = string & { __kind: ["base64"] };

@@ -15,9 +15,13 @@ export {
 	base64PrefixRegex,
 	base64ImageRegex,
 	base64ImagePrefixRegex,
+	pureBase64Regex,
 	convertToBase64,
 	isBase64,
 	isBase64Image,
+	isPureBase64ImageBrand,
 	toPureBase64,
 	toPureBase64Image,
+	isUrl,
+	isUrlType,
 } from "./formatBase64";
