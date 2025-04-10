@@ -1,42 +1,44 @@
+import {
+	type Base64,
+	type Base64Image,
+	type PureBase64,
+	type PureBase64Image,
+	type Url,
+	UrlSchema,
+} from ".";
+
+export const base64Regex = /^data:image\/[a-zA-Z]+;base64,[A-Za-z0-9+/=]+$/;
+export const base64PrefixRegex = /^data:image\/[a-zA-Z]+;base64,/;
 export const base64ImageRegex =
 	/^data:image\/(png|jpeg|jpg|gif|webp);base64,[A-Za-z0-9+/=]+$/;
 export const base64ImagePrefixRegex =
 	/^data:image\/(png|jpeg|jpg|gif|webp);base64,/;
-export const base64Regex = /^data:image\/[a-zA-Z]+;base64,[A-Za-z0-9+/=]+$/;
-export const base64PrefixRegex = /^data:image\/[a-zA-Z]+;base64,/;
 
-/**
- * FileオブジェクトからBase64文字列を取得する
- *
- * @param file - ユーザーが選択した画像ファイル
- * @returns Base64文字列（`data:image/*;base64,...` 形式）
- */
-export const convertToBase64 = (file: File): Promise<string> => {
+export const convertToBase64 = (file: File): Promise<Base64> => {
 	return new Promise((resolve, reject) => {
 		const reader = new FileReader();
 		reader.readAsDataURL(file);
-		reader.onload = () => resolve(reader.result as string);
+		reader.onload = () => resolve(reader.result as Base64);
 		reader.onerror = (error) => reject(error);
 	});
 };
 
-/**
- * 文字列が Data URL（data:image/...;base64,...）形式か判定する
- *
- * @param str - 判定対象の文字列
- * @returns boolean
- */
-export const isBase64 = (str: string): boolean => {
-	return base64Regex.test(str);
+export const isBase64 = (value: unknown): value is Base64 => {
+	return typeof value === "string" && base64Regex.test(value);
+};
+export const isBase64Image = (value: unknown): value is Base64Image => {
+	return typeof value === "string" && base64ImageRegex.test(value);
 };
 
-/**
- * Base64 Data URL 形式の文字列からプレフィックスを除去する
- * （data:image/png;base64,... → iVBORw0...）
- *
- * @param dataUrl - Base64 Data URL形式の文字列
- * @returns プレフィックスを除いた純粋なBase64文字列
- */
-export const stripBase64Prefix = (dataUrl: string): string => {
-	return dataUrl.replace(base64PrefixRegex, "");
+export const toPureBase64 = (base64: Base64): PureBase64 => {
+	return base64.replace(base64PrefixRegex, "") as PureBase64;
+};
+export const toPureBase64Image = (
+	base64Image: Base64Image,
+): PureBase64Image => {
+	return base64Image.replace(base64ImagePrefixRegex, "") as PureBase64Image;
+};
+
+export const isUrl = (value: unknown): value is Url => {
+	return typeof value === "string" && UrlSchema.safeParse(value).success;
 };
