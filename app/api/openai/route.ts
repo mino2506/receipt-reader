@@ -3,8 +3,8 @@ import {
 	messageSuffixPrompt,
 	rolePrompt,
 } from "@/app/api/openai/receiptPrompt";
+import { openai } from "@/lib/openai";
 import { createClient as createServerClient } from "@/lib/supabase/server";
-import { openai } from "@/utils/openai";
 import { NextResponse } from "next/server";
 
 export const POST = async (req: Request, res: NextResponse) => {

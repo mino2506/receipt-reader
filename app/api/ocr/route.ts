@@ -1,67 +1,33 @@
 // app/api/ocr/route.ts
 
+import {
+	GCVFeatureSchema,
+	GCVFeatureType,
+	GCVRequestSchema,
+	googleCloudVisionClient,
+} from "@/lib/googleCloudVision";
+import {} from "@/lib/googleCloudVision";
 import { createClient as createServerClient } from "@/lib/supabase/server";
-import { isBase64DataUrl, stripBase64Prefix } from "@/utils/base64";
-import { googleCloudVisionClient } from "@/utils/googleCloudVision";
-import { protos } from "@google-cloud/vision";
+import { isBase64, stripBase64Prefix } from "@/utils/base64";
 import { NextResponse } from "next/server";
-import { z } from "zod";
+import type { z } from "zod";
 
-export type GCVFeature = protos.google.cloud.vision.v1.Feature;
-export const GCVFeatureType = protos.google.cloud.vision.v1.Feature.Type;
-
-const allGCVFeatureTypes = Object.keys(GCVFeatureType)
-	.filter((key) => Number.isNaN(Number(key)))
-	.map((key) => ({
-		name: key,
-		value: GCVFeatureType[key as keyof typeof GCVFeatureType],
-	}));
-
-// console.log("allGCVFeatureTypes: ", allGCVFeatureTypes);
-
-const allowedFeatureTypes = [
-	"DOCUMENT_TEXT_DETECTION",
-	"TEXT_DETECTION",
-	"LOGO_DETECTION",
-	"LABEL_DETECTION",
-	"OBJECT_LOCALIZATION",
-] as const;
-
-const GCVFeatureSchema = z.object({
-	type: z.enum(allowedFeatureTypes),
-});
-
-const imageSchema = z
-	.object({
-		content: z.string().optional(),
-		source: z
-			.object({
-				imageUri: z.string().optional(),
-			})
-			.optional(),
-	})
-	.refine(
-		(data) =>
-			typeof data.content === "string" ||
-			typeof data.source?.imageUri === "string",
-		{
-			message: "content または source.imageUri のいずれかは必須です",
-		},
-	);
-
-export const GCVRequestSchema = z.object({
-	image: z.object({
-		content: z.string().optional(),
-		source: z
-			.object({
-				imageUri: z.string().optional(),
-			})
-			.optional(),
-	}),
-	features: z.array(GCVFeatureSchema).min(1, {
-		message: "features must be a non-empty array",
-	}),
-});
+const reqMock = {
+	body: {
+		image:
+			"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFBAJ/wlseKgAAAABJRU5ErkJggg==",
+		features: [
+			{
+				type: "DOCUMENT_TEXT_DETECTION",
+			},
+			{
+				type: "LABEL_DETECTION",
+			},
+		],
+	},
+};
+const safeParsedGCVRequest = GCVRequestSchema.safeParse(reqMock.body);
+type GCVRequest = z.infer<typeof GCVRequestSchema>;
 
 export function hasValidGCVRequestBody(body: unknown): body is GCVRequest {
 	if (
@@ -121,7 +87,7 @@ export const POST = async (req: Request, res: NextResponse) => {
 	}
 
 	let requestToGCV;
-	if (isBase64DataUrl(imageUrl)) {
+	if (isBase64(imageUrl)) {
 		const cleanedBase64 = stripBase64Prefix(imageUrl);
 		console.log("[log]request type: ", "Base64");
 		console.log(

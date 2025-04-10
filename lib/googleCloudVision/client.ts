@@ -1,4 +1,4 @@
-// utils/googleCloudVision.ts
+// lib/googleCloudVision/googleCloudVisionClient.ts
 
 import vision from "@google-cloud/vision";
 
