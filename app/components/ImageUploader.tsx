@@ -1,11 +1,10 @@
 "use client";
 
+import { GCVFeatureType } from "@/lib/googleCloudVision";
 import {
 	base64ImagePrefixRegex,
 	base64ImageRegex,
 	convertToBase64,
-	isBase64DataUrl,
-	stripBase64Prefix,
 } from "@/utils/base64";
 import {
 	type GCVResponse,
@@ -14,64 +13,16 @@ import {
 	isGCVResponse,
 	parseGCVResponse,
 } from "@/utils/formatGCVResponse";
+import { enumKeys } from "@/utils/generics";
 import { useState } from "react";
 import { z } from "zod";
-
-export enum GCVFeatureType {
-	TYPE_UNSPECIFIED = 0,
-	FACE_DETECTION = 1,
-	LANDMARK_DETECTION = 2,
-	LOGO_DETECTION = 3,
-	LABEL_DETECTION = 4,
-	TEXT_DETECTION = 5,
-	DOCUMENT_TEXT_DETECTION = 11,
-	SAFE_SEARCH_DETECTION = 6,
-	IMAGE_PROPERTIES = 7,
-	CROP_HINTS = 9,
-	WEB_DETECTION = 10,
-	PRODUCT_SEARCH = 12,
-	OBJECT_LOCALIZATION = 19,
-}
-
-function enumKeys<T extends Record<string, string | number>>(e: T) {
-	const keys = Object.keys(e).filter((k) =>
-		Number.isNaN(Number(k)),
-	) as (keyof T)[];
-
-	if (keys.length === 0) {
-		throw new Error("Enum must have at least one key");
-	}
-
-	return keys as [keyof T, ...(keyof T)[]];
-}
-
-function enumValues<T extends Record<string, string | number>>(
-	e: T,
-): T[keyof T][] {
-	return Object.values(e).filter((v) => typeof v === "number") as T[keyof T][];
-}
 
 export const base64ImageSchema = z
 	.string()
 	.regex(base64ImageRegex, {
-		message: "画像を base64 として読み込めませんでした",
+		message: "base64 形式ではありません。",
 	})
 	.transform((value) => value.replace(base64ImagePrefixRegex, ""));
-
-export const GCVFeatureSchema = z.object({
-	type: z
-		.enum(enumKeys(GCVFeatureType))
-		.transform((key) => GCVFeatureType[key]),
-});
-
-export const GCVRequestSchema = z.object({
-	request: z.object({
-		image: z.object({
-			content: base64ImageSchema,
-		}),
-		features: z.array(GCVFeatureSchema),
-	}),
-});
 
 export default function ImageUploader() {
 	const [base64, setBase64] = useState<string>("");
