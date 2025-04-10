@@ -8,7 +8,7 @@ import {
 } from "@/lib/googleCloudVision";
 import {} from "@/lib/googleCloudVision";
 import { createClient as createServerClient } from "@/lib/supabase/server";
-import { isBase64, stripBase64Prefix } from "@/utils/base64";
+import { isBase64, toPureBase64 } from "@/utils/base64";
 import { NextResponse } from "next/server";
 import type { z } from "zod";
 
@@ -88,12 +88,9 @@ export const POST = async (req: Request, res: NextResponse) => {
 
 	let requestToGCV;
 	if (isBase64(imageUrl)) {
-		const cleanedBase64 = stripBase64Prefix(imageUrl);
+		const cleanedBase64 = toPureBase64(imageUrl);
 		console.log("[log]request type: ", "Base64");
-		console.log(
-			"stripBase64Prefix: ",
-			stripBase64Prefix(imageUrl).slice(0, 100),
-		);
+		console.log("stripBase64Prefix: ", toPureBase64(imageUrl).slice(0, 100));
 		requestToGCV = {
 			image: { content: cleanedBase64 },
 		};

@@ -1,10 +1,15 @@
 "use client";
 
-import { GCVFeatureType } from "@/lib/googleCloudVision";
+import { GCVFeatureType } from "@/lib/googleCloudVision/schema";
 import {
-	base64ImagePrefixRegex,
-	base64ImageRegex,
+  type Base64Image,
+  Base64ImageSchema,
+  type PureBase64Image,
+	ToPureBase64ImageSchema,
+  type Url,
+  UrlSchema,
 	convertToBase64,
+	toPureBase64,
 } from "@/utils/base64";
 import {
 	type GCVResponse,
@@ -17,12 +22,79 @@ import { enumKeys } from "@/utils/generics";
 import { useState } from "react";
 import { z } from "zod";
 
-export const base64ImageSchema = z
-	.string()
-	.regex(base64ImageRegex, {
-		message: "base64 形式ではありません。",
-	})
-	.transform((value) => value.replace(base64ImagePrefixRegex, ""));
+const ToImageInputSchema = z.union([
+	ToPureBase64ImageSchema,
+	UrlSchema,
+]);
+
+const defaultGCVFeatures = [
+	{ type: GCVFeatureType.DOCUMENT_TEXT_DETECTION },
+	{ type: GCVFeatureType.LABEL_DETECTION },
+];
+
+export function validateImageInput(input: unknown) {
+	const parsed = ToImageInputSchema.safeParse(input);
+	if (!parsed.success) {
+		const errorMessage = parsed.error.errors[0]?.message ?? "Invalid input";
+		throw new Error(errorMessage);
+	}
+	return parsed.data;
+}
+
+type GCVRequest  ={
+	image: {
+		content: PureBase64Image;
+	};
+	features: {
+		type: GCVFeatureType;
+	}[];
+}|{
+	image: {
+		source: {
+			imageUri: Url;
+		};
+	};
+	features: {
+		type: GCVFeatureType;
+	}[];
+};
+
+export function createGCVRequest(input: Base64Image | Url): GCVRequest {
+	const parsed = ToImageInputSchema.safeParse(input);
+	if (!parsed.success) {
+		const errorMessage = parsed.error.errors[0]?.message ?? "Invalid input";
+		throw new Error(errorMessage);
+	}
+	const data = parsed.data;
+
+	if (ToPureBase64ImageSchema.safeParse(data).success) {
+		return {
+			image: {
+				content: toPureBase64(data),
+			},
+			features: defaultGCVFeatures,
+		};
+	}
+
+	return {
+		image: {
+			source: {
+				imageUri: data,
+			},
+		},
+		features: defaultGCVFeatures,
+	};
+}
+
+type GCVResult =
+	| { success: true; result: GCVResponse }
+	| { success: false; error: string };
+
+export function fetchGCVResult(input: unknown): Promise<GCVResult> {
+  try{
+    const gcvRequest = createGCVRequest(input)
+  }
+}
 
 export default function ImageUploader() {
 	const [base64, setBase64] = useState<string>("");
@@ -43,12 +115,9 @@ export default function ImageUploader() {
 			return;
 		}
 
-		const safeParsedBase64 = base64ImageSchema.safeParse(base64);
-
+		const safeParsedBase64 = Base64ImageSchema.safeParse(base64);
 		if (!safeParsedBase64.success) {
-			const errorMessage = safeParsedBase64.error.errors
-				.map((e) => e.message)
-				.join("\n");
+			const errorMessage = safeParsedBase64.error.errors[0]?.message ?? "";
 			handleError(errorMessage);
 			return;
 		}
