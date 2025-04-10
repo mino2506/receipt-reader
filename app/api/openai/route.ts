@@ -1,44 +1,65 @@
+import {
+	messagePrefixPrompt,
+	messageSuffixPrompt,
+	rolePrompt,
+} from "@/app/api/openai/receiptPrompt";
+import { createClient as createServerClient } from "@/lib/supabase/server";
 import { openai } from "@/utils/openai";
 import { NextResponse } from "next/server";
 
 export const POST = async (req: Request, res: NextResponse) => {
 	console.log("\n\n~~~📨📮   POOOOOOOOOST!!!🚀🚀🚀🆕🆕🆕\n");
 
-	// const reqJson = await req.json();
-	// console.log(reqJson);
+	const supabase = await createServerClient();
+	if (process.env.NODE_ENV === "development") {
+		// 🔐 認証チェック
+		console.log("🔐 開発環境です。認証をスキップしました。");
+	} else {
+		const {
+			data: { user },
+			error,
+		} = await supabase.auth.getUser();
 
-	const { fullTextAnnotation } = await req.json();
-
-	if (typeof fullTextAnnotation === "undefined") {
-		console.log("fullTextAnnotation is undefined");
-		return NextResponse.json(
-			{ message: "fullTextAnnotation is required in request body" },
-			{ status: 400 },
-		);
+		if (error) {
+			return NextResponse.json(
+				{ message: "failed in fetch user from supabase", error },
+				{ status: 500 },
+			);
+		}
+		if (!user) {
+			return NextResponse.json(
+				{ message: "user is not found" },
+				{ status: 400 },
+			);
+		}
 	}
 
-	const inputOcrText = JSON.stringify(fullTextAnnotation);
+	const { data } = await req.json();
+	// const { fullTextAnnotation } = await req.json();
+
+	// if (typeof fullTextAnnotation === "undefined") {
+	// 	console.log("fullTextAnnotation is undefined");
+	// 	return NextResponse.json(
+	// 		{ message: "fullTextAnnotation is required in request body" },
+	// 		{ status: 400 },
+	// 	);
+	// }
+
+	const inputOcrText = data.join("\n");
 
 	console.log("inputOcrText: ");
 	console.log(inputOcrText);
 
-	const rolePrompt: string =
-		"あなたはレシートデータを構造化するAIアシスタントです。OCRで抽出されたテキストを分析し、必要な情報を正確にJSON形式で返してください。";
-	const actionPrompt: string = `以下はレシートのOCRテキストです。このテキストから次の情報を抽出してJSON形式で返してください：
-- storeName: 店舗名
-- date: 購入日（YYYY-MM-DD形式に変換）
-- time: 購入時間（HH:MM形式）
-- items: 商品リスト（各商品の名前、数量、価格を含む）
-- totalPrice: 合計金額
-- taxAmount: 税額（あれば）
-
-レシートテキスト:
-${inputOcrText}`;
+	const actionPrompt: string = `
+  ${messagePrefixPrompt}
+  ${inputOcrText}
+  ${messageSuffixPrompt}
+  `;
 
 	try {
 		console.log("try openai.chat.completions.create");
 		const response = await openai.chat.completions.create({
-			model: "gpt-3.5-turbo-16k",
+			model: "gpt-4o-mini",
 			messages: [
 				{
 					role: "system",
@@ -55,6 +76,14 @@ ${inputOcrText}`;
 			frequency_penalty: 0,
 			presence_penalty: 0,
 		});
+
+		if (response.usage) {
+			const { prompt_tokens, completion_tokens, total_tokens } = response.usage;
+			console.log(`📊 OpenAI token usage:
+      - prompt_tokens: ${prompt_tokens}
+      - completion_tokens: ${completion_tokens}
+      - total_tokens: ${total_tokens}`);
+		}
 
 		const content = response?.choices?.[0]?.message.content;
 		if (!content) {
