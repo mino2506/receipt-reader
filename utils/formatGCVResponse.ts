@@ -1,7 +1,7 @@
 import response from "@/gcvRawData.json";
 import type { protos } from "@google-cloud/vision";
 
-type GCVResponse = {
+export type GCVResponse = {
 	message: string;
 	result: protos.google.cloud.vision.v1.IAnnotateImageResponse;
 };
@@ -131,8 +131,8 @@ type Line = {
  *
  * @param words - WordInfo[] ページ内の単語リスト
  * @param imageHeight - ページ画像の高さ ( px ). 行マージの基準に使用
- * @param lineMergeRatio - 高さに対する行マージの許容割合（例: 0.01 = 1%）
- * @param confidenceThreshold - 最低信頼度 この値未満の単語は除外される
+ * @param lineMergeRatio - Optional (Default: 0.01) 高さに対する行マージの許容割合（例: 0.01 = 1%）
+ * @param confidenceThreshold - Optional (Default: 0.8) 最低信頼度 この値未満の単語は除外される
  * @returns 行ごとに結合された文字列の配列（上から順）
  *
  * @example
@@ -177,6 +177,7 @@ export function groupWordsIntoLinesByRatio(
 		.map((line) => line.words.map((w) => w.text).join(" "));
 }
 
+// TODO: テストコード書くときに使う
 // const errorResponse = { message: "Invalid image", result: null };
 // const parsedErrorGCVResponse = parseGCVResponse(errorResponse) as GCVResponse;
 // const errorPages = extractPagesFromGCV(parsedErrorGCVResponse);

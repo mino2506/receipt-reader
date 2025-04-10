@@ -3,13 +3,65 @@
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { isBase64DataUrl, stripBase64Prefix } from "@/utils/base64";
 import { googleCloudVisionClient } from "@/utils/googleCloudVision";
+import { protos } from "@google-cloud/vision";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-export type GCVRequest = {
-	image?: { content?: string } | { source?: { imageUri: string } };
-	features?: { type: string }[];
-};
+export type GCVFeature = protos.google.cloud.vision.v1.Feature;
+export const GCVFeatureType = protos.google.cloud.vision.v1.Feature.Type;
+
+const allGCVFeatureTypes = Object.keys(GCVFeatureType)
+	.filter((key) => Number.isNaN(Number(key)))
+	.map((key) => ({
+		name: key,
+		value: GCVFeatureType[key as keyof typeof GCVFeatureType],
+	}));
+
+// console.log("allGCVFeatureTypes: ", allGCVFeatureTypes);
+
+const allowedFeatureTypes = [
+	"DOCUMENT_TEXT_DETECTION",
+	"TEXT_DETECTION",
+	"LOGO_DETECTION",
+	"LABEL_DETECTION",
+	"OBJECT_LOCALIZATION",
+] as const;
+
+const GCVFeatureSchema = z.object({
+	type: z.enum(allowedFeatureTypes),
+});
+
+const imageSchema = z
+	.object({
+		content: z.string().optional(),
+		source: z
+			.object({
+				imageUri: z.string().optional(),
+			})
+			.optional(),
+	})
+	.refine(
+		(data) =>
+			typeof data.content === "string" ||
+			typeof data.source?.imageUri === "string",
+		{
+			message: "content または source.imageUri のいずれかは必須です",
+		},
+	);
+
+export const GCVRequestSchema = z.object({
+	image: z.object({
+		content: z.string().optional(),
+		source: z
+			.object({
+				imageUri: z.string().optional(),
+			})
+			.optional(),
+	}),
+	features: z.array(GCVFeatureSchema).min(1, {
+		message: "features must be a non-empty array",
+	}),
+});
 
 export function hasValidGCVRequestBody(body: unknown): body is GCVRequest {
 	if (
@@ -95,7 +147,7 @@ export const POST = async (req: Request, res: NextResponse) => {
 
 	const resquestTest = {
 		requests: [requestToGCV],
-		features: [{ type: "DOCUMENT_TEXT_DETECTION" }, { type: "LOGO_DETECTION" }],
+		features: [{ type: 11 }, { type: 3 }],
 	};
 	try {
 		// const [result] =

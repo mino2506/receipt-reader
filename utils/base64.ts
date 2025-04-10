@@ -1,3 +1,10 @@
+export const base64ImageRegex =
+	/^data:image\/(png|jpeg|jpg|gif|webp);base64,[A-Za-z0-9+/=]+$/;
+export const base64ImagePrefixRegex =
+	/^data:image\/(png|jpeg|jpg|gif|webp);base64,/;
+export const base64FileRegex = /^data:image\/[a-zA-Z]+;base64,[A-Za-z0-9+/=]+$/;
+export const base64FilePrefixRegex = /^data:image\/[a-zA-Z]+;base64,/;
+
 /**
  * FileオブジェクトからBase64文字列を取得する
  *
@@ -20,7 +27,7 @@ export const convertToBase64 = (file: File): Promise<string> => {
  * @returns boolean
  */
 export const isBase64DataUrl = (str: string): boolean => {
-	return /^data:image\/[a-zA-Z]+;base64,/.test(str);
+	return base64FileRegex.test(str);
 };
 
 /**
@@ -31,5 +38,5 @@ export const isBase64DataUrl = (str: string): boolean => {
  * @returns プレフィックスを除いた純粋なBase64文字列
  */
 export const stripBase64Prefix = (dataUrl: string): string => {
-	return dataUrl.replace(/^data:image\/[a-zA-Z]+;base64,/, "");
+	return dataUrl.replace(base64FileRegex, "");
 };
