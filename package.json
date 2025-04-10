@@ -17,7 +17,8 @@
     "next": "15.2.3",
     "openai": "4.89.1",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "zod": "3.24.2"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",

@@ -4,36 +4,36 @@ import { createClient as createServerClient } from "@/lib/supabase/server";
 import { isBase64DataUrl, stripBase64Prefix } from "@/utils/base64";
 import { googleCloudVisionClient } from "@/utils/googleCloudVision";
 import { NextResponse } from "next/server";
+import { z } from "zod";
 
-// export default async function handler(req: Request, res: NextResponse) {
-// 	if (req.method !== "POST") {
-// 		res.status(405).json({ error: "Only POST requests are allowed" });
-// 		return;
-// 	}
+export type GCVRequest = {
+	image?: { content?: string } | { source?: { imageUri: string } };
+	features?: { type: string }[];
+};
 
-// 	try {
-// 		// リクエストボディから画像URLまたはbase64のデータを取得
-// 		const { url } = req.json();
-// 		if (!imageUrl) {
-// 			// res.status(400).json({ error: "imageUrl is required in request body" });
-// 			return NextResponse.json(
-// 				{ message: "imageUrl is required in request body" },
-// 				{ status: 400 },
-// 			);
-// 		}
+export function hasValidGCVRequestBody(body: unknown): body is GCVRequest {
+	if (
+		typeof body !== "object" ||
+		body === null ||
+		!("image" in body) ||
+		!("features" in body)
+	) {
+		console.warn("[GCV] Missing image or features in request", body);
+		return false;
+	}
 
-// 		// 例：ラベル検出を実施
-// 		const [result] = await googleCloudVisionClient.labelDetection(imageUrl);
-// 		const labels = result.labelAnnotations;
+	const features = (body as any).features;
+	if (!Array.isArray(features) || features.length === 0) {
+		console.warn("[GCV] Features must be a non-empty array", features);
+		return false;
+	}
 
-// 		res.status(200).json({ labels });
-// 	} catch (error) {
-// 		console.error("Error calling Cloud Vision API:", error);
-// 		res.status(500).json({ error: error.message });
-// 	}
-// }
+	return true;
+}
+
 export const POST = async (req: Request, res: NextResponse) => {
 	console.log("\n\n~~~📨📮   POOOOOOOOOST!!!🚀🚀🚀🆕🆕🆕\n");
+
 	const supabase = await createServerClient();
 	if (process.env.NODE_ENV === "development") {
 		// 🔐 認証チェック
@@ -93,9 +93,14 @@ export const POST = async (req: Request, res: NextResponse) => {
 		);
 	}
 
+	const resquestTest = {
+		requests: [requestToGCV],
+		features: [{ type: "DOCUMENT_TEXT_DETECTION" }, { type: "LOGO_DETECTION" }],
+	};
 	try {
-		const [result] =
-			await googleCloudVisionClient.documentTextDetection(requestToGCV);
+		// const [result] =
+		// 	await googleCloudVisionClient.documentTextDetection(requestToGCV);
+		const [result] = await googleCloudVisionClient.annotateImage(resquestTest);
 		const fullTextAnnotation = result.fullTextAnnotation;
 		const rawText = result.fullTextAnnotation?.text;
 
