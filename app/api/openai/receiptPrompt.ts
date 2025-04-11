@@ -69,48 +69,38 @@ ${messageCategoryPrompt}
 - 出力は上記形式に完全に準拠した JSON オブジェクト1つのみで、余計な説明やコメントは含めないでください
 `;
 
-export const messageSuffixPromptEN = `
+export const messageSuffixPrompt = `
 ---
 
-Based on the provided information, structure the receipt content into the following JSON format:
+Based on the receipt lines above, return a structured JSON in the following format:
 
 {
-  "store": string,             // Store name
-  "date": YYYY-MM-DDTHH:mm:ssZ, // Date (example: 2023-10-25T16:39:27Z; must be in strict UTC format)
+  "store": string,
+  "date": string, // e.g. "2023-10-25 16:39:27"
   "items": [
     {
-      "name": string,               // Item name
-      "quantity": number | null,    // Quantity (null if not explicitly written; client will default to 1)
-      "price": number | null,       // Unit price (null if not written; do NOT calculate from subtotal/quantity)
-      "subtotal": number | null,    // Subtotal (tax-included); null if not written
-      "discount": number | null,    // Discount amount; null if not written
-      "category": string,           // Item category (must be selected from the list below)
-      "taxRate": number,            // Tax rate as an integer (e.g., 8, 10); must NOT be null
-      "taxRateSource": "explicit" | "inferred" // Source of tax rate; must be either "explicit" or "inferred"
+      "name": string,
+      "quantity": number | null,       // null if not shown
+      "price": number | null,          // unit price, null if not shown (do not calculate)
+      "subtotal": number | null,       // total price per item line (tax included)
+      "discount": number | null,       // discount per item if available
+      "category": string,              // one of the categories listed below
+      "taxRate": number,               // integer tax rate (e.g. 8, 10), must not be null
+      "taxRateSource": "explicit" | "inferred"
     }
   ],
-  "total": number,             // Total amount (tax included)
-  "discount": number | null,   // Total receipt-level discount; null if not written
-  "tax": { [rate: number]: number } | null, // Tax amount per rate; null if not written
-  "payment": string            // Payment method (e.g., cash, credit, QUICPay)
+  "total": number,
+  "discount": number | null,           // overall discount if shown
+  "tax": { [rate: number]: number } | null, // tax breakdown per rate or null
+  "payment": string
 }
 
-- The "date" field must strictly follow the UTC ISO 8601 format: "YYYY-MM-DDTHH:mm:ssZ".
-  - Example: "2023-10-25T16:39:27Z"
-  - DO NOT use a space separator; always use "T" between date and time.
-  - The "Z" must be present and placed right after the seconds.
-  - Although "Z" denotes UTC, you must treat the value as **local time in Japan (JST)** as written on the receipt.
-  - Do NOT convert the time to UTC — just use the local time with "Z" for format compliance.
-  - If time is missing, output "T00:00:00Z" as default.
+- Do not infer quantity or price if not written — use null
+- taxRate must be a number (e.g. 8, 10). Infer if not written, but never use null
+- taxRateSource indicates whether the rate was written or inferred
+- Use one of the following categories:
 
-- Set "quantity" to null if it's not explicitly mentioned. DO NOT assume it as 1.
-- Set "price" to null even if subtotal and quantity are both present. DO NOT calculate it.
-- For "discount", include the amount only if explicitly written, otherwise null.
-- "taxRate" must be an integer (e.g., 8, 10, or 12) — null is NOT allowed.
-- "taxRateSource" must always be either "explicit" (clearly written) or "inferred" (inferred from context).
-- "tax" must be a mapping of tax rate (as integer) to tax amount; null if not written.
-- "category" must be one of the following options (id: label in Japanese):
 ${messageCategoryPrompt}
 
-- Output must be a single, valid JSON object **only**, with no extra text, commentary, or formatting.
+- Return a **single valid JSON object only**. No explanation or comments.
 `;
