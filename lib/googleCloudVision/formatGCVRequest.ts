@@ -1,15 +1,11 @@
 import { z } from "zod";
 import { GCVFeatureType } from ".";
+import { type GCVRequest, GCVRequestSchema } from "./schema";
 
-// export const GCVRequestSchema = z.object({
-// 	image: z.union([
-// 		z.object({ content: z.string() }),
-// 		z.object({ source: z.object({ imageUri: z.string().url() }) }),
-// 	]),
-// 	features: z.array(z.object({ type: z.number() })),
-// });
+export function isGCVRequest(data: unknown): boolean {
+	return GCVRequestSchema.safeParse(data).success;
+}
 
-// export const isGCVRequest = (
-// 	data: unknown,
-// ): data is z.infer<typeof GCVRequestSchema> =>
-// 	GCVRequestSchema.safeParse(data).success;
+export function isGCVRequestType(data: unknown): data is GCVRequest {
+	return GCVRequestSchema.safeParse(data).success;
+}

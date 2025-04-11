@@ -3,21 +3,14 @@
 import {
 	type Base64Image,
 	Base64ImageSchema,
-	type PureBase64Image,
 	ToPureBase64ImageSchema,
 	type Url,
 	UrlSchema,
-	convertToBase64,
-	isPureBase64ImageBrand,
-	isUrl,
-	isUrlType,
-	toPureBase64Image,
 } from "@/utils/base64";
 import { enumKeys } from "@/utils/generics/enumKeys";
-import type { protos } from "@google-cloud/vision";
 import { z } from "zod";
 
-// FeatureType
+// [FeatureType]
 export enum GCVFeatureType {
 	TYPE_UNSPECIFIED = 0,
 	FACE_DETECTION = 1,
@@ -40,7 +33,7 @@ export const GCVFeatureSchema = z.object({
 		.transform((key) => GCVFeatureType[key]),
 });
 
-// Request
+// [Request]
 export const ImageInputSchema = z.union([Base64ImageSchema, UrlSchema]);
 
 export const ToImageInputSchema = z.union([ToPureBase64ImageSchema, UrlSchema]);
@@ -55,6 +48,8 @@ export const GCVRequestSchema = z.object({
 			.min(1, { message: "At least one feature is required" }),
 	}),
 });
+
+export type GCVRequest = z.infer<typeof GCVRequestSchema>;
 
 export type GCVBase64RequestBody = {
 	image: {
@@ -78,15 +73,75 @@ export type GCVUrlRequestBody = {
 
 export type GCVRequestBody = GCVBase64RequestBody | GCVUrlRequestBody;
 
-// Response
-export type GCVResponse = {
-	message: string;
-	result: protos.google.cloud.vision.v1.IAnnotateImageResponse;
-};
+// [Response]
+// 頂点（座標）
+export const VertexSchema = z.object({
+	x: z.number().optional(),
+	y: z.number().optional(),
+});
+export type GCVVertex = z.infer<typeof VertexSchema>;
 
-export type GCVCustomResult =
-	| { success: true; result: GCVResponse }
-	| { success: false; error: string };
+// boundingBox
+export const BoundingBoxSchema = z.object({
+	vertices: z.array(VertexSchema).length(4), // 四角形を想定
+});
+export type GCVBoundingBox = z.infer<typeof BoundingBoxSchema>;
+
+// symbol（1文字）
+export const SymbolSchema = z.object({
+	text: z.string(),
+	boundingBox: BoundingBoxSchema.optional(),
+});
+export type GCVSymbol = z.infer<typeof SymbolSchema>;
+
+// word（単語）
+export const WordSchema = z.object({
+	symbols: z.array(SymbolSchema),
+	confidence: z.number().optional(),
+	boundingBox: BoundingBoxSchema.optional(),
+});
+export type GCVWord = z.infer<typeof WordSchema>;
+
+// paragraph
+export const ParagraphSchema = z.object({
+	words: z.array(WordSchema),
+	boundingBox: BoundingBoxSchema.optional(),
+});
+export type GCVParagraph = z.infer<typeof ParagraphSchema>;
+
+// block
+export const BlockSchema = z.object({
+	paragraphs: z.array(ParagraphSchema),
+	boundingBox: BoundingBoxSchema.optional(),
+});
+export type GCVBlock = z.infer<typeof BlockSchema>;
+
+// page
+export const PageSchema = z.object({
+	width: z.number(),
+	height: z.number(),
+	blocks: z.array(BlockSchema),
+});
+export type GCVPage = z.infer<typeof PageSchema>;
+
+// fullTextAnnotation
+export const FullTextAnnotationSchema = z.object({
+	text: z.string(),
+	pages: z.array(PageSchema),
+});
+export type GCVFullTextAnnotation = z.infer<typeof FullTextAnnotationSchema>;
+
+// responses[i]
+export const GCVSingleResponseSchema = z.object({
+	fullTextAnnotation: FullTextAnnotationSchema.optional(),
+});
+export type GCVSingleResponse = z.infer<typeof GCVSingleResponseSchema>;
+
+// 最終レスポンス（GCVResponse）
+const GCVResponseSchema = z.object({
+	responses: z.array(GCVSingleResponseSchema),
+});
+type GCVResponse = z.infer<typeof GCVResponseSchema>; // !TODO: 名前の衝突
 
 export type WordInfo = {
 	text: string;
