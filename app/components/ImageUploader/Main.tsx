@@ -12,10 +12,22 @@ import { convertToBase64 } from "@/utils/base64";
 import { useState } from "react";
 import { tryParseAndFetchGCVFromClient } from "./action";
 
+const fetchOpenAI = async (text: string) => {
+	const res = await fetch("/api/openai", {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+		},
+		body: JSON.stringify({ text }),
+	});
+	return res.json();
+};
+
 export default function ImageUploader() {
 	const [base64, setBase64] = useState<string>("");
 	const [error, setError] = useState<string>("");
 	const [plainText, setPlainText] = useState<string>("");
+	const [json, setJson] = useState<any>(null);
 
 	const handleError = (error: unknown) => {
 		const message = error instanceof Error ? error.message : String(error);
@@ -51,6 +63,16 @@ export default function ImageUploader() {
 			);
 			setPlainText(lines.join("\n"));
 			// console.log("OCR結果:", lines.join("\n"));
+		} catch (error) {
+			handleError(`通信エラーが発生しました。${String(error)}`);
+		}
+	};
+
+	const handleAI = async (text: string) => {
+		try {
+			const aiResult = await fetchOpenAI(text);
+			console.log("AIでの構造化結果:", aiResult);
+			setJson(aiResult);
 		} catch (error) {
 			handleError(`通信エラーが発生しました。${String(error)}`);
 		}
@@ -92,7 +114,14 @@ export default function ImageUploader() {
 					onClick={() => handleOCR(base64)}
 					className="cursor-pointer border border-gray-300 rounded-md px-4 py-2 inline-block bg-white hover:bg-gray-100 text-sm font-medium text-gray-700"
 				>
-					OCR送信
+					📝OCR送信
+				</button>
+				<button
+					type="submit"
+					onClick={() => handleAI(plainText)}
+					className="cursor-pointer border border-gray-300 rounded-md px-4 py-2 inline-block bg-white hover:bg-gray-100 text-sm font-medium text-gray-700"
+				>
+					📊AI送信
 				</button>
 			</div>
 			{base64 && (
@@ -123,6 +152,16 @@ export default function ImageUploader() {
 				</div>
 			)}
 			{error && <p className="text-red-700">{error}</p>}
+			{json && (
+				<table>
+					<tr>
+						<th>商品名</th>
+					</tr>
+					<tr>
+						<th>価格</th>
+					</tr>
+				</table>
+			)}
 		</div>
 	);
 }

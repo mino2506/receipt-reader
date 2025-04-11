@@ -140,7 +140,7 @@ export const POST = async (
 				},
 			],
 			temperature: 0.1, // 低い値で決定的な応答に
-			max_tokens: 1500,
+			max_tokens: 5000,
 			top_p: 1,
 			frequency_penalty: 0,
 			presence_penalty: 0,
