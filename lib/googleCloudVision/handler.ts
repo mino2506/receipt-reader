@@ -1,5 +1,6 @@
 // lib/googleCloudVision/handler.ts
 
+import type { ApiResponseFromType } from "@/lib/api/common.schema";
 import {
 	type Base64Image,
 	type Url,
@@ -7,13 +8,13 @@ import {
 	isUrl,
 } from "@/utils/base64";
 import { API_ENDPOINTS, DEFAULT_GCV_FEATURES } from "./constants";
-import { isGCVResponse, parseGCVResponse } from "./formatGCVResponse";
 import {
-	type GCVCustomResult,
 	type GCVRequestBody,
 	ImageInputSchema,
 	ToImageInputSchema,
 } from "./schema";
+import { type GCVSingleResponse, GCVSingleResponseSchema } from "./schema";
+import type { GCVCustomResult } from "./types.server";
 
 export function validateImageInput(input: unknown): Base64Image | Url {
 	const parsed = ImageInputSchema.safeParse(input);
@@ -60,9 +61,11 @@ export function createGCVRequest(input: Base64Image | Url): GCVRequestBody {
 
 export async function fetchGCVResult(
 	input: GCVRequestBody,
-): Promise<GCVCustomResult> {
+): Promise<ApiResponseFromType<GCVSingleResponse>> {
+	const url = `${process.env.NEXT_PUBLIC_SITE_ORIGIN}${API_ENDPOINTS.OCR}`;
+	console.log("fetchGCVResult from", url);
 	try {
-		const res = await fetch(API_ENDPOINTS.OCR, {
+		const res = await fetch(url, {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
@@ -73,27 +76,40 @@ export async function fetchGCVResult(
 		if (!res.ok) {
 			return {
 				success: false,
-				error: `GCV API returned non-200 status: ${res.status} ${res.statusText}`,
+				error: {
+					code: "gcv_response_failed",
+					message: `GCV API returned non-200 status: ${res.status} ${res.statusText}`,
+				},
 			};
 		}
 
 		const json = await res.json();
 
-		if (!isGCVResponse(json)) {
+		// ✅ GCVレスポンスの構造チェック（Zodでvalidate）
+		const parsed = GCVSingleResponseSchema.safeParse(json);
+		if (!parsed.success) {
 			return {
 				success: false,
-				error: "GCV response is not in the expected format.",
+				error: {
+					code: "invalid_gcv_response",
+					message: "GCV response is not in the expected format",
+					hint: parsed.error.message,
+				},
 			};
 		}
 
 		return {
 			success: true,
-			result: parseGCVResponse(json),
+			data: parsed.data,
 		};
 	} catch (error) {
 		return {
 			success: false,
-			error: error instanceof Error ? error.message : String(error),
+			error: {
+				code: "gcv_fetch_error",
+				message: "GCV API 呼び出し中にエラーが発生しました",
+				hint: error instanceof Error ? error.message : String(error),
+			},
 		};
 	}
 }
@@ -106,13 +122,20 @@ export async function fetchGCVResult(
  */
 export async function tryParseAndFetchGCV(
 	input: unknown,
-): Promise<GCVCustomResult> {
+): Promise<ApiResponseFromType<GCVSingleResponse>> {
 	try {
 		const validated = validateImageInput(input);
 		const request = createGCVRequest(validated);
 		return await fetchGCVResult(request);
 	} catch (error) {
 		const message = error instanceof Error ? error.message : "Unknown error";
-		return { success: false, error: message };
+		return {
+			success: false,
+			error: {
+				code: "invalid_input",
+				message: "入力された画像の検証に失敗しました",
+				hint: error instanceof Error ? error.message : String(error),
+			},
+		};
 	}
 }

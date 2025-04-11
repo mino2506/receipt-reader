@@ -2,10 +2,12 @@
 
 "use client";
 
+import type { ApiResponseFromType } from "@/lib/api/common.schema";
 import {
 	extractPagesFromGCV,
 	groupWordsIntoLinesByRatio,
 } from "@/lib/googleCloudVision/formatGCVResponse";
+import type { GCVSingleResponse } from "@/lib/googleCloudVision/schema";
 import { convertToBase64 } from "@/utils/base64";
 import { useState } from "react";
 import { tryParseAndFetchGCVFromClient } from "./action";
@@ -32,15 +34,16 @@ export default function ImageUploader() {
 
 		try {
 			console.log("OCRを開始します");
-			const fetched = await tryParseAndFetchGCVFromClient(base64);
+			const fetched: ApiResponseFromType<GCVSingleResponse> =
+				await tryParseAndFetchGCVFromClient(base64);
 			console.log("OCRが完了しました");
 
 			if (!fetched.success) {
-				handleError(fetched.error);
+				handleError(fetched.error.message);
 				return;
 			}
 
-			const pages = extractPagesFromGCV(fetched.result);
+			const pages = extractPagesFromGCV(fetched.data);
 			const lines = pages.flatMap((page) =>
 				groupWordsIntoLinesByRatio(page.words, page.size.height),
 			);
@@ -57,7 +60,7 @@ export default function ImageUploader() {
 
 		setError("");
 		try {
-			// const base64 = await convertToBase64(file);
+			const base64 = await convertToBase64(file);
 			setBase64(base64);
 		} catch (error) {
 			console.error("Base64変換失敗:", error);
@@ -105,8 +108,15 @@ export default function ImageUploader() {
 			)}
 			{plainText && (
 				<div>
-					{plainText.split("\n").map((line) => (
-						<div key={line}>{line}</div>
+					{plainText.split("\n").map((line, index) => (
+						<div
+							key={`line-${
+								// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+								index
+							}`}
+						>
+							{line}
+						</div>
 					))}
 				</div>
 			)}

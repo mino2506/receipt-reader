@@ -1,15 +1,23 @@
 // app/api/ocr/route.ts
 
 import {
+	type ApiError,
+	ApiErrorSchema,
+	type ApiResponseFromType,
+	createApiResponseSchema,
+} from "@/lib/api/common.schema";
+import {
 	GCVFeatureSchema,
 	GCVFeatureType,
 	GCVRequestSchema,
+	type GCVSingleResponse,
+	GCVSingleResponseSchema,
 	googleCloudVisionClient,
 } from "@/lib/googleCloudVision";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { isBase64, toPureBase64 } from "@/utils/base64";
+import type { protos } from "@google-cloud/vision";
 import { NextResponse } from "next/server";
-import type { z } from "zod";
 
 const reqMock = {
 	body: {
@@ -25,35 +33,16 @@ const reqMock = {
 		],
 	},
 };
-const safeParsedGCVRequest = GCVRequestSchema.safeParse(reqMock.body);
-type GCVRequest = z.infer<typeof GCVRequestSchema>;
 
-export function hasValidGCVRequestBody(body: unknown): body is GCVRequest {
-	if (
-		typeof body !== "object" ||
-		body === null ||
-		!("image" in body) ||
-		!("features" in body)
-	) {
-		console.warn("[GCV] Missing image or features in request", body);
-		return false;
-	}
-
-	const features = (body as any).features;
-	if (!Array.isArray(features) || features.length === 0) {
-		console.warn("[GCV] Features must be a non-empty array", features);
-		return false;
-	}
-
-	return true;
-}
+type OcrApiResponse = ApiResponseFromType<GCVSingleResponse>;
 
 export const POST = async (req: Request, res: NextResponse) => {
 	console.log("\n\n~~~📨📮   POOOOOOOOOST!!!🚀🚀🚀🆕🆕🆕\n");
+	console.log("📨 GCV OCR API called");
 
+	// 🔐 認証チェック
 	const supabase = await createServerClient();
 	if (process.env.NODE_ENV === "development") {
-		// 🔐 認証チェック
 		console.log("🔐 開発環境です。認証をスキップしました。");
 	} else {
 		const {
@@ -62,69 +51,85 @@ export const POST = async (req: Request, res: NextResponse) => {
 		} = await supabase.auth.getUser();
 
 		if (error) {
-			return NextResponse.json(
-				{ message: "failed in fetch user from supabase", error },
+			return NextResponse.json<OcrApiResponse>(
+				{
+					success: false,
+					error: {
+						code: "auth_user_fetch_failed",
+						message: "認証ユーザー情報の取得に失敗しました",
+						field: "auth",
+					},
+				},
 				{ status: 500 },
 			);
 		}
-		if (!user) {
-			return NextResponse.json(
-				{ message: "user is not found" },
-				{ status: 400 },
-			);
-		}
+		return NextResponse.json<OcrApiResponse>(
+			{
+				success: false,
+				error: {
+					code: "unauthorized",
+					message: "ユーザーが認証されていません",
+					field: "auth",
+				},
+			},
+			{ status: 401 },
+		);
 	}
 
 	const reqBody = await req.json();
+	const requestToGCV = reqBody.request;
 
-	const { imageUrl } = reqBody;
-	if (typeof imageUrl === "undefined") {
-		return NextResponse.json(
-			{ message: "imageUrl is required in request body" },
-			{ status: 400 },
-		);
-	}
-
-	let requestToGCV;
-	if (isBase64(imageUrl)) {
-		const cleanedBase64 = toPureBase64(imageUrl);
-		console.log("[log]request type: ", "Base64");
-		console.log("stripBase64Prefix: ", toPureBase64(imageUrl).slice(0, 100));
-		requestToGCV = {
-			image: { content: cleanedBase64 },
-		};
-	} else if (imageUrl.startsWith("http")) {
-		console.log("request type: ", "Url");
-
-		requestToGCV = {
-			image: { source: { imageUri: imageUrl } },
-		};
-	} else {
-		console.warn("⚠️ imageUrl がURLでもBase64でもありません");
-		return NextResponse.json(
-			{ message: "Invalid image format" },
-			{ status: 400 },
-		);
-	}
-
-	const resquestTest = {
-		requests: [requestToGCV],
-		features: [{ type: 11 }, { type: 3 }],
-	};
+	console.log("Try OCR by Google Cloud Vision");
 	try {
-		// const [result] =
-		// 	await googleCloudVisionClient.documentTextDetection(requestToGCV);
-		const [result] = await googleCloudVisionClient.annotateImage(resquestTest);
-		const fullTextAnnotation = result.fullTextAnnotation;
-		const rawText = result.fullTextAnnotation?.text;
+		console.log("Starting OCR by Google Cloud Vision");
 
-		console.dir(result, { depth: null });
-		console.log("fullTextAnnotation: ", fullTextAnnotation);
-		console.log("rawText: ", rawText);
-		// return fullTextAnnotation?.text;
+		const [rawResponse] =
+			await googleCloudVisionClient.annotateImage(requestToGCV);
 
-		return NextResponse.json({ message: "Success", result }, { status: 200 });
+		// ✅ GCVレスポンスの構造チェック（Zodでvalidate）
+		const parsed = GCVSingleResponseSchema.safeParse(rawResponse);
+		if (!parsed.success) {
+			console.warn("GCV レスポンスの構造が不正:", parsed.error.flatten());
+
+			return NextResponse.json<OcrApiResponse>(
+				{
+					success: false,
+					error: {
+						code: "invalid_gcv_response",
+						message: "GCV のレスポンス形式が不正です",
+						hint: parsed.error.message,
+						field: "gcv",
+					},
+				},
+				{ status: 422 },
+			);
+		}
+
+		console.log("rawText: \n", parsed.data.fullTextAnnotation?.text);
+
+		// ✅ 正常レスポンス
+		return NextResponse.json<OcrApiResponse>(
+			{
+				success: true,
+				data: parsed.data,
+				message: "OCR に成功しました",
+			},
+			{ status: 200 },
+		);
 	} catch (error) {
-		return NextResponse.json({ message: "Error", error }, { status: 500 });
+		const message = error instanceof Error ? error.message : String(error);
+
+		return NextResponse.json<OcrApiResponse>(
+			{
+				success: false,
+				error: {
+					code: "gcv_execution_failed",
+					message: "Google Cloud Vision API の呼び出しに失敗しました",
+					hint: message,
+					field: "gcv",
+				},
+			},
+			{ status: 500 },
+		);
 	}
 };
