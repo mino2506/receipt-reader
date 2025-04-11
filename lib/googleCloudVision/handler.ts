@@ -85,8 +85,20 @@ export async function fetchGCVResult(
 
 		const json = await res.json();
 
+		// ✅ 成功か確認
+		if (!json.success || !json.data) {
+			return {
+				success: false,
+				error: {
+					code: "gcv_api_failure",
+					message: "GCV API が失敗レスポンスを返しました",
+					hint: json.error?.message ?? "Unknown error",
+				},
+			};
+		}
+
 		// ✅ GCVレスポンスの構造チェック（Zodでvalidate）
-		const parsed = GCVSingleResponseSchema.safeParse(json);
+		const parsed = GCVSingleResponseSchema.safeParse(json.data);
 		if (!parsed.success) {
 			return {
 				success: false,
@@ -94,6 +106,17 @@ export async function fetchGCVResult(
 					code: "invalid_gcv_response",
 					message: "GCV response is not in the expected format",
 					hint: parsed.error.message,
+				},
+			};
+		}
+		// ✅ fullTextAnnotation の存在確認
+		if (!parsed.data.fullTextAnnotation) {
+			return {
+				success: false,
+				error: {
+					code: "empty_gcv_result",
+					message: "fullTextAnnotation が GCV レスポンスに存在しません",
+					field: "fullTextAnnotation",
 				},
 			};
 		}

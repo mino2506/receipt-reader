@@ -37,6 +37,7 @@ export default function ImageUploader() {
 			const fetched: ApiResponseFromType<GCVSingleResponse> =
 				await tryParseAndFetchGCVFromClient(base64);
 			console.log("OCRが完了しました");
+			console.log("OCR結果:", fetched);
 
 			if (!fetched.success) {
 				handleError(fetched.error.message);
@@ -44,11 +45,12 @@ export default function ImageUploader() {
 			}
 
 			const pages = extractPagesFromGCV(fetched.data);
+			console.log("ページ数:", pages.length);
 			const lines = pages.flatMap((page) =>
 				groupWordsIntoLinesByRatio(page.words, page.size.height),
 			);
 			setPlainText(lines.join("\n"));
-			console.log("OCR結果:", lines.join("\n"));
+			// console.log("OCR結果:", lines.join("\n"));
 		} catch (error) {
 			handleError(`通信エラーが発生しました。${String(error)}`);
 		}

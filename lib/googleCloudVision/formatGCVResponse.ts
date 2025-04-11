@@ -1,66 +1,32 @@
 import response from "@/gcvRawData.json";
-import type { GCVResponse, PageInfo, WordInfo } from ".";
+import {
+	type GCVSingleResponse,
+	GCVSingleResponseSchema,
+	type PageInfo,
+	type WordInfo,
+} from "@/lib/googleCloudVision/schema";
+import { ZodError } from "zod";
 
 /**
- * データが GCVResponse 型かどうかを判定する関数
+ * unknown 型データを安全に GCVSingleResponse に変換する
  *
- * @param data - チェック対象の unknown 型データ
- * @returns boolean
- */
-export function isGCVResponse(data: unknown): boolean {
-	if (
-		typeof data === "object" &&
-		data !== null &&
-		"message" in data &&
-		typeof data.message === "string" &&
-		"result" in data &&
-		typeof data.result === "object" &&
-		data.result !== null &&
-		"fullTextAnnotation" in data.result
-	) {
-		return true;
-	}
-	return false;
-}
-
-/**
- * データが GCVResponse 型かどうかを判定する Type Guard 関数
- *
- * @param data - チェック対象の unknown 型データ
- * @returns boolean
- */
-export function isGCVResponseType(data: unknown): data is GCVResponse {
-	if (
-		typeof data === "object" &&
-		data !== null &&
-		"message" in data &&
-		typeof data.message === "string" &&
-		"result" in data &&
-		typeof data.result === "object" &&
-		data.result !== null &&
-		"fullTextAnnotation" in data.result
-	) {
-		return true;
-	}
-	return false;
-}
-/**
- * unknown 型データを安全に GCVResponse に変換する
- *
- * @param data - 任意のデータ（JSONやfetch結果など）
- * @returns GCVResponse 型のデータ 適合しない場合は null を返す
+ * @param data - GCVの **単一** レスポンス相当のデータ（JSONやfetchのdata部分）
+ * @returns GCVSingleResponse 型のデータ。Zodスキーマに適合しない場合はエラーをスロー
  *
  * @example
- * const parsed = parseGCVResponse(json);
- * if (parsed) {
- *   console.log(parsed.result.fullTextAnnotation?.text);
- * }
+ * const parsed = parseGCVResponse(response.data);
+ * console.log(parsed.fullTextAnnotation?.text);
  */
-export function parseGCVResponse(data: unknown): GCVResponse {
-	if (isGCVResponseType(data)) {
-		return data;
+export function parseGCVResponse(data: unknown): GCVSingleResponse {
+	const parsed = GCVSingleResponseSchema.safeParse(data);
+	if (!parsed.success) {
+		console.error("🛑 GCV response schema mismatch:", parsed.error.format());
+		throw new ZodError(parsed.error.issues);
 	}
-	throw new Error("Invalid GCVResponse format");
+	if (!parsed.data.fullTextAnnotation) {
+		throw new Error("GCV data is missing fullTextAnnotation");
+	}
+	return parsed.data;
 }
 
 /**
@@ -76,10 +42,12 @@ export function parseGCVResponse(data: unknown): GCVResponse {
  *   console.log(pages[0].words);
  * }
  */
-export function extractPagesFromGCV(response: GCVResponse): PageInfo[] {
+export function extractPagesFromGCV(response: GCVSingleResponse): PageInfo[] {
 	const result: PageInfo[] = [];
 
-	const pages = response.result.fullTextAnnotation?.pages ?? [];
+	console.log("response", response);
+	const pages = response.fullTextAnnotation?.pages ?? [];
+	console.log("pages", pages);
 
 	for (const [pageIndex, page] of pages.entries()) {
 		const width = page.width ?? 500;
@@ -181,8 +149,12 @@ export function groupWordsIntoLinesByRatio(
 // const parsedErrorGCVResponse = parseGCVResponse(errorResponse) as GCVResponse;
 // const errorPages = extractPagesFromGCV(parsedErrorGCVResponse);
 // console.log(errorPages);
-const parsedGCVResponse = parseGCVResponse(response);
+// import { inspect } from "node:util";
+// console.log(inspect(response, { depth: null, colors: true }));
+const parsedGCVResponse = parseGCVResponse(response.data);
+// console.log(parsedGCVResponse);
 const pages = extractPagesFromGCV(parsedGCVResponse);
+console.log("pages", pages);
 for (const page of pages) {
 	console.log(page.size);
 	const words = page.words;
@@ -190,4 +162,5 @@ for (const page of pages) {
 
 	console.log(lines);
 	console.log(JSON.stringify(lines).length);
+	console.log(lines.join("\n"));
 }
