@@ -1,35 +1,13 @@
 import response from "@/gcvRawData.json";
-import type { protos } from "@google-cloud/vision";
-
-export type GCVResponse = {
-	message: string;
-	result: protos.google.cloud.vision.v1.IAnnotateImageResponse;
-};
-
-export type WordInfo = {
-	text: string;
-	boundingBox: {
-		vertices: { x: number; y: number }[];
-	};
-	confidence: number;
-};
-
-export type PageInfo = {
-	pageIndex: number;
-	size: {
-		width: number;
-		height: number;
-	};
-	words: WordInfo[];
-};
+import type { GCVResponse, PageInfo, WordInfo } from ".";
 
 /**
- * データが GCVResponse 型かどうかを判定する Type Guard 関数
+ * データが GCVResponse 型かどうかを判定する関数
  *
  * @param data - チェック対象の unknown 型データ
- * @returns boolean 型判定結果 GCVResponse 構造であれば true を返す
+ * @returns boolean
  */
-export function isGCVResponse(data: unknown): data is GCVResponse {
+export function isGCVResponse(data: unknown): boolean {
 	if (
 		typeof data === "object" &&
 		data !== null &&
@@ -46,6 +24,27 @@ export function isGCVResponse(data: unknown): data is GCVResponse {
 }
 
 /**
+ * データが GCVResponse 型かどうかを判定する Type Guard 関数
+ *
+ * @param data - チェック対象の unknown 型データ
+ * @returns boolean
+ */
+export function isGCVResponseType(data: unknown): data is GCVResponse {
+	if (
+		typeof data === "object" &&
+		data !== null &&
+		"message" in data &&
+		typeof data.message === "string" &&
+		"result" in data &&
+		typeof data.result === "object" &&
+		data.result !== null &&
+		"fullTextAnnotation" in data.result
+	) {
+		return true;
+	}
+	return false;
+}
+/**
  * unknown 型データを安全に GCVResponse に変換する
  *
  * @param data - 任意のデータ（JSONやfetch結果など）
@@ -57,11 +56,11 @@ export function isGCVResponse(data: unknown): data is GCVResponse {
  *   console.log(parsed.result.fullTextAnnotation?.text);
  * }
  */
-export function parseGCVResponse(data: unknown): GCVResponse | null {
-	if (isGCVResponse(data)) {
+export function parseGCVResponse(data: unknown): GCVResponse {
+	if (isGCVResponseType(data)) {
 		return data;
 	}
-	return null;
+	throw new Error("Invalid GCVResponse format");
 }
 
 /**
@@ -182,7 +181,7 @@ export function groupWordsIntoLinesByRatio(
 // const parsedErrorGCVResponse = parseGCVResponse(errorResponse) as GCVResponse;
 // const errorPages = extractPagesFromGCV(parsedErrorGCVResponse);
 // console.log(errorPages);
-const parsedGCVResponse = parseGCVResponse(response) as GCVResponse;
+const parsedGCVResponse = parseGCVResponse(response);
 const pages = extractPagesFromGCV(parsedGCVResponse);
 for (const page of pages) {
 	console.log(page.size);
