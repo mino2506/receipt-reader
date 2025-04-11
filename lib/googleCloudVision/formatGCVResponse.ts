@@ -161,6 +161,8 @@ for (const page of pages) {
 	const lines: string[] = groupWordsIntoLinesByRatio(words, page.size.height);
 
 	console.log(lines);
+	console.log(JSON.stringify(lines.join("\n")));
+
 	console.log(JSON.stringify(lines).length);
 	console.log(lines.join("\n"));
 }
