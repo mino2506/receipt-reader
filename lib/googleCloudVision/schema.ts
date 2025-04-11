@@ -1,7 +1,23 @@
-import { Base64ImageSchema } from "@/utils/base64";
+// lib/googleCloudVision/schema.ts
+
+import {
+	type Base64Image,
+	Base64ImageSchema,
+	type PureBase64Image,
+	ToPureBase64ImageSchema,
+	type Url,
+	UrlSchema,
+	convertToBase64,
+	isPureBase64ImageBrand,
+	isUrl,
+	isUrlType,
+	toPureBase64Image,
+} from "@/utils/base64";
 import { enumKeys } from "@/utils/generics/enumKeys";
+import type { protos } from "@google-cloud/vision";
 import { z } from "zod";
 
+// FeatureType
 export enum GCVFeatureType {
 	TYPE_UNSPECIFIED = 0,
 	FACE_DETECTION = 1,
@@ -24,6 +40,11 @@ export const GCVFeatureSchema = z.object({
 		.transform((key) => GCVFeatureType[key]),
 });
 
+// Request
+export const ImageInputSchema = z.union([Base64ImageSchema, UrlSchema]);
+
+export const ToImageInputSchema = z.union([ToPureBase64ImageSchema, UrlSchema]);
+
 export const GCVRequestSchema = z.object({
 	request: z.object({
 		image: z.object({
@@ -34,3 +55,52 @@ export const GCVRequestSchema = z.object({
 			.min(1, { message: "At least one feature is required" }),
 	}),
 });
+
+export type GCVBase64RequestBody = {
+	image: {
+		content: Base64Image;
+	};
+	features: {
+		type: GCVFeatureType;
+	}[];
+};
+
+export type GCVUrlRequestBody = {
+	image: {
+		source: {
+			imageUri: Url;
+		};
+	};
+	features: {
+		type: GCVFeatureType;
+	}[];
+};
+
+export type GCVRequestBody = GCVBase64RequestBody | GCVUrlRequestBody;
+
+// Response
+export type GCVResponse = {
+	message: string;
+	result: protos.google.cloud.vision.v1.IAnnotateImageResponse;
+};
+
+export type GCVCustomResult =
+	| { success: true; result: GCVResponse }
+	| { success: false; error: string };
+
+export type WordInfo = {
+	text: string;
+	boundingBox: {
+		vertices: { x: number; y: number }[];
+	};
+	confidence: number;
+};
+
+export type PageInfo = {
+	pageIndex: number;
+	size: {
+		width: number;
+		height: number;
+	};
+	words: WordInfo[];
+};

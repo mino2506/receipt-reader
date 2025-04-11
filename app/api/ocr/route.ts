@@ -6,7 +6,6 @@ import {
 	GCVRequestSchema,
 	googleCloudVisionClient,
 } from "@/lib/googleCloudVision";
-import {} from "@/lib/googleCloudVision";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { isBase64, toPureBase64 } from "@/utils/base64";
 import { NextResponse } from "next/server";
