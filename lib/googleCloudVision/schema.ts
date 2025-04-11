@@ -90,6 +90,7 @@ export type GCVBoundingBox = z.infer<typeof BoundingBoxSchema>;
 // symbol（1文字）
 export const SymbolSchema = z.object({
 	text: z.string(),
+	confidence: z.number().optional(),
 	boundingBox: BoundingBoxSchema.optional(),
 });
 export type GCVSymbol = z.infer<typeof SymbolSchema>;

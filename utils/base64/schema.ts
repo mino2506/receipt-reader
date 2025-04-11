@@ -5,7 +5,7 @@ import {
 	base64PrefixRegex,
 	base64Regex,
 	pureBase64Regex,
-} from ".";
+} from "./formatBase64";
 
 export type Base64 = string & { __kind: ["base64"] };
 export type PureBase64 = Base64 & { __kind: [...Base64["__kind"], "pure"] };

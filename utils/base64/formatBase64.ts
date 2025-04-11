@@ -5,7 +5,7 @@ import {
 	type PureBase64Image,
 	type Url,
 	UrlSchema,
-} from ".";
+} from "./schema";
 
 export const base64Regex = /^data:image\/[a-zA-Z]+;base64,[A-Za-z0-9+/=]+$/;
 export const base64PrefixRegex = /^data:image\/[a-zA-Z]+;base64,/;
