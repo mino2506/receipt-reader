@@ -8,7 +8,8 @@ import {
 } from "./schema";
 
 export const base64Regex = /^data:image\/[a-zA-Z]+;base64,[A-Za-z0-9+/=]+$/;
-export const base64PrefixRegex = /^data:image\/[a-zA-Z]+;base64,/;
+export const base64PrefixRegex =
+	/^data:[a-zA-Z0-9.+-]+\/[a-zA-Z0-9.+-]+;base64,/;
 export const base64ImageRegex =
 	/^data:image\/(png|jpeg|jpg|gif|webp);base64,[A-Za-z0-9+/=]+$/;
 export const base64ImagePrefixRegex =
