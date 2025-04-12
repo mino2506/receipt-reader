@@ -7,10 +7,18 @@ import {
 	pureBase64Regex,
 } from "./formatBase64";
 
+export type Base64Brand = { __kind: ["base64"] };
+export type PureBase64Brand = { __kind: ["base64", "pure"] };
+export type Base64ImageBrand = { __kind: ["base64", "image"] };
+export type PureBase64ImageBrand = { __kind: ["base64", "image", "pure"] };
+
 export type Base64 = string & { __kind: ["base64"] };
 export type PureBase64 = Base64 & { __kind: [...Base64["__kind"], "pure"] };
 export type Base64Image = Base64 & { __kind: [...Base64["__kind"], "image"] };
-export type PureBase64Image = PureBase64 & PureBase64;
+// export type PureBase64Image = PureBase64 & PureBase64;
+export type PureBase64Image = Base64 & {
+	__kind: [...Base64["__kind"], "pure", "image"];
+};
 
 export const Base64Schema = z
 	.string()
