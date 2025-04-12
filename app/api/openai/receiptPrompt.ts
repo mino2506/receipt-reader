@@ -31,76 +31,76 @@ export const messageSuffixPromptJA = `
 この情報をもとに、レシートの内容を以下の形式で JSON に構造化してください：
 
 {
-  "store": string,             // 店舗名
-  "date": YYYY-MM-DDTHH:mm:ssZ,              // 日付（例: 2023-10-25T16:39:27Z 必ず絶対にUTC表記形式）
-  "items": [
-    {
-      "name": string,               // 商品名
-      "quantity": number | null,    // 数量（明記されていなければ null。クライアント側で 1 に補完）
-      "price": number | null,       // 単価（明記されていなければ null。GPTで計算しない）
-      "subtotal": number | null,    // 小計（税込） 明記されていなければ null
-      "discount": number | null,    // 値引き額（明記されていなければ null）
-      "category": string,           // 商品カテゴリ（下記リストから選択）
-      "taxRate": number,            // 税率（整数、例: 8, 10 など）文脈から推論可。nullは禁止
-      "taxRateSource": "explicit" | "inferred" // 税率の出所。明記されていれば "explicit"、なければ "inferred"
-    }
-  ],
-  "total": number,             // 合計（税込）
-  "discount": number | null,   // レシート全体の値引き額（明記されていなければ null）
-  "tax": { [rate: number]: number } | null, // 各税率ごとの税額。明記なければ null
-  "payment": string            // 支払方法（例: 現金, クレジット, QUICPay）
-}
-
-- date は 必ず絶対にUTC表記形式 "YYYY-MM-DDTHH:mm:ssZ" 形式で出力してください。例："2023-10-25T16:39:27Z"
-- 日付はスペースで区切らないで、"T" で区切る！
-- 秒の後に必ずZを付けること
-- この "Z" は UTC を意味しますが、実際の時刻は **レシートに書かれている日本時間（JST）そのまま**で構いません。
-- GPT側でタイムゾーンを考慮して補正する必要はありません。
-- 時刻が書かれていない場合は "T00:00:00Z" を補完してください。
-- quantity は明記されていなければ null としてください。GPTが勝手に 1 と推測しないでください（クライアント側で補完します）
-- price（単価）は subtotal や quantity が揃っていても GPTでは計算せず null にしてください
-- 割引（discount）は商品行またはレシート全体に明記されていれば金額を記載し、なければ null にしてください
-- 税率（taxRate）は null を使用せず、整数（例: 8, 10, 将来は 12 など）で記載してください
-- taxRateSource は "explicit"（レシートに明記あり）または "inferred"（文脈からの推定）で必ず出力してください
-- tax フィールドは各税率ごとの税額合計を記載してください。明記されていなければ tax: null としてください
-- 商品カテゴリ（category）は以下から1つ選んでください（id: 日本語）：
-${messageCategoryPrompt}
-
-- 出力は上記形式に完全に準拠した JSON オブジェクト1つのみで、余計な説明やコメントは含めないでください
-`;
-
-export const messageSuffixPrompt = `
----
-
-Based on the receipt lines above, return a structured JSON in the following format:
-
-{
   "store": string,
-  "date": string, // e.g. "2023-10-25 16:39:27"
+  "date": YYYY-MM-DDTHH:mm:ssZ,
   "items": [
     {
       "name": string,
-      "quantity": number | null,       // null if not shown
-      "price": number | null,          // unit price, null if not shown (do not calculate)
-      "subtotal": number | null,       // total price per item line (tax included)
-      "discount": number | null,       // discount per item if available
-      "category": string,              // one of the categories listed below
-      "taxRate": number,               // integer tax rate (e.g. 8, 10), must not be null
+      "quantity": number | null,
+      "price": number | null,
+      "subtotal": number | null,
+      "discount": number | null,
+      "category": string,
+      "taxRate": number,
       "taxRateSource": "explicit" | "inferred"
     }
   ],
   "total": number,
-  "discount": number | null,           // overall discount if shown
-  "tax": { [rate: number]: number } | null, // tax breakdown per rate or null
+  "discount": number | null,
+  "tax": { "8": number, "10": number, ... } | null,
   "payment": string
 }
 
-- Do not infer quantity or price if not written — use null
-- taxRate must be a number (e.g. 8, 10). Infer if not written, but never use null
-- taxRateSource indicates whether the rate was written or inferred
-- Use one of the following categories:
-
+- "date" は "YYYY-MM-DDTHH:mm:ssZ" の UTC 形式で出力してください（例: 2023-10-25T16:39:27Z）。"Z" は付けてくださいが、値は日本時間のままで構いません。
+- 数量は「2個」「2×99円」などの記載があれば quantity に数値を記載してください。明記されていなければ null にしてください。
+- price（単価）は明記されていない限り null にし、subtotal や quantity から計算しないでください。
+- 割引（discount）は商品ごと・全体いずれも、明記されていなければ null にしてください。
+- category は以下から明確に判断できる場合のみ記載し、不明確な場合は "other" を使用してください。
 ${messageCategoryPrompt}
+- taxRate は必ず整数（例: 8, 10）で、null は禁止です。
+- taxRateSource は taxRate が記載されていれば "explicit"、推測した場合は "inferred" としてください。
+- tax フィールドは税率ごとの合計税額を記載してください（例: { "8": 120, "10": 380 }）。明記されていなければ null。
+- payment が複数ある場合は、最も金額が大きい手段を選んで1つだけ記載してください（例: majica+クレジット → クレジット）。
 
-- Return a **single valid JSON object only**. No explanation or comments.
+出力は **上記形式に厳密に準拠した JSON オブジェクトのみ** にしてください。コメントや補足は一切不要です。
+`;
+
+export const messageSuffixPromptEN = `
+---
+
+Based on the OCR result above, return a structured JSON with the following format:
+
+{
+  "store": string,
+  "date": YYYY-MM-DDTHH:mm:ssZ,
+  "items": [
+    {
+      "name": string,
+      "quantity": number | null,
+      "price": number | null,
+      "subtotal": number | null,
+      "discount": number | null,
+      "category": string,
+      "taxRate": number,
+      "taxRateSource": "explicit" | "inferred"
+    }
+  ],
+  "total": number,
+  "discount": number | null,
+  "tax": { "8": number, "10": number, ... } | null,
+  "payment": string
+}
+
+- "date" must be in UTC format "YYYY-MM-DDTHH:mm:ssZ". Use "Z" literally, but the value should reflect the original **Japanese time** as written on the receipt.
+- If quantity is shown as "2個", "2×99", etc., set quantity to 2. Otherwise, set it to null.
+- price must be null unless explicitly stated. Do not calculate it from subtotal and quantity.
+- discount must be null unless explicitly shown for the item or overall receipt.
+- category must be chosen from the list below only if it is clearly identifiable from the item name. Otherwise, set it to "other".
+${messageCategoryPrompt}
+- taxRate must be a number (e.g., 8, 10), and must not be null.
+- taxRateSource must be "explicit" if written on the receipt, or "inferred" if deduced from context.
+- tax should be a map of tax rates to their total amounts (e.g., { "8": 120, "10": 380 }). If not shown, use null.
+- If multiple payment methods are used, choose only the one with the highest amount.
+
+**Only return a single valid JSON object with no explanations or comments.**
 `;
