@@ -5,7 +5,7 @@
 import type { ApiResponseFromType } from "@/lib/api/common.schema";
 import {
 	extractPagesFromGCV,
-	groupWordsIntoLinesByRatio,
+	groupWordsWithDeskew,
 } from "@/lib/googleCloudVision/formatGCVResponse";
 import type { GCVSingleResponse } from "@/lib/googleCloudVision/schema";
 import type {
@@ -71,7 +71,7 @@ export default function ImageUploader() {
 			const pages = extractPagesFromGCV(fetched.data);
 			console.log("ページ数:", pages.length);
 			const lines = pages.flatMap((page) =>
-				groupWordsIntoLinesByRatio(page.words, page.size.height),
+				groupWordsWithDeskew(page.words, page.size.height),
 			);
 			setPlainText(lines.join("\n"));
 			// console.log("OCR結果:", lines.join("\n"));
@@ -102,6 +102,7 @@ export default function ImageUploader() {
 		setError("");
 		try {
 			const base64 = await convertToBase64(file);
+			console.log(base64);
 			setBase64(base64);
 		} catch (error) {
 			console.error("Base64変換失敗:", error);
@@ -184,6 +185,7 @@ export default function ImageUploader() {
 					<pre>{JSON.stringify(json, null, 2)}</pre>
 				</div>
 			)}
+			{/* {base64 && <div className="text-blue-700">{JSON.stringify(json)}</div>} */}
 		</div>
 	);
 }
