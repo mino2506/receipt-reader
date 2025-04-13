@@ -15,10 +15,25 @@ const GPTModelSchema = z.enum([
 const GPTMessageRoleSchema = z.enum(["system", "user", "assistant", "tool"]);
 
 // [Request]
-const GPTMessageSchema = z.object({
-	role: GPTMessageRoleSchema,
-	content: z.string().nullable(),
-});
+const GPTMessageSchema = z.discriminatedUnion("role", [
+	z.object({
+		role: z.literal("system"),
+		content: z.string(),
+	}),
+	z.object({
+		role: z.literal("user"),
+		content: z.string(),
+	}),
+	z.object({
+		role: z.literal("assistant"),
+		content: z.string().nullable(),
+	}),
+	z.object({
+		role: z.literal("tool"),
+		content: z.string(),
+		tool_call_id: z.string(), // ✅ 必須にする
+	}),
+]);
 
 // Function Calling 用ツールの型（必要に応じて拡張可能）
 const ToolFunctionSchema = z.strictObject({
@@ -26,7 +41,7 @@ const ToolFunctionSchema = z.strictObject({
 	function: z.strictObject({
 		name: z.string(),
 		description: z.string(),
-		strict: z.boolean().optional(), // OpenAI側では任意
+		strict: z.union([z.boolean(), z.null()]),
 		parameters: z.object({
 			type: z.literal("object"),
 			properties: z.record(z.string(), z.any()),

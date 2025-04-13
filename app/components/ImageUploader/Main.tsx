@@ -86,7 +86,7 @@ export default function ImageUploader() {
 				await parseReceiptToJsonWithAi(text);
 			console.log("AIでの構造化結果:", aiResult);
 			if (!aiResult.success) {
-				handleError(aiResult.error.message);
+				handleError(`${aiResult.error.message}\n${aiResult.error.hint}`);
 				return;
 			}
 			setJson(aiResult.data);

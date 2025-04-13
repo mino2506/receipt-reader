@@ -190,7 +190,7 @@ export async function parseReceiptToJsonWithAi(
 		);
 
 		const choices = validated.data.data.choices;
-		if (!choices || !choices || choices.length !== 0) {
+		if (!choices || !choices || choices.length === 0) {
 			console.log("❌ エラーの元データ \n", choices);
 			console.error("GPTの応答に choices が含まれていません \n");
 			return {

@@ -43,7 +43,6 @@ export const receiptFunctionCallingSchema = {
 				},
 				date: {
 					type: "string",
-					format: "date-time",
 					description:
 						"UTC形式 'YYYY-MM-DDTHH:mm:ssZ' の文字列。ただし値はJSTのままで可（例: '2023-10-25T16:39:27Z'）",
 				},
@@ -59,22 +58,22 @@ export const receiptFunctionCallingSchema = {
 								description: "商品名",
 							},
 							quantity: {
-								type: ["number", "null"],
+								anyOf: [{ type: "number" }, { type: "null" }],
 								description:
 									"数量（例: '2個', '2×99円' のように明記されている場合のみ数値。なければ null）",
 							},
 							price: {
-								type: ["number", "null"],
+								anyOf: [{ type: "number" }, { type: "null" }],
 								description:
 									"単価（明記されていなければ null。subtotal や quantity から計算しない）",
 							},
 							subtotal: {
-								type: ["number", "null"],
+								anyOf: [{ type: "number" }, { type: "null" }],
 								description:
 									"小計（price × quantity ではなく、レシート上に記載された値）",
 							},
 							discount: {
-								type: ["number", "null"],
+								anyOf: [{ type: "number" }, { type: "null" }],
 								description: "商品単位の割引（明記されていなければ null）",
 							},
 							category: {
@@ -126,16 +125,19 @@ export const receiptFunctionCallingSchema = {
 					description: "合計金額（税込）",
 				},
 				discount: {
-					type: ["number", "null"],
+					anyOf: [{ type: "number" }, { type: "null" }],
 					description: "全体の割引（明記されていなければ null）",
 				},
 				tax: {
-					type: ["object", "null"],
+					anyOf: [
+						{
+							type: "object",
+							additionalProperties: { type: "number" },
+						},
+						{ type: "null" },
+					],
 					description:
 						'税率ごとの税額（例: { "8": 120, "10": 380 }）。明記されていなければ null',
-					additionalProperties: {
-						type: "number",
-					},
 				},
 				payment: {
 					type: "string",
