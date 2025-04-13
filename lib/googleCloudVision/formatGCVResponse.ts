@@ -151,18 +151,18 @@ export function groupWordsIntoLinesByRatio(
 // console.log(errorPages);
 // import { inspect } from "node:util";
 // console.log(inspect(response, { depth: null, colors: true }));
-const parsedGCVResponse = parseGCVResponse(response.data);
-// console.log(parsedGCVResponse);
-const pages = extractPagesFromGCV(parsedGCVResponse);
-console.log("pages", pages);
-for (const page of pages) {
-	console.log(page.size);
-	const words = page.words;
-	const lines: string[] = groupWordsIntoLinesByRatio(words, page.size.height);
+// const parsedGCVResponse = parseGCVResponse(response.data);
+// // console.log(parsedGCVResponse);
+// const pages = extractPagesFromGCV(parsedGCVResponse);
+// console.log("pages", pages);
+// for (const page of pages) {
+// 	console.log(page.size);
+// 	const words = page.words;
+// 	const lines: string[] = groupWordsIntoLinesByRatio(words, page.size.height);
 
-	console.log(lines);
-	console.log(JSON.stringify(lines.join("\n")));
+// 	console.log(lines);
+// 	console.log(JSON.stringify(lines.join("\n")));
 
-	console.log(JSON.stringify(lines).length);
-	console.log(lines.join("\n"));
-}
+// 	console.log(JSON.stringify(lines).length);
+// 	console.log(lines.join("\n"));
+// }
