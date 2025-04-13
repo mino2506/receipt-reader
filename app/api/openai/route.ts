@@ -13,6 +13,15 @@ import {
 } from "@/lib/openai/schema";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import type {
+	ChatCompletionNamedToolChoice,
+	ChatCompletionTool,
+	ChatCompletionToolChoiceOption,
+} from "openai/resources/chat/completions";
+
+type ToolChoice =
+	| ChatCompletionNamedToolChoice
+	| ChatCompletionToolChoiceOption;
 
 export const POST = async (
 	req: Request,
@@ -99,8 +108,8 @@ export const POST = async (
 			top_p: parsed.data.top_p,
 			frequency_penalty: parsed.data.frequency_penalty,
 			presence_penalty: parsed.data.presence_penalty,
-			tools: parsed.data.tools ?? undefined,
-			tool_choice: parsed.data.tool_choice,
+			...(parsed.data.tools && { tools: parsed.data.tools }),
+			tool_choice: parsed.data.tool_choice as ToolChoice,
 		});
 
 		// トークン使用量のログ
