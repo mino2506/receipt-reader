@@ -144,6 +144,64 @@ export function groupWordsIntoLinesByRatio(
 		.map((line) => line.words.map((w) => w.text).join(" "));
 }
 
+import type { WordInfo } from "@/lib/googleCloudVision/schema";
+import _ from "lodash";
+import { atan2 } from "mathjs";
+
+/**
+ * WordInfo 配列から行ごとに単語をグループ化（傾き補正付き）
+ *
+ * @param words - WordInfo[] 全単語（単ページ）
+ * @param confidenceThreshold - 最低信頼度。この値未満の単語は除外（既定: 0.8）
+ * @returns 行ごとに文字列化された配列（Y座標の昇順）
+ */
+export function groupWordsWithDeskew(
+	words: WordInfo[],
+	confidenceThreshold = 0.8,
+): string[] {
+	// 1. 信頼度フィルタ済みの単語
+	const filtered = words.filter((w) => w.confidence >= confidenceThreshold);
+
+	// 2. 左上の (x, y) 座標を抽出
+	const points = filtered.map((w) => w.boundingBox.vertices[0]);
+
+	// 3. 回帰直線を使って傾き（角度）を算出
+	const n = points.length;
+	const sumX = _.sumBy(points, (p) => p.x);
+	const sumY = _.sumBy(points, (p) => p.y);
+	const meanX = sumX / n;
+	const meanY = sumY / n;
+	const numerator = _.sumBy(points, (p) => (p.x - meanX) * (p.y - meanY));
+	const denominator = _.sumBy(points, (p) => Math.pow(p.x - meanX, 2)) || 1;
+	const slope = numerator / denominator;
+	const angleRad = atan2(slope, 1); // x軸と成す角度（ラジアン）
+
+	// 4. 傾きに応じてY座標を deskew（水平化）
+	const rotatedWords = filtered.map((w) => {
+		const { x, y } = w.boundingBox.vertices[0];
+		const rotatedY = y - slope * x; // 単純 deskew（回転行列は使わない）
+		return { ...w, rotatedY };
+	});
+
+	// 5. Y座標でグループ化（1%範囲で近似）
+	const yThreshold = 10; // 10px 以内を同じ行とみなす
+	const grouped = _.groupBy(rotatedWords, (w) =>
+		Math.round(w.rotatedY / yThreshold),
+	);
+
+	// 6. 行ごとにX昇順に並べて、文字列に変換
+	const lines = Object.values(grouped)
+		.map((line) => _.sortBy(line, (w) => w.boundingBox.vertices[0].x))
+		.map((line) => line.map((w) => w.text).join(" "));
+
+	// 7. 行順に昇順ソート
+	return lines.sort((a, b) => {
+		const ay = grouped[a]?.[0].rotatedY ?? 0;
+		const by = grouped[b]?.[0].rotatedY ?? 0;
+		return ay - by;
+	});
+}
+
 // TODO: テストコード書くときに使う
 // const errorResponse = { message: "Invalid image", result: null };
 // const parsedErrorGCVResponse = parseGCVResponse(errorResponse) as GCVResponse;
