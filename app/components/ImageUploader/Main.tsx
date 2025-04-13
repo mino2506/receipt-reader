@@ -8,9 +8,20 @@ import {
 	groupWordsIntoLinesByRatio,
 } from "@/lib/googleCloudVision/formatGCVResponse";
 import type { GCVSingleResponse } from "@/lib/googleCloudVision/schema";
+import type {
+	OpenAIApiResponseSchema,
+	OpenAIChatCompletionChoiceSchema,
+} from "@/lib/openai/schema";
 import { convertToBase64 } from "@/utils/base64";
 import { useState } from "react";
-import { tryParseAndFetchGCVFromClient } from "./action";
+import {
+	parseReceiptToJsonWithAi,
+	tryParseAndFetchGCVFromClient,
+} from "./action";
+import {
+	type OpenAiApiReceiptResponse,
+	OpenAiApiReceiptResponseSchema,
+} from "./schema";
 
 const fetchOpenAI = async (text: string) => {
 	const res = await fetch("/api/openai", {
@@ -27,6 +38,7 @@ export default function ImageUploader() {
 	const [base64, setBase64] = useState<string>("");
 	const [error, setError] = useState<string>("");
 	const [plainText, setPlainText] = useState<string>("");
+	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 	const [json, setJson] = useState<any>(null);
 
 	const handleError = (error: unknown) => {
@@ -70,9 +82,14 @@ export default function ImageUploader() {
 
 	const handleAI = async (text: string) => {
 		try {
-			const aiResult = await fetchOpenAI(text);
+			const aiResult: ApiResponseFromType<OpenAiApiReceiptResponse> =
+				await parseReceiptToJsonWithAi(text);
 			console.log("AIでの構造化結果:", aiResult);
-			setJson(aiResult);
+			if (!aiResult.success) {
+				handleError(aiResult.error.message);
+				return;
+			}
+			setJson(aiResult.data);
 		} catch (error) {
 			handleError(`通信エラーが発生しました。${String(error)}`);
 		}
@@ -152,7 +169,7 @@ export default function ImageUploader() {
 				</div>
 			)}
 			{error && <p className="text-red-700">{error}</p>}
-			{json && (
+			{/* {json && (
 				<table>
 					<tr>
 						<th>商品名</th>
@@ -161,6 +178,11 @@ export default function ImageUploader() {
 						<th>価格</th>
 					</tr>
 				</table>
+			)} */}
+			{json && (
+				<div>
+					<pre>{JSON.stringify(json, null, 2)}</pre>
+				</div>
 			)}
 		</div>
 	);

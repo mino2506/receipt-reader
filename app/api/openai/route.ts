@@ -2,62 +2,28 @@ import {
 	messagePrefixPrompt,
 	messageSuffixPromptEN,
 	rolePrompt,
-} from "@/app/api/openai/receiptPrompt";
-import {
-	type ApiResponseFromType,
-	createApiResponseSchema,
-} from "@/lib/api/common.schema";
+} from "@/app/components/ImageUploader/receiptPrompt";
 import { openai } from "@/lib/openai";
+import {
+	type OpenAIApiResponse,
+	OpenAIApiResponseSchema,
+	OpenAIChatCompletionResponseSchema,
+	type OpenAIRequest,
+	OpenAIRequestSchema,
+} from "@/lib/openai/schema";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
-import { z } from "zod";
-
-const OpenAIRequestSchema = z.object({
-	text: z.string().min(1, "text must not be empty"),
-});
-export type OpenAIRequest = z.infer<typeof OpenAIRequestSchema>;
-
-// 出力の仮定スキーマ（拡張前提）
-export const OpenAiStructuringResponseSchema = z.object({
-	store: z.string(),
-	date: z
-		.string()
-		.datetime() // ISO 8601 UTC形式: YYYY-MM-DDTHH:mm:ssZ
-		.transform((val) => new Date(val)), // UTCとしてDateに変換
-	items: z
-		.array(
-			z.object({
-				name: z.string(),
-				quantity: z.number().nullable(),
-				price: z.number().nullable(),
-				subtotal: z.number().nullable(),
-				discount: z.number().nullable(),
-				category: z.string(),
-				taxRate: z.number(),
-				taxRateSource: z.enum(["explicit", "inferred"]),
-			}),
-		)
-		.min(1, "1件以上の商品が必要です"),
-	total: z.number(),
-	discount: z.number().nullable(),
-	tax: z
-		.record(z.string().regex(/^\d+$/), z.number()) // 税率をキーとした税額。例: {"8": 10}
-		.nullable(),
-	payment: z.string(),
-});
-export type OpenAiStructuringResponse = z.infer<
-	typeof OpenAiStructuringResponseSchema
->;
-export type OpenAiApiResponse = ApiResponseFromType<OpenAiStructuringResponse>;
 
 export const POST = async (
 	req: Request,
 	res: NextResponse,
-): Promise<NextResponse<OpenAiApiResponse>> => {
+): Promise<NextResponse<OpenAIApiResponse>> => {
 	console.log("\n\n~~~📨📮   POOOOOOOOOST!!!🚀🚀🚀🆕🆕🆕\n");
 	console.log("📊 OpenAI API called");
+	const API_NAME = "OpenAI API";
 
 	// 🔐 認証チェック
+	console.log(API_NAME, "🔐 認証チェック");
 	const supabase = await createServerClient();
 	if (process.env.NODE_ENV === "development") {
 		console.log("🔐 開発環境です。認証をスキップしました。");
@@ -68,7 +34,7 @@ export const POST = async (
 		} = await supabase.auth.getUser();
 
 		if (error) {
-			return NextResponse.json<OpenAiApiResponse>(
+			return NextResponse.json<OpenAIApiResponse>(
 				{
 					success: false,
 					error: {
@@ -81,7 +47,7 @@ export const POST = async (
 			);
 		}
 		if (!user) {
-			return NextResponse.json<OpenAiApiResponse>(
+			return NextResponse.json<OpenAIApiResponse>(
 				{
 					success: false,
 					error: {
@@ -95,89 +61,90 @@ export const POST = async (
 		}
 	}
 
+	// 📝 リクエストボディのパー
+	console.log(API_NAME, "📝 リクエストボディのパース");
 	const json = await req.json();
-	console.log("data: ", json);
+	console.log(API_NAME, "json: ", JSON.stringify(json).slice(0, 100));
 
+	// リクエストのバリデーション
+	console.log(API_NAME, "リクエストのバリデーション");
 	const parsed = OpenAIRequestSchema.safeParse(json);
+	console.log(API_NAME, "parsed.success: ", parsed.success);
+	console.log(API_NAME, "parsed: ", JSON.stringify(parsed).slice(0, 100));
 	if (!parsed.success) {
-		return NextResponse.json<OpenAiApiResponse>(
+		console.error(API_NAME, "リクエストが不正です", parsed.error.message);
+		return NextResponse.json<OpenAIApiResponse>(
 			{
 				success: false,
 				error: {
 					code: "invalid_request",
-					message: "テキストが未指定または不正です",
+					message: "リクエストが不正です",
 					hint: parsed.error.message,
-					field: "text",
+					field: "request",
 				},
 			},
-			{ status: 400 },
+			{ status: 422 },
 		);
 	}
 
-	const inputOcrText = parsed.data.text;
-
-	console.log("inputOcrText: \n", inputOcrText);
-
-	const actionPrompt: string = `
-  ${messagePrefixPrompt}
-  ${inputOcrText}
-  ${messageSuffixPromptEN}
-  `;
-	console.log("actionPrompt: \n", actionPrompt);
-
+	// OpenAI 外部API を呼び出す
 	try {
-		console.log("try openai.chat.completions.create");
+		// リクエストをOpenAI 外部APIに送信
+		console.log(API_NAME, "📊 Try openai.chat.completions.create");
 		const response = await openai.chat.completions.create({
-			model: "gpt-4o-mini",
-			messages: [
-				{
-					role: "system",
-					content: rolePrompt,
-				},
-				{
-					role: "user",
-					content: actionPrompt,
-				},
-			],
-			temperature: 0.1, // 低い値で決定的な応答に
-			max_tokens: 5000,
-			top_p: 1,
-			frequency_penalty: 0,
-			presence_penalty: 0,
+			model: parsed.data.model,
+			messages: parsed.data.messages,
+			temperature: parsed.data.temperature,
+			max_tokens: parsed.data.max_tokens,
+			top_p: parsed.data.top_p,
+			frequency_penalty: parsed.data.frequency_penalty,
+			presence_penalty: parsed.data.presence_penalty,
+			tools: parsed.data.tools ?? undefined,
+			tool_choice: parsed.data.tool_choice,
 		});
 
 		// トークン使用量のログ
 		if (response.usage) {
 			const { prompt_tokens, completion_tokens, total_tokens } = response.usage;
-			console.log(`📊 OpenAI token usage:
+			console.log(
+				API_NAME,
+				`OpenAI token usage:
       - prompt_tokens: ${prompt_tokens}
       - completion_tokens: ${completion_tokens}
-      - total_tokens: ${total_tokens}`);
+      - total_tokens: ${total_tokens}`,
+			);
 		}
 
-		const content = response.choices?.[0]?.message?.content;
-		if (!content) throw new Error("No content in response");
-
-		const result = JSON.parse(content);
-		console.log("result: ", result);
-
-		const validated = OpenAiStructuringResponseSchema.safeParse(result);
+		// OpenAI 外部API レスポンスのバリデーション
+		const validated = OpenAIChatCompletionResponseSchema.safeParse(response);
 		if (!validated.success) {
-			return NextResponse.json<OpenAiApiResponse>(
+			console.error(
+				API_NAME,
+				"OpenAI 外部API レスポンスのバリデーションエラー",
+				validated.error.message,
+			);
+			return NextResponse.json<OpenAIApiResponse>(
 				{
 					success: false,
 					error: {
 						code: "invalid_ai_response",
 						message: "AIの返却形式が不正です",
 						hint: validated.error.message,
-						field: "content",
+						field: "response",
 					},
 				},
 				{ status: 422 },
 			);
 		}
+		console.log(
+			API_NAME,
+			"validated.data: ",
+			JSON.stringify(validated.data).slice(0, 100),
+		);
 
-		return NextResponse.json<OpenAiApiResponse>(
+		// 成功時のレスポンス送信
+		console.log(API_NAME, "✅ 成功時のレスポンス送信");
+		return NextResponse.json<OpenAIApiResponse>(
 			{
 				success: true,
 				data: validated.data,
@@ -187,7 +154,7 @@ export const POST = async (
 		);
 	} catch (error) {
 		console.error("Error calling OpenAI API:", error);
-		return NextResponse.json(
+		return NextResponse.json<OpenAIApiResponse>(
 			{
 				success: false,
 				error: {
