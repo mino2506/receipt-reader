@@ -1,10 +1,11 @@
-import response from "@/gcvRawData.json";
+import normalReceipt from "@/gcvRawData.json";
 import {
 	type GCVSingleResponse,
 	GCVSingleResponseSchema,
 	type PageInfo,
 	type WordInfo,
 } from "@/lib/googleCloudVision/schema";
+import angledReceipt from "@/sampleReceiptAngled.json";
 import { ZodError } from "zod";
 
 /**
@@ -63,15 +64,45 @@ export function extractPagesFromGCV(response: GCVSingleResponse): PageInfo[] {
 					const confidence =
 						symbols.reduce((acc, s) => acc + (s.confidence ?? 0), 0) /
 						symbols.length;
-					const x = word.boundingBox?.vertices?.[0]?.x ?? 0;
-					const y = word.boundingBox?.vertices?.[0]?.y ?? 0;
+					// const x2 = word.boundingBox?.vertices?.[0]?.x ?? 0;
+					// const y2 = word.boundingBox?.vertices?.[0]?.y ?? 0;
+					let x: number | undefined;
+					let y: number | undefined;
+					let vertices: { x: number; y: number }[] | undefined;
+					if (
+						typeof word.boundingBox?.vertices?.length !== "undefined" &&
+						word.boundingBox?.vertices?.length > 3
+					) {
+						const v = word.boundingBox.vertices;
+						if (
+							v[0] &&
+							v[1] &&
+							v[2] &&
+							v[3] &&
+							v[0].x &&
+							v[1].x &&
+							v[2].x &&
+							v[3].x &&
+							v[0].y &&
+							v[1].y &&
+							v[2].y &&
+							v[3].y
+						) {
+							vertices = [
+								{ x: v[0].x, y: v[0].y },
+								{ x: v[1].x, y: v[1].y },
+								{ x: v[2].x, y: v[2].y },
+								{ x: v[3].x, y: v[3].y },
+							];
+						}
+					}
 
 					if (!text || confidence === undefined) continue;
 
 					words.push({
 						text,
 						confidence: Number(confidence.toFixed(2)),
-						boundingBox: { vertices: [{ x, y }] },
+						boundingBox: { vertices: vertices ?? [{ x: 0, y: 0 }] },
 					});
 				}
 			}
@@ -110,7 +141,7 @@ export function groupWordsIntoLinesByRatio(
 	words: WordInfo[],
 	imageHeight: number,
 	lineMergeRatio = 0.01,
-	confidenceThreshold = 0.8,
+	confidenceThreshold = 0.5,
 ): string[] {
 	const lines: Line[] = [];
 	const lineMergeThreshold = imageHeight * lineMergeRatio;
@@ -144,62 +175,91 @@ export function groupWordsIntoLinesByRatio(
 		.map((line) => line.words.map((w) => w.text).join(" "));
 }
 
-import type { WordInfo } from "@/lib/googleCloudVision/schema";
-import _ from "lodash";
+import groupBy from "lodash/groupBy";
+import sortBy from "lodash/sortBy";
+import sumBy from "lodash/sumBy";
 import { atan2 } from "mathjs";
 
 /**
  * WordInfo 配列から行ごとに単語をグループ化（傾き補正付き）
  *
  * @param words - WordInfo[] 全単語（単ページ）
+ * @param imageHeight - ページ画像の高さ ( px ). 行マージの基準に使用
+ * @param lineMergeRatio - Optional (Default: 0.01) 高さに対する行マージの許容割合（例: 0.01 = 1%）
  * @param confidenceThreshold - 最低信頼度。この値未満の単語は除外（既定: 0.8）
  * @returns 行ごとに文字列化された配列（Y座標の昇順）
  */
 export function groupWordsWithDeskew(
 	words: WordInfo[],
+	imageHeight: number,
+	lineMergeRatio = 0.02,
 	confidenceThreshold = 0.8,
 ): string[] {
-	// 1. 信頼度フィルタ済みの単語
+	const yThreshold = imageHeight * lineMergeRatio;
+
+	// 1. 信頼度フィルタ済みの単語（ノイズ除去）
 	const filtered = words.filter((w) => w.confidence >= confidenceThreshold);
 
-	// 2. 左上の (x, y) 座標を抽出
-	const points = filtered.map((w) => w.boundingBox.vertices[0]);
+	// 2. 各単語の左上・右上の dx/dy から傾きを算出
+	const angles = filtered.flatMap((w) => {
+		const v = w.boundingBox.vertices;
+		if (v?.[0] && v?.[1] && v?.[2] && v?.[3]) {
+			const dx = v[1].x - v[0].x + v[2].x - v[3].x;
+			const dy = v[1].y - v[0].y + v[2].y - v[3].y;
+			console.log("dx, dy", dx, dy);
+			const rad = atan2(dy, dx);
+			return [rad];
+		}
+		return [];
+	});
+	console.log("angles", angles);
 
-	// 3. 回帰直線を使って傾き（角度）を算出
-	const n = points.length;
-	const sumX = _.sumBy(points, (p) => p.x);
-	const sumY = _.sumBy(points, (p) => p.y);
-	const meanX = sumX / n;
-	const meanY = sumY / n;
-	const numerator = _.sumBy(points, (p) => (p.x - meanX) * (p.y - meanY));
-	const denominator = _.sumBy(points, (p) => Math.pow(p.x - meanX, 2)) || 1;
-	const slope = numerator / denominator;
-	const angleRad = atan2(slope, 1); // x軸と成す角度（ラジアン）
+	const averageRad =
+		angles.length > 0 ? sumBy(angles, (r) => r) / angles.length : 0;
 
-	// 4. 傾きに応じてY座標を deskew（水平化）
+	const slope = Math.tan(averageRad);
+
+	// 3. 各単語のY座標を deskew（水平補正）して新フィールド rotatedY を追加
 	const rotatedWords = filtered.map((w) => {
-		const { x, y } = w.boundingBox.vertices[0];
-		const rotatedY = y - slope * x; // 単純 deskew（回転行列は使わない）
+		const vertex = w.boundingBox.vertices[0];
+		const { x = 0, y = 0 } = vertex ?? {};
+		const rotatedY = y - slope * x;
 		return { ...w, rotatedY };
 	});
 
-	// 5. Y座標でグループ化（1%範囲で近似）
-	const yThreshold = 10; // 10px 以内を同じ行とみなす
-	const grouped = _.groupBy(rotatedWords, (w) =>
+	// 4. Y座標でグループ化
+	const grouped = groupBy(rotatedWords, (w) =>
 		Math.round(w.rotatedY / yThreshold),
 	);
 
-	// 6. 行ごとにX昇順に並べて、文字列に変換
-	const lines = Object.values(grouped)
-		.map((line) => _.sortBy(line, (w) => w.boundingBox.vertices[0].x))
-		.map((line) => line.map((w) => w.text).join(" "));
+	// 5. 各行をX昇順で並べて、文字列に変換
+	const lineEntries = Object.entries(grouped).map(([key, group]) => ({
+		key,
+		words: sortBy(group, (w) => w.boundingBox.vertices[0]?.x ?? 0),
+		sortY: group[0]?.rotatedY ?? 0,
+		line: group.map((w) => w.text).join(" "),
+	}));
 
-	// 7. 行順に昇順ソート
-	return lines.sort((a, b) => {
-		const ay = grouped[a]?.[0].rotatedY ?? 0;
-		const by = grouped[b]?.[0].rotatedY ?? 0;
-		return ay - by;
-	});
+	// 6. 行順にソートして返す
+	const retrunGroup = lineEntries
+		.sort((a, b) => a.sortY - b.sortY)
+		.map((l) => l.line);
+
+	// 7. ログ出力
+	const log = {
+		deskew: {
+			applied: true,
+			yThreshold,
+			confidenceThreshold,
+			estimatedSlope: slope,
+			angleDeg: -(averageRad * 180) / Math.PI,
+			method: "dx/dy from vertices[0]→[1]",
+			lineCount: retrunGroup.length,
+		},
+	};
+	console.log("[groupWordsWithDeskew] log:", log);
+
+	return retrunGroup;
 }
 
 // TODO: テストコード書くときに使う
@@ -209,18 +269,67 @@ export function groupWordsWithDeskew(
 // console.log(errorPages);
 // import { inspect } from "node:util";
 // console.log(inspect(response, { depth: null, colors: true }));
-// const parsedGCVResponse = parseGCVResponse(response.data);
-// // console.log(parsedGCVResponse);
-// const pages = extractPagesFromGCV(parsedGCVResponse);
-// console.log("pages", pages);
-// for (const page of pages) {
-// 	console.log(page.size);
-// 	const words = page.words;
-// 	const lines: string[] = groupWordsIntoLinesByRatio(words, page.size.height);
 
-// 	console.log(lines);
-// 	console.log(JSON.stringify(lines.join("\n")));
+const parsedGCVResponse = parseGCVResponse(normalReceipt.data);
+// console.log(parsedGCVResponse);
+const normalPages = extractPagesFromGCV(parsedGCVResponse);
 
-// 	console.log(JSON.stringify(lines).length);
-// 	console.log(lines.join("\n"));
-// }
+console.log("🌟真っすぐなレシート\n");
+
+console.log("回転補正❌なし");
+for (const page of normalPages) {
+	console.log(page.size);
+	const words = page.words;
+	const lines: string[] = groupWordsIntoLinesByRatio(words, page.size.height);
+
+	// console.log(lines);
+	// console.log(JSON.stringify(lines.join("\n")));
+
+	console.log(JSON.stringify(lines).length);
+	console.log(lines.join("\n"));
+}
+
+console.log("回転補正✅あり！");
+for (const page of normalPages) {
+	console.log(page.size);
+	const words = page.words;
+	const lines: string[] = groupWordsWithDeskew(words, page.size.height);
+
+	// console.log(lines);
+	// console.log(JSON.stringify(lines.join("\n")));
+
+	console.log(JSON.stringify(lines).length);
+	console.log(lines.join("\n"));
+}
+
+const parsedGCVResponseAngled = parseGCVResponse(angledReceipt.data);
+// console.log(parsedGCVResponse);
+const angledPages = extractPagesFromGCV(parsedGCVResponseAngled);
+
+console.log("🌟傾いたレシート\n");
+
+console.log("回転補正❌なし");
+for (const page of angledPages) {
+	console.log(page.size);
+	const words = page.words;
+	const lines: string[] = groupWordsIntoLinesByRatio(words, page.size.height);
+
+	// console.log(lines);
+	// console.log(JSON.stringify(lines.join("\n")));
+
+	console.log(JSON.stringify(lines).length);
+	console.log(lines.join("\n"));
+}
+
+console.log("回転補正✅あり！");
+for (const page of angledPages) {
+	console.log(page.size);
+	const words = page.words;
+	const lines: string[] = groupWordsWithDeskew(words, page.size.height);
+
+	// console.log(lines);
+	// console.log(JSON.stringify(lines.join("\n")));
+
+	console.log(JSON.stringify(lines).length);
+	console.log(lines.join("\n"));
+}
