@@ -1,22 +1,12 @@
 // app/api/ocr/route.ts
 
+import type { ApiResponseFromType } from "@/lib/api/common.schema";
 import {
-	type ApiError,
-	ApiErrorSchema,
-	type ApiResponseFromType,
-	createApiResponseSchema,
-} from "@/lib/api/common.schema";
-import {
-	GCVFeatureSchema,
-	GCVFeatureType,
-	GCVRequestSchema,
 	type GCVSingleResponse,
 	GCVSingleResponseSchema,
 	googleCloudVisionClient,
 } from "@/lib/googleCloudVision";
 import { createClient as createServerClient } from "@/lib/supabase/server";
-import { isBase64, toPureBase64 } from "@/utils/base64";
-import type { protos } from "@google-cloud/vision";
 import { NextResponse } from "next/server";
 
 const reqMock = {

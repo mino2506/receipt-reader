@@ -2,9 +2,9 @@ export { googleCloudVisionClient } from "./client";
 export { DEFAULT_GCV_FEATURES, API_ENDPOINTS } from "./constants";
 export {
 	GCVFeatureType,
-	GCVFeatureSchema,
-	ImageInputSchema,
-	ToImageInputSchema,
+	GCVRequestFeatureSchema,
+	GCVRequestImageInputSchema,
+	toGCVRequestImageInputSchema,
 	GCVRequestSchema,
 	VertexSchema,
 	type GCVVertex,
@@ -28,11 +28,8 @@ export {
 	type GCVBase64RequestBody,
 	type GCVUrlRequestBody,
 	type GCVRequestBody,
-	type WordInfo,
-	type PageInfo,
 } from "./schema";
 export {
-	isGCVResponseType,
 	parseGCVResponse,
 	extractPagesFromGCV,
 	groupWordsIntoLinesByRatio,

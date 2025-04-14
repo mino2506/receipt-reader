@@ -11,6 +11,10 @@ import { enumKeys } from "@/utils/generics/enumKeys";
 import { z } from "zod";
 
 // [FeatureType]
+/**
+ * この型は、公式の型定義でのランタイムエラーを
+ * 避けるための独自の型定義です。
+ */
 export enum GCVFeatureType {
 	TYPE_UNSPECIFIED = 0,
 	FACE_DETECTION = 1,
@@ -27,30 +31,65 @@ export enum GCVFeatureType {
 	OBJECT_LOCALIZATION = 19,
 }
 
-export const GCVFeatureSchema = z.object({
+// [Request]
+/**
+ * Zod Schema
+ * Google Cloud Vision 用の ***内部API*** へのリクエスト用
+ */
+export const GCVRequestFeatureSchema = z.object({
 	type: z
 		.enum(enumKeys(GCVFeatureType))
 		.transform((key) => GCVFeatureType[key]),
 });
 
-// [Request]
-export const ImageInputSchema = z.union([Base64ImageSchema, UrlSchema]);
+/**
+ * Zod Schema
+ * Google Cloud Vision 用の ***内部API*** へのリクエスト用
+ */
+export const GCVRequestImageInputSchema = z.union([
+	Base64ImageSchema,
+	UrlSchema,
+]);
 
-export const ToImageInputSchema = z.union([ToPureBase64ImageSchema, UrlSchema]);
+/**
+ * Zod Schema
+ * Google Cloud Vision 用の ***内部API*** へのリクエスト用
+ */
+export const toGCVRequestImageInputSchema = z.union([
+	ToPureBase64ImageSchema,
+	UrlSchema,
+]);
 
+/**
+ * Zod Schema
+ * Google Cloud Vision 用の ***内部API*** へのリクエスト用
+ * @see GCVRequest - 型定義
+ */
 export const GCVRequestSchema = z.object({
 	request: z.object({
 		image: z.object({
 			content: Base64ImageSchema,
 		}),
 		features: z
-			.array(GCVFeatureSchema)
+			.array(GCVRequestFeatureSchema)
 			.min(1, { message: "At least one feature is required" }),
 	}),
 });
 
+/**
+ * Zod Schema から変換した型定義
+ * Google Cloud Vision 用の ***内部API*** へのリクエスト用
+ * @see GCVRequestSchema - Zod Schema
+ */
 export type GCVRequest = z.infer<typeof GCVRequestSchema>;
 
+/**
+ * 型定義
+ * Google Cloud Vision 用の ***内部API*** への
+ * Base64Image を使用するリクエスト用
+ * @see Base64Image - ブランド型定義
+ * @see GCVFeatureType - 型定義
+ */
 export type GCVBase64RequestBody = {
 	image: {
 		content: Base64Image;
@@ -60,6 +99,13 @@ export type GCVBase64RequestBody = {
 	}[];
 };
 
+/**
+ * 型定義
+ * Google Cloud Vision 用の ***内部API*** への
+ * Url を使用するリクエスト用
+ * @see Url - ブランド型定義
+ * @see GCVFeatureType - 型定義
+ */
 export type GCVUrlRequestBody = {
 	image: {
 		source: {
@@ -71,6 +117,11 @@ export type GCVUrlRequestBody = {
 	}[];
 };
 
+/**
+ * 型定義
+ * Google Cloud Vision 用の ***内部API*** へのリクエスト用
+ * Base64Image 及び Url を使用するリクエスト用
+ */
 export type GCVRequestBody = GCVBase64RequestBody | GCVUrlRequestBody;
 
 // [Response]
@@ -143,20 +194,3 @@ const GCVResponseSchema = z.object({
 	responses: z.array(GCVSingleResponseSchema),
 });
 type GCVResponse = z.infer<typeof GCVResponseSchema>; // !TODO: 名前の衝突
-
-export type WordInfo = {
-	text: string;
-	boundingBox: {
-		vertices: { x: number; y: number }[];
-	};
-	confidence: number;
-};
-
-export type PageInfo = {
-	pageIndex: number;
-	size: {
-		width: number;
-		height: number;
-	};
-	words: WordInfo[];
-};
