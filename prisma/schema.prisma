@@ -22,40 +22,56 @@ model Post{
 }
 
 model User {
-  id String @id @db.Uuid
-  email String @unique
-  display_name String?
-  avatar_url String?
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-  provider String?
-  receipts Receipt[]
+  id                String @id @db.Uuid
+  email             String @unique
+  display_name      String?
+  avatar_url        String?
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+  provider          String?
+  receipts          Receipt[]
 }
 
 model Receipt{
-  id Int @id @default(autoincrement())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deletedAt DateTime? 
-  totalPrice Int
-  receiptDetailId String
-  receiptDetails ReceiptDetail[]
-  userId String @db.Uuid
-  user User @relation(fields: [userId], references: [id])
+  id                String      @id @db.Uuid @default(uuid())
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  deletedAt         DateTime? 
+  totalPrice        Int
+  receiptDetails    ReceiptDetail[]
+  userId            String      @db.Uuid
+  user              User        @relation(fields: [userId], references: [id])
 }
 
 model ReceiptDetail{
-  id Int @id @default(autoincrement())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deletedAt DateTime?
-  item String
-  amount String
-  unitPrice Int
-  subTotalPrice Int
-  tax Int
-  currency String
-  category Int
-  receiptId Int
-  receipt Receipt @relation(fields: [receiptId], references: [id])
+  id                String      @id @db.Uuid @default(uuid())
+
+  itemId            String      @db.Uuid
+  item              Item        @relation(fields: [itemId], references: [id])
+
+  amount            Int
+  unitPrice         Int
+  subTotalPrice     Int
+  tax               Int
+  currency          String?
+
+  receiptId         String      @db.Uuid
+  receipt           Receipt     @relation(fields: [receiptId], references: [id])
+
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  deletedAt         DateTime?
+}
+
+model Item {
+  id                String      @id @db.Uuid @default(uuid())
+
+  rawName           String      // OCRや構造化時のAI簡易補正、手入力そのまま
+  normalized        String?     @db.VarChar(255) @unique  // 後から補正を強くする用。GPTや手動補正で整えたユニークな名前
+  category          String      // Optional: 後でGPT分類 or 手動選択
+
+  receiptDetails    ReceiptDetail[]
+
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
 }
