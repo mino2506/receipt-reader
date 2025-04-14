@@ -1,6 +1,6 @@
 // app/auth/confirm/route.ts
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient as createServerClient } from "@/lib/supabase/server";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import type { NextRequest } from "next/server";
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
 	console.log("GET: ", "/auth/confirm/route.ts");
 
 	if (token_hash && type) {
-		const supabase = await createClient();
+		const supabase = await createServerClient();
 		const { error } = await supabase.auth.verifyOtp({
 			type,
 			token_hash,

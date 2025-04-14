@@ -3,6 +3,8 @@
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { type NextRequest, NextResponse } from "next/server";
 
+import { upsertUser } from "@/lib/supabase/upsertUser";
+
 /**
  * OAuth 認証後に Supabase のセッションを確立し、指定の `next` へリダイレクトする
  *
@@ -31,6 +33,14 @@ export async function GET(request: NextRequest) {
 		const supabase = await createServerClient();
 
 		await supabase.auth.exchangeCodeForSession(code);
+
+		const {
+			data: { user },
+		} = await supabase.auth.getUser();
+
+		if (user) {
+			await upsertUser(user);
+		}
 	}
 
 	return NextResponse.redirect(`${origin}${next}`);
