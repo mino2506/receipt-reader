@@ -1,21 +1,13 @@
-import {
-	messagePrefixPrompt,
-	messageSuffixPromptEN,
-	rolePrompt,
-} from "@/app/components/ImageUploader/receiptPrompt";
 import { openai } from "@/lib/openai";
 import {
 	type OpenAIApiResponse,
-	OpenAIApiResponseSchema,
 	OpenAIChatCompletionResponseSchema,
-	type OpenAIRequest,
 	OpenAIRequestSchema,
 } from "@/lib/openai/schema";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import type {
 	ChatCompletionNamedToolChoice,
-	ChatCompletionTool,
 	ChatCompletionToolChoiceOption,
 } from "openai/resources/chat/completions";
 
@@ -28,11 +20,11 @@ export const POST = async (
 	res: NextResponse,
 ): Promise<NextResponse<OpenAIApiResponse>> => {
 	console.log("\n\n~~~📨📮   POOOOOOOOOST!!!🚀🚀🚀🆕🆕🆕\n");
-	console.log("📊 OpenAI API called");
 	const API_NAME = "OpenAI API";
+	console.log(`📊 ${API_NAME} called`);
 
 	// 🔐 認証チェック
-	console.log(API_NAME, "🔐 認証チェック");
+	console.log(`[${API_NAME}]`, "🔐 認証チェック");
 	const supabase = await createServerClient();
 	if (process.env.NODE_ENV === "development") {
 		console.log("🔐 開発環境です。認証をスキップしました。");
@@ -71,17 +63,26 @@ export const POST = async (
 	}
 
 	// 📝 リクエストボディのパー
-	console.log(API_NAME, "📝 リクエストボディのパース");
+	console.log(`[${API_NAME}]`, "📝 リクエストボディのパース");
 	const json = await req.json();
-	console.log(API_NAME, "json: ", JSON.stringify(json).slice(0, 100));
+	console.log(`[${API_NAME}]`, "json: ", JSON.stringify(json).slice(0, 100));
 
 	// リクエストのバリデーション
-	console.log(API_NAME, "リクエストのバリデーション");
+	console.log(`[${API_NAME}]`, "リクエストのバリデーション");
 	const parsed = OpenAIRequestSchema.safeParse(json);
-	console.log(API_NAME, "parsed.success: ", parsed.success);
-	console.log(API_NAME, "parsed: ", JSON.stringify(parsed).slice(0, 100));
+	console.log(`[${API_NAME}]`, "parsed.success: ", parsed.success);
+	console.log(
+		`[${API_NAME}]`,
+		"parsed: ",
+		JSON.stringify(parsed).slice(0, 100),
+	);
 	if (!parsed.success) {
-		console.error(API_NAME, "リクエストが不正です", parsed.error.message);
+		console.log("❌ エラーの元データ \n", json);
+		console.error(
+			`[${API_NAME}]`,
+			"リクエストが不正です",
+			parsed.error.message,
+		);
 		return NextResponse.json<OpenAIApiResponse>(
 			{
 				success: false,
@@ -99,8 +100,9 @@ export const POST = async (
 	// OpenAI 外部API を呼び出す
 	try {
 		// リクエストをOpenAI 外部APIに送信
-		console.log(API_NAME, "📊 Try openai.chat.completions.create");
-		const response = await openai.chat.completions.create({
+		console.log(`[${API_NAME}]`, "📊 Try openai.chat.completions.create");
+
+		const requestToOpenAI = {
 			model: parsed.data.model,
 			messages: parsed.data.messages,
 			temperature: parsed.data.temperature,
@@ -109,14 +111,19 @@ export const POST = async (
 			frequency_penalty: parsed.data.frequency_penalty,
 			presence_penalty: parsed.data.presence_penalty,
 			...(parsed.data.tools && { tools: parsed.data.tools }),
-			tool_choice: parsed.data.tool_choice as ToolChoice,
-		});
+			...(parsed.data.tool_choice && {
+				tool_choice: parsed.data.tool_choice as ToolChoice,
+			}),
+		};
+		console.log(`[${API_NAME}]`, "requestToOpenAI: ", requestToOpenAI);
+
+		const response = await openai.chat.completions.create(requestToOpenAI);
 
 		// トークン使用量のログ
 		if (response.usage) {
 			const { prompt_tokens, completion_tokens, total_tokens } = response.usage;
 			console.log(
-				API_NAME,
+				`[${API_NAME}]`,
 				`OpenAI token usage:
       - prompt_tokens: ${prompt_tokens}
       - completion_tokens: ${completion_tokens}
@@ -127,8 +134,9 @@ export const POST = async (
 		// OpenAI 外部API レスポンスのバリデーション
 		const validated = OpenAIChatCompletionResponseSchema.safeParse(response);
 		if (!validated.success) {
+			console.log("❌ エラーの元データ \n", response);
 			console.error(
-				API_NAME,
+				`[${API_NAME}]`,
 				"OpenAI 外部API レスポンスのバリデーションエラー",
 				validated.error.message,
 			);
@@ -146,13 +154,13 @@ export const POST = async (
 			);
 		}
 		console.log(
-			API_NAME,
+			`[${API_NAME}]`,
 			"validated.data: ",
 			JSON.stringify(validated.data).slice(0, 100),
 		);
 
 		// 成功時のレスポンス送信
-		console.log(API_NAME, "✅ 成功時のレスポンス送信");
+		console.log(`[${API_NAME}]`, "✅ 成功時のレスポンス送信");
 		return NextResponse.json<OpenAIApiResponse>(
 			{
 				success: true,

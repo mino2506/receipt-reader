@@ -10,14 +10,13 @@ import {
 import { API_ENDPOINTS, DEFAULT_GCV_FEATURES } from "./constants";
 import {
 	type GCVRequestBody,
-	ImageInputSchema,
-	ToImageInputSchema,
+	GCVRequestImageInputSchema,
+	toGCVRequestImageInputSchema,
 } from "./schema";
 import { type GCVSingleResponse, GCVSingleResponseSchema } from "./schema";
-import type { GCVCustomResult } from "./types.server";
 
 export function validateImageInput(input: unknown): Base64Image | Url {
-	const parsed = ImageInputSchema.safeParse(input);
+	const parsed = GCVRequestImageInputSchema.safeParse(input);
 	if (!parsed.success) {
 		const errorMessage = parsed.error.errors[0]?.message ?? "Invalid input";
 		throw new Error(errorMessage);
@@ -26,7 +25,7 @@ export function validateImageInput(input: unknown): Base64Image | Url {
 }
 
 export function createGCVRequest(input: Base64Image | Url): GCVRequestBody {
-	const parsed = ToImageInputSchema.safeParse(input);
+	const parsed = toGCVRequestImageInputSchema.safeParse(input);
 	if (!parsed.success) {
 		const errorMessage = parsed.error.errors[0]?.message ?? "Invalid input";
 		throw new Error(errorMessage);

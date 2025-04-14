@@ -2,11 +2,33 @@ import normalReceipt from "@/gcvRawData.json";
 import {
 	type GCVSingleResponse,
 	GCVSingleResponseSchema,
-	type PageInfo,
-	type WordInfo,
 } from "@/lib/googleCloudVision/schema";
 import angledReceipt from "@/sampleReceiptAngled.json";
 import { ZodError } from "zod";
+
+// [変換用]
+type WordInfo = {
+	text: string;
+	boundingBox: {
+		vertices: { x: number; y: number }[];
+	};
+	confidence: number;
+};
+
+type PageInfo = {
+	pageIndex: number;
+	size: {
+		width: number;
+		height: number;
+	};
+	words: WordInfo[];
+};
+
+// 行ごとに配列化するための型
+type Line = {
+	y: number;
+	words: WordInfo[];
+};
 
 /**
  * unknown 型データを安全に GCVSingleResponse に変換する
@@ -118,70 +140,14 @@ export function extractPagesFromGCV(response: GCVSingleResponse): PageInfo[] {
 	return result;
 }
 
-// 行ごとに配列かするための型
-type Line = {
-	y: number;
-	words: WordInfo[];
-};
-
-/**
- * 単語リストをY座標の近さに基づいて行ごとにグループ化する
- *
- * @param words - WordInfo[] ページ内の単語リスト
- * @param imageHeight - ページ画像の高さ ( px ). 行マージの基準に使用
- * @param lineMergeRatio - Optional (Default: 0.01) 高さに対する行マージの許容割合（例: 0.01 = 1%）
- * @param confidenceThreshold - Optional (Default: 0.8) 最低信頼度 この値未満の単語は除外される
- * @returns 行ごとに結合された文字列の配列（上から順）
- *
- * @example
- * const lines = groupWordsIntoLinesByRatio(page.words, page.size.height);
- * console.log(lines.join("\n"));
- */
-export function groupWordsIntoLinesByRatio(
-	words: WordInfo[],
-	imageHeight: number,
-	lineMergeRatio = 0.01,
-	confidenceThreshold = 0.5,
-): string[] {
-	const lines: Line[] = [];
-	const lineMergeThreshold = imageHeight * lineMergeRatio;
-
-	for (const word of words) {
-		if (word.confidence < confidenceThreshold) continue;
-
-		const y = word.boundingBox.vertices[0]?.y ?? 0;
-
-		const existingLine = lines.find(
-			(line) => Math.abs(line.y - y) < lineMergeThreshold,
-		);
-
-		if (existingLine) {
-			existingLine.words.push(word);
-		} else {
-			lines.push({ y, words: [word] });
-		}
-	}
-
-	for (const line of lines) {
-		line.words.sort(
-			(a, b) =>
-				(a.boundingBox.vertices[0]?.x ?? 0) -
-				(b.boundingBox.vertices[0]?.x ?? 0),
-		);
-	}
-
-	return lines
-		.sort((a, b) => a.y - b.y)
-		.map((line) => line.words.map((w) => w.text).join(" "));
-}
-
 import groupBy from "lodash/groupBy";
 import sortBy from "lodash/sortBy";
 import sumBy from "lodash/sumBy";
 import { atan2 } from "mathjs";
 
 /**
- * WordInfo 配列から行ごとに単語をグループ化（傾き補正付き）
+ * WordInfo 配列から行ごとに単語をグループ化
+ * - 各単語の頂点から dx/dy から傾きを算出して補正
  *
  * @param words - WordInfo[] 全単語（単ページ）
  * @param imageHeight - ページ画像の高さ ( px ). 行マージの基準に使用
@@ -260,6 +226,59 @@ export function groupWordsWithDeskew(
 	console.log("[groupWordsWithDeskew] log:", log);
 
 	return retrunGroup;
+}
+
+/**
+ * @deprecated
+ *
+ * 単語リストをY座標の近さに基づいて行ごとにグループ化する
+ *
+ * @param words - WordInfo[] ページ内の単語リスト
+ * @param imageHeight - ページ画像の高さ ( px ). 行マージの基準に使用
+ * @param lineMergeRatio - Optional (Default: 0.01) 高さに対する行マージの許容割合（例: 0.01 = 1%）
+ * @param confidenceThreshold - Optional (Default: 0.8) 最低信頼度 この値未満の単語は除外される
+ * @returns 行ごとに結合された文字列の配列（上から順）
+ *
+ * @example
+ * const lines = groupWordsIntoLinesByRatio(page.words, page.size.height);
+ * console.log(lines.join("\n"));
+ */
+export function groupWordsIntoLinesByRatio(
+	words: WordInfo[],
+	imageHeight: number,
+	lineMergeRatio = 0.01,
+	confidenceThreshold = 0.5,
+): string[] {
+	const lines: Line[] = [];
+	const lineMergeThreshold = imageHeight * lineMergeRatio;
+
+	for (const word of words) {
+		if (word.confidence < confidenceThreshold) continue;
+
+		const y = word.boundingBox.vertices[0]?.y ?? 0;
+
+		const existingLine = lines.find(
+			(line) => Math.abs(line.y - y) < lineMergeThreshold,
+		);
+
+		if (existingLine) {
+			existingLine.words.push(word);
+		} else {
+			lines.push({ y, words: [word] });
+		}
+	}
+
+	for (const line of lines) {
+		line.words.sort(
+			(a, b) =>
+				(a.boundingBox.vertices[0]?.x ?? 0) -
+				(b.boundingBox.vertices[0]?.x ?? 0),
+		);
+	}
+
+	return lines
+		.sort((a, b) => a.y - b.y)
+		.map((line) => line.words.map((w) => w.text).join(" "));
 }
 
 // TODO: テストコード書くときに使う

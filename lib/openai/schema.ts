@@ -1,4 +1,4 @@
-import { createApiResponseSchema } from "@/lib//api/common.schema";
+import { createApiResponseSchema } from "@/lib/api/common.schema";
 import { z } from "zod";
 
 // [General]
