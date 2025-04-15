@@ -1,15 +1,28 @@
 // lib/api/receipt/receipt.ts
 
 import { z } from "zod";
-import { UuidIdSchema } from "./common";
+import { IsoDateSchema, UuidIdSchema } from "./common";
 
 /**
  * Zod Schema
- * レシートテーブルPOST用のスキーマ定義
+ * - レシートテーブルPOST用のスキーマ定義
+ * - レシート作成用の最小限のデータ { totalPrice, userId } のみ
  */
 export const CreateReceiptSchema = z.object({
 	totalPrice: z.number().int().nonnegative(),
 	userId: z.string().uuid(),
+});
+/**
+ * Zod Schema
+ * - レシートテーブルPOST用のスキーマ定義
+ * - 作成されたレシートのすべてのデータを含む
+ * @see CreateReceiptSchema - スキーマ定義
+ */
+export const CreatedReceiptSchema = CreateReceiptSchema.extend({
+	id: z.string().uuid(),
+	createdAt: IsoDateSchema,
+	updatedAt: IsoDateSchema,
+	deletedAt: IsoDateSchema.nullable(),
 });
 
 /**

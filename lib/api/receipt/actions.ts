@@ -8,33 +8,47 @@ import {
 	type ApiResponseFromType,
 	createApiResponseSchema,
 } from "@/lib/api/common.schema";
-import { CreateReceiptSchema } from "@/lib/api/receipt/receipt";
-import { CreateReceiptDetailArraySchema } from "@/lib/api/receipt/receiptDetail";
+import {
+	type CreateReceiptDetailSchema,
+	CreateReceiptDetailWithItemArraySchema,
+	CreateReceiptSchema,
+	CreatedReceiptDetailArraySchema,
+	CreatedReceiptSchema,
+} from "@/lib/api/receipt";
 
-const CreateReceiptWithDetailsSchema = z.object({
+// [Input]
+const CreateReceiptWithItemDetailsSchema = z.object({
 	receipt: CreateReceiptSchema,
-	details: CreateReceiptDetailArraySchema,
+	details: CreateReceiptDetailWithItemArraySchema,
 });
 type CreateReceiptWithDetailsInput = z.infer<
-	typeof CreateReceiptWithDetailsSchema
+	typeof CreateReceiptWithItemDetailsSchema
 >;
 
-const ApiResponseReceiptWithDetailsSchema = createApiResponseSchema(
-	CreateReceiptWithDetailsSchema,
-);
+// [Output]
+const CreatedReceiptWithDetailsSchema = z.object({
+	receipt: CreatedReceiptSchema,
+	details: CreatedReceiptDetailArraySchema,
+});
+type CreatedReceiptWithDetails = z.infer<
+	typeof CreatedReceiptWithDetailsSchema
+>;
+
 type ApiResponseReceiptWithDetails =
-	ApiResponseFromType<CreateReceiptWithDetailsInput>;
+	ApiResponseFromType<CreatedReceiptWithDetails>;
+
+type ReceiptDetailInput = z.infer<typeof CreateReceiptDetailSchema>;
 
 export async function createReceiptWithDetails(
 	input: CreateReceiptWithDetailsInput,
 ): Promise<ApiResponseReceiptWithDetails> {
 	// ✅ Zodで安全性確認
-	const parsed = CreateReceiptWithDetailsSchema.safeParse(input);
+	const parsed = CreateReceiptWithItemDetailsSchema.safeParse(input);
 	if (!parsed.success) {
 		console.log("❌ エラーの元データ:", input);
 		console.error(
 			"❌ リクエストパラメータのバリデーションに失敗しました",
-			parsed.error,
+			parsed.error.issues,
 		);
 		return {
 			success: false,
@@ -74,15 +88,100 @@ export async function createReceiptWithDetails(
 			},
 		});
 
-		// ✅ 明細を一括作成
-		await prisma.receiptDetail.createMany({
-			data: details.map((d) => ({
-				...d,
-				receiptId: createdReceipt.id,
-			})),
-		});
+		// ✅ 一括作成したい明細の配列を空で作成
+		const detailsToCreate: ReceiptDetailInput[] = [];
 
-		return { success: true, data: { receipt, details } };
+		for (const detail of details) {
+			// ✅ 商品が登録済みか検索
+			const existingItems = await prisma.item.findFirst({
+				where: {
+					...(detail.item.normalized
+						? { normalized: detail.item.normalized }
+						: { rawName: detail.item.rawName }),
+				},
+			});
+
+			// ✅ 商品がなければ作成
+			const item =
+				existingItems ??
+				(await prisma.item.create({
+					data: {
+						rawName: detail.item.rawName,
+						normalized: detail.item.normalized ?? null,
+						category: detail.item.category,
+					},
+				}));
+
+			// ✅ 明細を detailsToCreate に追加
+			detailsToCreate.push({
+				amount: detail.amount,
+				unitPrice: detail.unitPrice,
+				subTotalPrice: detail.subTotalPrice,
+				tax: detail.tax,
+				currency: detail.currency,
+				itemId: item.id,
+				receiptId: createdReceipt.id,
+			});
+		}
+
+		// ✅ 明細を一括作成
+		// 要検証 .createMany() は id createdAt などを返さない
+		// const createdDetails = await prisma.receiptDetail.createMany({
+		// 	data: detailsToCreate.map((d) => ({
+		// 		...d,
+		// 		receiptId: createdReceipt.id,
+		// 	})),
+		// });
+		const createdDetails = await Promise.all(
+			detailsToCreate.map((d) =>
+				prisma.receiptDetail.create({
+					data: { ...d, receiptId: createdReceipt.id },
+				}),
+			),
+		);
+
+		const transformedReceipt = CreatedReceiptSchema.safeParse(createdReceipt);
+		if (!transformedReceipt.success) {
+			console.error(
+				"❌ createReceiptWithDetails エラー:",
+				transformedReceipt.error.issues,
+			);
+			return {
+				success: false,
+				error: {
+					code: "receipt_validation_failed",
+					message: "レシートの形式が不正です",
+					hint: transformedReceipt.error.message,
+					field: "receipt",
+				},
+			};
+		}
+
+		const transformedDetails =
+			CreatedReceiptDetailArraySchema.safeParse(createdDetails);
+		if (!transformedDetails.success) {
+			console.error(
+				"❌ createReceiptWithDetails エラー:",
+				transformedDetails.error.issues,
+			);
+			return {
+				success: false,
+				error: {
+					code: "details_validation_failed",
+					message: "明細の形式が不正です",
+					hint: transformedDetails.error.message,
+					field: "details",
+				},
+			};
+		}
+
+		return {
+			success: true,
+			data: {
+				receipt: transformedReceipt.data,
+				details: transformedDetails.data,
+			},
+		};
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);
 		console.error("❌ createReceiptWithDetails エラー:", error);
