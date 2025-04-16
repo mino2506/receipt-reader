@@ -2,6 +2,8 @@
 
 "use client";
 
+import { useState } from "react";
+
 import type { ApiResponseFromType } from "@/lib/api/common.schema";
 import {
 	extractPagesFromGCV,
@@ -13,7 +15,6 @@ import type {
 	OpenAIChatCompletionChoiceSchema,
 } from "@/lib/openai/schema";
 import { convertToBase64 } from "@/utils/base64";
-import { useState } from "react";
 import {
 	parseReceiptToJsonWithAi,
 	tryParseAndFetchGCVFromClient,

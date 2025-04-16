@@ -2,42 +2,20 @@
 
 import { prisma } from "@/lib/prisma";
 import { createClient as createServerClient } from "@/lib/supabase/server";
-import { z } from "zod";
+import type { z } from "zod";
 
 import {
-	type ApiResponseFromType,
-	createApiResponseSchema,
-} from "@/lib/api/common.schema";
-import {
 	type CreateReceiptDetailSchema,
-	CreateReceiptDetailWithItemArraySchema,
-	CreateReceiptSchema,
 	CreatedReceiptDetailArraySchema,
 	CreatedReceiptSchema,
 } from "@/lib/api/receipt";
+import {
+	type ApiResponseReceiptWithDetails,
+	type CreateReceiptWithDetailsInput,
+	CreateReceiptWithItemDetailsSchema,
+} from "./create.type";
 
-// [Input]
-const CreateReceiptWithItemDetailsSchema = z.object({
-	receipt: CreateReceiptSchema,
-	details: CreateReceiptDetailWithItemArraySchema,
-});
-type CreateReceiptWithDetailsInput = z.infer<
-	typeof CreateReceiptWithItemDetailsSchema
->;
-
-// [Output]
-const CreatedReceiptWithDetailsSchema = z.object({
-	receipt: CreatedReceiptSchema,
-	details: CreatedReceiptDetailArraySchema,
-});
-type CreatedReceiptWithDetails = z.infer<
-	typeof CreatedReceiptWithDetailsSchema
->;
-
-type ApiResponseReceiptWithDetails =
-	ApiResponseFromType<CreatedReceiptWithDetails>;
-
-type ReceiptDetailInput = z.infer<typeof CreateReceiptDetailSchema>;
+export type ReceiptDetailInput = z.infer<typeof CreateReceiptDetailSchema>;
 
 export async function createReceiptWithDetails(
 	input: CreateReceiptWithDetailsInput,

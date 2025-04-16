@@ -20,3 +20,10 @@ export {
 	UpdateReceiptDetailArraySchema,
 	ReceiptDetailIdArraySchema,
 } from "./receiptDetail";
+export {
+	CreateReceiptWithItemDetailsSchema,
+	type CreateReceiptWithDetailsInput,
+	CreatedReceiptWithDetailsSchema,
+	type CreatedReceiptWithDetails,
+	type ApiResponseReceiptWithDetails,
+} from "./create.type";
