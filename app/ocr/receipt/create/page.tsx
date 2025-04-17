@@ -3,17 +3,20 @@
 import { useOptimistic, useState, useTransition } from "react";
 
 import type { ApiError } from "@/lib/api/common.schema";
-import { createReceiptWithDetails } from "@/lib/api/receipt/actions";
-import type {
-	CreateReceiptWithDetailsInput,
-	CreatedReceiptWithDetails,
-} from "@/lib/api/receipt/create.type";
+import {
+	type CreateReceiptDetailArray,
+	type CreateReceiptWithItemDetails,
+	CreateReceiptWithItemDetailsSchema,
+} from "@/lib/api/receipt/create.schema";
+import {
+	type ReceiptWithItemDetails,
+	ReceiptWithItemDetailsSchema,
+} from "@/lib/api/receipt/get.schema";
+import { createReceiptWithDetails } from "@/lib/api/receipt/server/createReceiptWithDetails";
 
-const mockInput: CreateReceiptWithDetailsInput = {
-	receipt: {
-		totalPrice: 1980,
-		userId: "47186933-47fa-4152-91f9-70fcf9d5247d", // SupabaseユーザーID（開発用）
-	},
+const mockInput: CreateReceiptWithItemDetails = {
+	totalPrice: 1980,
+
 	details: [
 		{
 			item: {
@@ -43,34 +46,37 @@ const mockInput: CreateReceiptWithDetailsInput = {
 };
 
 export default function TestCreateReceiptPage() {
-	const [receipt, setReceipt] = useState<CreatedReceiptWithDetails | null>(
-		null,
-	);
+	const [receipt, setReceipt] = useState<ReceiptWithItemDetails | null>(null);
 	const [optimisticReceipt, setOptimisticReceipt] = useOptimistic(receipt);
 	const [isPending, startTransition] = useTransition();
 	const [error, setError] = useState<ApiError | null>(null);
 
 	const handleSubmit = () => {
 		startTransition(async () => {
-			const optimisticReceipt: CreatedReceiptWithDetails = {
+			const optimisticReceipt: ReceiptWithItemDetails = {
 				...mockInput,
-				receipt: {
-					totalPrice: mockInput.receipt.totalPrice,
-					userId: "-",
-					id: "-",
-					createdAt: new Date().toISOString(),
-					updatedAt: new Date().toISOString(),
-					deletedAt: null,
-				},
+				totalPrice: mockInput.totalPrice,
+				id: "-",
+				createdAt: new Date().toISOString(),
+				updatedAt: new Date().toISOString(),
+				deletedAt: null,
 				details: mockInput.details.map((detail, index) => ({
 					...detail,
 					id: `00000000-0000-0000-0000-${index.toString().padStart(12, "0")}`,
-					itemId: `00000000-0000-0000-0000-${index.toString().padStart(12, "0")}`,
 					createdAt: new Date().toISOString(),
 					updatedAt: new Date().toISOString(),
 					deletedAt: null,
+					item: {
+						id: `00000000-0000-0000-0000-${index.toString().padStart(12, "0")}`,
+						rawName: detail.item.rawName,
+						normalized: detail.item.normalized ?? "",
+						category: detail.item.category,
+						createdAt: new Date().toISOString(),
+						updatedAt: new Date().toISOString(),
+					},
 				})),
 			};
+			[].reduce;
 
 			setOptimisticReceipt(optimisticReceipt);
 
@@ -110,38 +116,47 @@ export default function TestCreateReceiptPage() {
 	);
 }
 
-const dummyReceipt: CreatedReceiptWithDetails = {
-	receipt: {
-		id: "dummy-receipt-id",
-		userId: "dummy-user-id",
-		totalPrice: 1980,
-		createdAt: new Date().toISOString(),
-		updatedAt: new Date().toISOString(),
-		deletedAt: null,
-	},
+const dummyReceipt: ReceiptWithItemDetails = {
+	id: "dummy-receipt-id",
+	totalPrice: 1980,
+	createdAt: new Date().toISOString(),
+	updatedAt: new Date().toISOString(),
+	deletedAt: null,
 	details: [
 		{
 			id: "dummy-detail-1",
-			itemId: "item-123",
+			item: {
+				rawName: "ダミー商品名-1",
+				normalized: "標準化済みダミー商品名-1",
+				category: "other",
+				id: "item-123",
+				createdAt: new Date().toISOString(),
+				updatedAt: new Date().toISOString(),
+			},
 			amount: 2,
 			unitPrice: 900,
 			subTotalPrice: 1800,
 			tax: 180,
 			currency: "JPY",
-			receiptId: "dummy-receipt-id",
 			createdAt: new Date().toISOString(),
 			updatedAt: new Date().toISOString(),
 			deletedAt: null,
 		},
 		{
 			id: "dummy-detail-2",
-			itemId: "item-456",
+			item: {
+				rawName: "ダミー商品名-2",
+				normalized: null,
+				category: "drink",
+				id: "item-456",
+				createdAt: new Date().toISOString(),
+				updatedAt: new Date().toISOString(),
+			},
 			amount: 1,
 			unitPrice: 180,
 			subTotalPrice: 180,
 			tax: 18,
 			currency: "JPY",
-			receiptId: "dummy-receipt-id",
 			createdAt: new Date().toISOString(),
 			updatedAt: new Date().toISOString(),
 			deletedAt: null,
@@ -150,13 +165,13 @@ const dummyReceipt: CreatedReceiptWithDetails = {
 };
 function ReceiptTable({
 	receipt = dummyReceipt,
-}: { receipt: CreatedReceiptWithDetails | undefined }) {
+}: { receipt: ReceiptWithItemDetails | undefined }) {
 	return (
 		<div className="overflow-x-auto">
 			<table className="table-auto w-full">
 				<thead>
 					<tr>
-						<th className="px-4 py-2">Item</th>
+						<th className="px-4 py-2">Item Name</th>
 						<th className="px-4 py-2">Amount</th>
 						<th className="px-4 py-2">Unit Price</th>
 						<th className="px-4 py-2">Subtotal Price</th>
@@ -167,7 +182,9 @@ function ReceiptTable({
 				<tbody>
 					{receipt.details.map((detail) => (
 						<tr key={detail.id}>
-							<td className="border px-4 py-2">{detail.itemId}</td>
+							<td className="border px-4 py-2">
+								{detail.item.normalized ?? detail.item.rawName}
+							</td>
 							<td className="border px-4 py-2">{detail.amount}</td>
 							<td className="border px-4 py-2">{detail.unitPrice}</td>
 							<td className="border px-4 py-2">{detail.subTotalPrice}</td>
