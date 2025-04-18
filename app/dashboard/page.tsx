@@ -7,6 +7,7 @@ import { useEffect } from "react";
 
 import SignOutButton from "@/app/components/SignOutButton";
 import ReceiptImage from "@/app/ocr/receipt/receiptImage/page";
+import AllReceiptsTable from "@/app/ocr/receipt/table/page";
 
 export default function Dashboard() {
 	const router = useRouter();
@@ -26,7 +27,7 @@ export default function Dashboard() {
 				<div className="flex-wrap m-3 bg-gray-500 max-w-full break-words">
 					ようこそ、{session.user.email} さん！aaaaaaaaaaaaaaaaaaa
 				</div>
-				<AllReceipts />
+				<AllReceiptsTable />
 				<ReceiptImage />
 				<SignOutButton />
 			</div>
