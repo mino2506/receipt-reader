@@ -1,5 +1,6 @@
 // app/layout.tsx
 
+import { TRPCProvider } from "@/app/providers/trpc-provider";
 import { SessionProvider } from "@/context/SessionProvider";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
@@ -30,7 +31,9 @@ export default function RootLayout({
 			<body
 				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
 			>
-				<SessionProvider>{children}</SessionProvider>
+				<SessionProvider>
+					<TRPCProvider>{children}</TRPCProvider>
+				</SessionProvider>
 			</body>
 		</html>
 	);
