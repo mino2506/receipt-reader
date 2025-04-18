@@ -39,7 +39,21 @@ export default function Dashboard() {
 import { trpc } from "@/lib/trpc/client";
 
 function AllReceipts() {
-	const { data, isLoading, error } = trpc.getMyReceipts.useQuery({ limit: 10 });
+	const {
+		data,
+		isLoading,
+		error,
+		fetchNextPage,
+		hasNextPage,
+		isFetchingNextPage,
+	} = trpc.receipt.getReceipts.useInfiniteQuery(
+		{
+			limit: 5,
+		},
+		{
+			getNextPageParam: (lastPage) => lastPage.nextCursor,
+		},
+	);
 
 	if (isLoading) return <div>読み込み中...</div>;
 	if (error) return <div>エラー: {error.message}</div>;
@@ -57,16 +71,30 @@ function AllReceipts() {
 					</tr>
 				</thead>
 				<tbody>
-					{data?.map((r) => (
-						<tr key={r.id}>
-							<td className="border px-4 py-2">{r.id}</td>
-							<td className="border px-4 py-2">{r.totalPrice}</td>
-							<td className="border px-4 py-2">{r.updatedAt}</td>
-							<td className="border px-4 py-2">{r.receiptDetails.length}</td>
-						</tr>
-					))}
+					{data?.pages.flatMap((page) =>
+						page.receipts.map((r) => (
+							<tr key={r.id}>
+								<td className="border px-4 py-2">{r.id}</td>
+								<td className="border px-4 py-2">{r.totalPrice}</td>
+								<td className="border px-4 py-2">
+									{new Date(r.updatedAt).toLocaleString()}
+								</td>
+								<td className="border px-4 py-2">{r.details.length}</td>
+							</tr>
+						)),
+					)}
 				</tbody>
 			</table>
+			{hasNextPage && (
+				<button
+					type="button"
+					onClick={() => fetchNextPage()}
+					disabled={isFetchingNextPage}
+					className="bg-blue-600 text-white m-2 px-4 py-2 rounded hover:opacity-80 disabled:opacity-50"
+				>
+					{isFetchingNextPage ? "読み込み中..." : "もっと見る"}
+				</button>
+			)}
 		</div>
 	);
 }

@@ -79,15 +79,10 @@ export async function createReceiptWithDetails(
 			};
 		}
 
-		const receiptWithDetails = {
-			...fetchedReceipt,
-			details: fetchedReceipt?.receiptDetails,
-		};
-
 		const transformedReceipt =
-			ReceiptWithItemDetailsSchema.safeParse(receiptWithDetails);
+			ReceiptWithItemDetailsSchema.safeParse(fetchedReceipt);
 		if (!transformedReceipt.success) {
-			console.warn("❌ エラーの元データ:", receiptWithDetails);
+			console.warn("❌ エラーの元データ:", fetchedReceipt);
 			console.error(
 				"❌ createReceiptWithDetails エラー:",
 				transformedReceipt.error.issues,

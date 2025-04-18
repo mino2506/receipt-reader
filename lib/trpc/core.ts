@@ -13,7 +13,7 @@ export const protectedProcedure = t.procedure.use(
 			throw new Error("UNAUTHORIZED");
 		}
 
-		// non-nullチェック後の値をプロパティに代入してUser型のみにする
+		// non-null チェック後の値をプロパティに代入してUser型のみにする
 		return next({
 			ctx: {
 				...ctx,

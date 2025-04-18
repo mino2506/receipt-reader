@@ -1,3 +1,5 @@
+// lib/api/receipt/get.schema.ts
+
 import { z } from "zod";
 
 import { CategoryEnum, CurrencyEnum, IsoDateSchema } from "./common.schema";
@@ -64,8 +66,18 @@ export type ReceiptDetailWithItemArray = z.infer<
  * - レシート全体のGET用のスキーマ定義
  */
 export const ReceiptWithItemDetailsSchema = ReceiptSchema.extend({
-	details: ReceiptDetailWithItemArraySchema,
-});
+	receiptDetails: ReceiptDetailWithItemArraySchema,
+}).transform(({ receiptDetails, ...rest }) => ({
+	...rest,
+	details: receiptDetails,
+}));
 export type ReceiptWithItemDetails = z.infer<
 	typeof ReceiptWithItemDetailsSchema
+>;
+
+export const ReceiptWithItemDetailsArraySchema = z.array(
+	ReceiptWithItemDetailsSchema,
+);
+export type ReceiptWithItemDetailsArray = z.infer<
+	typeof ReceiptWithItemDetailsArraySchema
 >;
