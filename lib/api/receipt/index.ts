@@ -26,4 +26,6 @@ export {
 	type ReceiptDetailWithItemArray,
 	ReceiptWithItemDetailsSchema,
 	type ReceiptWithItemDetails,
+	ReceiptWithItemDetailsArraySchema,
+	type ReceiptWithItemDetailsArray,
 } from "./get.schema";
