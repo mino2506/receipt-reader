@@ -1,6 +1,6 @@
 import { trpc } from "@/lib/trpc/client";
 
-import { ReceiptTable } from "./ReceiptTable";
+import ReceiptTable from "./ReceiptTable";
 
 export default function AllReceiptsTable() {
 	const {

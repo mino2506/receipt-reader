@@ -15,6 +15,23 @@ export async function insertReceiptWithDetails(
 			},
 		});
 
+		const searchKeys = input.details.map((d) =>
+			d.item.normalized
+				? { normalized: d.item.normalized, rawName: d.item.rawName }
+				: { rawName: d.item.rawName },
+		);
+		const uniqueKeys = Array.from(new Set(searchKeys));
+		const existingItems = await tx.item.findMany({
+			where: {
+				OR: uniqueKeys,
+			},
+		});
+		const itemMap = new Map<string, (typeof existingItems)[number]>();
+		for (const item of existingItems) {
+			const key = item.normalized ?? item.rawName;
+			itemMap.set(key, item);
+		}
+
 		const detailsToCreate: CreateReceiptDetailArray = [];
 
 		for (const detail of input.details) {
