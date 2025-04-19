@@ -3,15 +3,8 @@
 import { useOptimistic, useState, useTransition } from "react";
 
 import type { ApiError } from "@/lib/api/common.schema";
-import {
-	type CreateReceiptDetailArray,
-	type CreateReceiptWithItemDetails,
-	CreateReceiptWithItemDetailsSchema,
-} from "@/lib/api/receipt/create.schema";
-import {
-	type ReceiptWithItemDetails,
-	ReceiptWithItemDetailsSchema,
-} from "@/lib/api/receipt/get.schema";
+import type { CreateReceiptWithItemDetails } from "@/lib/api/receipt/create.schema";
+import type { ReceiptWithItemDetails } from "@/lib/api/receipt/get.schema";
 import { createReceiptWithDetails } from "@/lib/api/receipt/server/createReceiptWithDetails";
 
 const mockInput: CreateReceiptWithItemDetails = {
@@ -89,7 +82,6 @@ export default function TestCreateReceiptPage() {
 					},
 				})),
 			};
-			[].reduce;
 
 			setOptimisticReceipt(optimisticReceipt);
 

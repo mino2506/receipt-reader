@@ -12,6 +12,7 @@ import {
 	OpenAIReceiptRequestSchema,
 	type OpenAiApiReceiptResponse,
 	OpenAiApiReceiptResponseSchema,
+	type OpenAiReceiptData,
 	OpenAiReceiptDataSchema,
 } from "@/app/components/ImageUploader/schema";
 import type { ApiResponseFromType } from "@/lib/api/common.schema";
@@ -37,7 +38,7 @@ export async function tryParseAndFetchGCVFromClient(input: unknown) {
 
 export async function parseReceiptToJsonWithAi(
 	input: string,
-): Promise<ApiResponseFromType<OpenAiApiReceiptResponse>> {
+): Promise<ApiResponseFromType<OpenAiReceiptData>> {
 	const ACTION_NAME = "parseReceiptToJsonWithAi";
 	console.log(`📊RUNNING ServerAction - ${parseReceiptToJsonWithAi}`);
 	console.log(`[${ACTION_NAME}]`, "input: \n", input.slice(0, 300));
@@ -306,7 +307,7 @@ export async function parseReceiptToJsonWithAi(
 		console.log(`[${ACTION_NAME}]`, "✅ 成功時のレスポンス送信");
 		return {
 			success: true,
-			data: receiptData,
+			data: receiptData.data,
 		};
 	} catch (error) {
 		console.error(error);

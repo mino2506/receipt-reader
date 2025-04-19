@@ -13,7 +13,7 @@ import { receiptColumns } from "./columns";
 
 import type { ReceiptWithItemDetails } from "@/lib/api/receipt/get.schema";
 
-import ReceiptDetailsTable from "./ReceiptDetailsTable";
+import ReceiptDetailPreviewTable from "./ReceiptDetailPreviewTable";
 
 export default function ReceiptTable({
 	data,
@@ -56,7 +56,7 @@ export default function ReceiptTable({
 				{table.getRowModel().rows.map((row) => (
 					<React.Fragment key={row.id}>
 						<tr className=" border border-t-0 bg-amber-800 ">
-							<td className=" border border-t-0 flex items-center justify-center">
+							<td className=" border border-t-0 h-full flex items-stretch justify-center">
 								<div className="h-8 px-1 py-1">
 									<button
 										type="button"
@@ -89,7 +89,7 @@ export default function ReceiptTable({
 							<tr>
 								<td colSpan={row.getVisibleCells().length + 1}>
 									<div className="p-2 bg-red-400">
-										<ReceiptDetailsTable
+										<ReceiptDetailPreviewTable
 											details={row.original.details}
 											pageSize={5}
 										/>

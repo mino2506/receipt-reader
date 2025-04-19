@@ -2,7 +2,7 @@ import { useState } from "react";
 
 import type { ReceiptDetailWithItem } from "@/lib/api/receipt/get.schema";
 
-export default function ReceiptDetailsTable({
+export default function ReceiptDetailPreviewTable({
 	details,
 	pageSize = 5,
 }: {
