@@ -2,9 +2,10 @@
 
 "use client";
 
-import { useState } from "react";
+import { useOptimistic, useState, useTransition } from "react";
 
 import type { ApiResponseFromType } from "@/lib/api/common.schema";
+import type { ReceiptWithItemDetails } from "@/lib/api/receipt/get.schema";
 
 import { convertToBase64 } from "@/utils/base64";
 
@@ -18,16 +19,60 @@ import {
 	parseReceiptToJsonWithAi,
 	tryParseAndFetchGCVFromClient,
 } from "./action";
-import type { OpenAiApiReceiptResponse } from "./schema";
+import { type OpenAiReceiptData, OpenAiReceiptDataSchema } from "./schema";
 
+import ReceiptDetailsTable from "@/app/ocr/receipt/table/[id]/ReceiptDetail";
+import { CreateReceiptWithItemDetailsSchema } from "@/lib/api/receipt";
 import { createReceiptWithDetails } from "@/lib/api/receipt/server/createReceiptWithDetails";
 
+function createOptimisticReceipt(
+	receipt: ReceiptWithItemDetails | null,
+): ReceiptWithItemDetails | null {
+	if (!receipt) return null;
+	return {
+		...receipt,
+		store: {
+			id: "-",
+			rawName: receipt.store?.rawName ?? "-",
+			normalized: receipt.store?.normalized ?? "-",
+			createdAt: new Date().toISOString(),
+			updatedAt: new Date().toISOString(),
+			deletedAt: null,
+		},
+		date: receipt.date ?? null,
+		totalPrice: receipt.totalPrice,
+		id: "-",
+		createdAt: new Date().toISOString(),
+		updatedAt: new Date().toISOString(),
+		deletedAt: null,
+		details: receipt.details.map((detail, index) => ({
+			...detail,
+			id: `00000000-0000-0000-0000-${index.toString().padStart(12, "0")}`,
+			createdAt: new Date().toISOString(),
+			updatedAt: new Date().toISOString(),
+			deletedAt: null,
+			item: {
+				id: `00000000-0000-0000-0000-${index.toString().padStart(12, "0")}`,
+				rawName: detail.item.rawName,
+				normalized: detail.item.normalized ?? "",
+				category: detail.item.category,
+				createdAt: new Date().toISOString(),
+				updatedAt: new Date().toISOString(),
+			},
+		})),
+	};
+}
+
 export default function ImageUploader() {
+	const [error, setError] = useState<string | null>(null);
+
 	const [base64, setBase64] = useState<string>("");
-	const [error, setError] = useState<string>("");
 	const [plainText, setPlainText] = useState<string>("");
-	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-	const [json, setJson] = useState<any>(null);
+	const [json, setJson] = useState<OpenAiReceiptData | null>(null);
+
+	const [receipt, setReceipt] = useState<ReceiptWithItemDetails | null>(null);
+	const [optimisticReceipt, setOptimisticReceipt] = useOptimistic(receipt);
+	const [isPending, startTransition] = useTransition();
 
 	const handleError = (error: unknown) => {
 		const message = error instanceof Error ? error.message : String(error);
@@ -84,36 +129,81 @@ export default function ImageUploader() {
 
 	const handleAI = async (text: string) => {
 		try {
-			const aiResult: ApiResponseFromType<OpenAiApiReceiptResponse> =
+			const aiResult: ApiResponseFromType<OpenAiReceiptData> =
 				await parseReceiptToJsonWithAi(text);
 			console.log("AIでの構造化結果:", aiResult);
+
 			if (!aiResult.success) {
 				handleError(`${aiResult.error.message}\n${aiResult.error.hint}`);
 				return;
 			}
-			setJson(aiResult.data);
+
+			const validated = OpenAiReceiptDataSchema.safeParse(aiResult.data);
+			if (!validated.success) {
+				console.log("AIの構造化結果の検証に失敗しました", validated.error);
+				return;
+			}
+
+			setJson(validated.data);
 		} catch (error) {
 			handleError(`通信エラーが発生しました。${String(error)}`);
 		}
 	};
 
 	const handleRegister = async () => {
-		if (!json) {
-			handleError("構造化されたレシートデータがありません");
-			return;
-		}
-
-		try {
-			const result = await createReceiptWithDetails(json);
-			if (!result.success) {
-				handleError(result.error.message);
+		startTransition(async () => {
+			if (!json) {
+				handleError("構造化されたレシートデータがありません");
 				return;
 			}
-			alert(`✅ 登録成功! レシートID: ${result.data.id}`);
-			console.log("登録完了:", result.data);
-		} catch (error) {
-			handleError(`登録中にエラーが発生しました: ${String(error)}`);
-		}
+
+			try {
+				const transformed = {
+					...json,
+					details: json.details.map((d) => {
+						return {
+							...d,
+							unitPrice:
+								d.unitPrice ??
+								(d.amount !== null && d.amount > 0
+									? d.subTotalPrice / d.amount
+									: 0),
+						};
+					}),
+				};
+
+				if (transformed.details.length === 0) {
+					handleError("構造化されたレシートデータがありません");
+					return;
+				}
+
+				const toRegister =
+					CreateReceiptWithItemDetailsSchema.strip().safeParse(transformed);
+
+				if (!toRegister.data) {
+					handleError("構造化されたレシートデータがありません");
+					return;
+				}
+
+				const optimisticReceipt = createOptimisticReceipt(receipt);
+				setOptimisticReceipt(optimisticReceipt);
+
+				const result = await createReceiptWithDetails(toRegister.data);
+
+				if (result.success) {
+					setError(null);
+					setReceipt(result.data);
+				} else {
+					handleError(result.error.message);
+					return;
+				}
+
+				alert(`✅ 登録成功! レシートID: ${result.data.id}`);
+				console.log("登録完了:", result.data);
+			} catch (error) {
+				handleError(`登録中にエラーが発生しました: ${String(error)}`);
+			}
+		});
 	};
 
 	return (
@@ -161,6 +251,9 @@ export default function ImageUploader() {
 					<img src={base64} alt={"Preview"} />
 				</div>
 			)}
+			<ReceiptDetailsTable
+				details={optimisticReceipt?.details ?? receipt?.details ?? []}
+			/>
 			{!base64 && (
 				<div className="relative w-full max-w-md">
 					<img src="receipt-dummy.png" alt={"Dummy"} />
