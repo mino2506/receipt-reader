@@ -280,8 +280,8 @@ export async function parseReceiptToJsonWithAi(
 			return {
 				success: false,
 				error: {
-					code: "invalid_ai_response",
-					message: "AIの返却形式が不正です",
+					code: "non_json_ai_response",
+					message: "AIの返却がJSON形式がではありません",
 					hint: "receiptText is invalid",
 					field: "content",
 				},

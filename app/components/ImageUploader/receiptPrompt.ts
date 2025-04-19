@@ -31,74 +31,116 @@ export const receiptFunctionCallingSchema = {
 	type: "function",
 	function: {
 		name: "parse_receipt_data",
-		description: "日本のレシートを構造化し、会計情報をJSON形式で出力する",
+		description:
+			"日本のレシートを構造化し、家計簿システムに登録可能な形式で出力する",
 		strict: true,
 		parameters: {
 			type: "object" as const,
 			additionalProperties: false,
 			properties: {
-				store: {
-					type: "string",
-					description: "店舗名",
+				totalPrice: {
+					type: "number",
+					description: "合計金額（税込）",
 				},
 				date: {
 					type: "string",
 					description:
-						"UTC形式 'YYYY-MM-DDTHH:mm:ssZ' の文字列。ただし値はJSTのままで可（例: '2023-10-25T16:39:27Z'）",
+						"見たままのレシートの日付（ISO 8601形式: YYYY-MM-DDTHH:mm:ssZ）",
 				},
-				items: {
-					type: "array",
-					description: "レシートの商品明細リスト（1件以上必須）",
+				store: {
+					type: "object" as const,
+					additionalProperties: false,
+					properties: {
+						rawName: {
+							type: "string",
+							description: "レシートに記載された店舗名",
+						},
+					},
+					required: ["rawName"],
+				},
+				totalDiscount: {
+					anyOf: [{ type: "number" }, { type: "null" }],
+					description: "全体の割引",
+				},
+				totalTax: {
+					anyOf: [
+						{
+							type: "object",
+							additionalProperties: { type: "number" },
+						},
+						{ type: "null" },
+					],
+					description: '税率ごとの税額（例: { "8": 120, "10": 380 }）。',
+				},
+				details: {
+					type: "array" as const,
+					additionalProperties: false,
+					description: "レシートの商品明細リスト",
 					items: {
-						type: "object",
+						type: "object" as const,
 						additionalProperties: false,
 						properties: {
-							name: {
-								type: "string",
-								description: "商品名",
+							item: {
+								type: "object" as const,
+								additionalProperties: false,
+								properties: {
+									rawName: {
+										type: "string",
+										description: "レシートに記載された商品名",
+									},
+									category: {
+										type: "string",
+										enum: [
+											"food",
+											"drink",
+											"snacks",
+											"daily",
+											"medical",
+											"beauty_products",
+											"clothing",
+											"eating_out",
+											"pet",
+											"leisure",
+											"transport",
+											"utility",
+											"other",
+										],
+										description: '商品名から分類。不明な場合は "other" を使用',
+									},
+								},
+								required: ["rawName", "category"],
 							},
-							quantity: {
-								anyOf: [{ type: "number" }, { type: "null" }],
+							amount: {
+								type: "number",
 								description:
-									"数量（例: '2個', '2×99円' のように明記されている場合のみ数値。なければ null）",
+									"数量（例: '2個', '2×99円' のように明記されている数値。なければ 1 ）",
 							},
-							price: {
-								anyOf: [{ type: "number" }, { type: "null" }],
+							unitPrice: {
+								type: "number",
 								description:
 									"単価（明記されていなければ null。subtotal や quantity から計算しない）",
 							},
-							subtotal: {
-								anyOf: [{ type: "number" }, { type: "null" }],
+							subTotalPrice: {
+								type: "number",
 								description:
 									"小計（price × quantity ではなく、レシート上に記載された値）",
+							},
+							tax: {
+								type: "number",
+								description: "税額。税の小計から類推しても良い",
 							},
 							discount: {
 								anyOf: [{ type: "number" }, { type: "null" }],
 								description: "商品単位の割引（明記されていなければ null）",
 							},
-							category: {
+							currency: {
 								type: "string",
-								enum: [
-									"food",
-									"drink",
-									"snacks",
-									"daily",
-									"medical",
-									"beauty_products",
-									"clothing",
-									"eating_out",
-									"pet",
-									"leisure",
-									"transport",
-									"utility",
-									"other",
-								],
-								description:
-									'商品名から明確に分類できる場合のみ指定。それ以外は "other" を使用',
+								enum: ["JPY"],
 							},
 							taxRate: {
 								type: "number",
-								description: "税率（整数、null は不可。例: 8, 10）",
+								description:
+									"税率（整数、null は不可。例: 8, 10）,税率毎の小計から類推しても良い",
 							},
 							taxRateSource: {
 								type: "string",
@@ -108,149 +150,27 @@ export const receiptFunctionCallingSchema = {
 							},
 						},
 						required: [
-							"name",
-							"quantity",
-							"price",
-							"subtotal",
+							"item",
+							"amount",
+							"unitPrice",
+							"subTotalPrice",
+							"tax",
 							"discount",
-							"category",
+							"currency",
 							"taxRate",
 							"taxRateSource",
 						],
 					},
 				},
-
-				total: {
-					type: "number",
-					description: "合計金額（税込）",
-				},
-				discount: {
-					anyOf: [{ type: "number" }, { type: "null" }],
-					description: "全体の割引（明記されていなければ null）",
-				},
-				tax: {
-					anyOf: [
-						{
-							type: "object",
-							additionalProperties: { type: "number" },
-						},
-						{ type: "null" },
-					],
-					description:
-						'税率ごとの税額（例: { "8": 120, "10": 380 }）。明記されていなければ null',
-				},
-				payment: {
-					type: "string",
-					description:
-						"支払い手段（複数ある場合は最も金額が大きいもの1つだけ）",
-				},
 			},
 			required: [
+				"totalPrice",
 				"store",
+				"details",
 				"date",
-				"items",
-				"total",
-				"discount",
-				"tax",
-				"payment",
+				"totalDiscount",
+				"totalTax",
 			],
 		},
 	},
 };
-
-// [OLD] メッセージのプロンプト
-export const messageCategoryPrompt = `
-  - food: 食品
-  - drink: 飲料
-  - snacks: 菓子類
-  - daily: 日用品
-  - medical: 医薬品・衛生用品
-  - beauty_products: 美容・コスメ
-  - clothing: 衣料品
-  - eating_out: 外食・軽食
-  - pet: ペット関連
-  - leisure: 娯楽・サービス
-  - transport: 交通
-  - utility: 公共料金
-  - other: その他
-`;
-
-export const messageSuffixPromptJA = `
----
-
-この情報をもとに、レシートの内容を以下の形式で JSON に構造化してください：
-
-{
-  "store": string,
-  "date": YYYY-MM-DDTHH:mm:ssZ,
-  "items": [
-    {
-      "name": string,
-      "quantity": number | null,
-      "price": number | null,
-      "subtotal": number | null,
-      "discount": number | null,
-      "category": string,
-      "taxRate": number,
-      "taxRateSource": "explicit" | "inferred"
-    }
-  ],
-  "total": number,
-  "discount": number | null,
-  "tax": { "8": number, "10": number, ... } | null,
-  "payment": string
-}
-
-- "date" は "YYYY-MM-DDTHH:mm:ssZ" の UTC 形式で出力してください（例: 2023-10-25T16:39:27Z）。"Z" は付けてくださいが、値は日本時間のままで構いません。
-- 数量は「2個」「2×99円」などの記載があれば quantity に数値を記載してください。明記されていなければ null にしてください。
-- price（単価）は明記されていない限り null にし、subtotal や quantity から計算しないでください。
-- 割引（discount）は商品ごと・全体いずれも、明記されていなければ null にしてください。
-- category は以下から明確に判断できる場合のみ記載し、不明確な場合は "other" を使用してください。
-${messageCategoryPrompt}
-- taxRate は必ず整数（例: 8, 10）で、null は禁止です。
-- taxRateSource は taxRate が記載されていれば "explicit"、推測した場合は "inferred" としてください。
-- tax フィールドは税率ごとの合計税額を記載してください（例: { "8": 120, "10": 380 }）。明記されていなければ null。
-- payment が複数ある場合は、最も金額が大きい手段を選んで1つだけ記載してください（例: majica+クレジット → クレジット）。
-
-出力は **上記形式に厳密に準拠した JSON オブジェクトのみ** にしてください。コメントや補足は一切不要です。
-`;
-
-export const messageSuffixPromptEN = `
----
-
-Based on the OCR result above, return a structured JSON with the following format:
-
-{
-  "store": string,
-  "date": YYYY-MM-DDTHH:mm:ssZ,
-  "items": [
-    {
-      "name": string,
-      "quantity": number | null,
-      "price": number | null,
-      "subtotal": number | null,
-      "discount": number | null,
-      "category": string,
-      "taxRate": number,
-      "taxRateSource": "explicit" | "inferred"
-    }
-  ],
-  "total": number,
-  "discount": number | null,
-  "tax": { "8": number, "10": number, ... } | null,
-  "payment": string
-}
-
-- "date" must be in UTC format "YYYY-MM-DDTHH:mm:ssZ". Use "Z" literally, but the value should reflect the original **Japanese time** as written on the receipt.
-- If quantity is shown as "2個", "2×99", etc., set quantity to 2. Otherwise, set it to null.
-- price must be null unless explicitly stated. Do not calculate it from subtotal and quantity.
-- discount must be null unless explicitly shown for the item or overall receipt.
-- category must be chosen from the list below only if it is clearly identifiable from the item name. Otherwise, set it to "other".
-${messageCategoryPrompt}
-- taxRate must be a number (e.g., 8, 10), and must not be null.
-- taxRateSource must be "explicit" if written on the receipt, or "inferred" if deduced from context.
-- tax should be a map of tax rates to their total amounts (e.g., { "8": 120, "10": 380 }). If not shown, use null.
-- If multiple payment methods are used, choose only the one with the highest amount.
-
-**Only return a single valid JSON object with no explanations or comments.**
-`;

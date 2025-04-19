@@ -19,15 +19,30 @@ export const ItemSchema = z.object({
 export type Item = z.infer<typeof ItemSchema>;
 
 /**
+ * 店舗のGET用スキーマ定義
+ */
+export const StoreSchema = z.object({
+	id: z.string().uuid(),
+	rawName: z.string(),
+	normalized: z.string().nullable(),
+	createdAt: IsoDateSchema,
+	updatedAt: IsoDateSchema,
+	deletedAt: IsoDateSchema.nullable(),
+});
+export type Store = z.infer<typeof StoreSchema>;
+
+/**
  * Zod Schema
  * - レシートのGET用のスキーマ定義
  */
 export const ReceiptSchema = z.object({
 	id: z.string().uuid(),
+	date: IsoDateSchema.nullable(),
+	totalPrice: z.number().int().nonnegative(),
+	store: StoreSchema.optional().nullable(),
 	createdAt: IsoDateSchema,
 	updatedAt: IsoDateSchema,
 	deletedAt: IsoDateSchema.nullable(),
-	totalPrice: z.number().int().nonnegative(),
 });
 export type Receipt = z.infer<typeof ReceiptSchema>;
 

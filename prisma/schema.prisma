@@ -39,6 +39,12 @@ model Receipt{
   deletedAt         DateTime? 
   totalPrice        Int
   receiptDetails    ReceiptDetail[]
+
+  date              DateTime?
+
+  storeId           String?     @db.Uuid// Storeとのリレーション。AIが推定できない場合もあるので nullable に
+  store             Store?      @relation(fields: [storeId], references: [id])
+
   userId            String      @db.Uuid
   user              User        @relation(fields: [userId], references: [id])
 }
@@ -74,4 +80,17 @@ model Item {
 
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
+}
+
+model Store {
+  id          String    @id @default(uuid()) @db.Uuid
+
+  rawName     String    // OCRやAIによる補正、手入力された店舗名
+  normalized  String?   @db.VarChar(255) @unique  // 正規化済み店舗名（外部マスタと突合などに使用）
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  
+  receipts    Receipt[] // Store <- Receipt リレーション（1対多）
 }
