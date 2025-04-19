@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { e } from "mathjs";
-import { CategoryEnum, CurrencyEnum } from "./common.schema";
+import { CategoryEnum, CurrencyEnum, IsoDateSchema } from "./common.schema";
 
 /**
  * Zod Schema
@@ -17,11 +17,23 @@ export type CreateItem = z.infer<typeof CreateItemSchema>;
 
 /**
  * Zod Schema
+ * - 店舗データのPOST用スキーマ定義
+ */
+export const CreateStoreSchema = z.object({
+	rawName: z.string().min(1),
+	normalized: z.string().min(1).nullable().optional(),
+});
+export type CreateStore = z.infer<typeof CreateStoreSchema>;
+
+/**
+ * Zod Schema
  * - レシートのPOST用のスキーマ定義
  * - レシート作成用の最小限のデータ { totalPrice, userId } のみ
  */
 export const CreateReceiptSchema = z.object({
 	totalPrice: z.number().int().nonnegative(),
+	date: IsoDateSchema.optional(),
+	store: CreateStoreSchema.optional(),
 });
 export type CreateReceipt = z.infer<typeof CreateReceiptSchema>;
 

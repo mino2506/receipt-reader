@@ -5,35 +5,22 @@
 import { useState } from "react";
 
 import type { ApiResponseFromType } from "@/lib/api/common.schema";
+
+import { convertToBase64 } from "@/utils/base64";
+
 import {
 	extractPagesFromGCV,
 	groupWordsWithDeskew,
 } from "@/lib/googleCloudVision/formatGCVResponse";
 import type { GCVSingleResponse } from "@/lib/googleCloudVision/schema";
-import type {
-	OpenAIApiResponseSchema,
-	OpenAIChatCompletionChoiceSchema,
-} from "@/lib/openai/schema";
-import { convertToBase64 } from "@/utils/base64";
+
 import {
 	parseReceiptToJsonWithAi,
 	tryParseAndFetchGCVFromClient,
 } from "./action";
-import {
-	type OpenAiApiReceiptResponse,
-	OpenAiApiReceiptResponseSchema,
-} from "./schema";
+import type { OpenAiApiReceiptResponse } from "./schema";
 
-const fetchOpenAI = async (text: string) => {
-	const res = await fetch("/api/openai", {
-		method: "POST",
-		headers: {
-			"Content-Type": "application/json",
-		},
-		body: JSON.stringify({ text }),
-	});
-	return res.json();
-};
+import { createReceiptWithDetails } from "@/lib/api/receipt/server/createReceiptWithDetails";
 
 export default function ImageUploader() {
 	const [base64, setBase64] = useState<string>("");
@@ -46,6 +33,20 @@ export default function ImageUploader() {
 		const message = error instanceof Error ? error.message : String(error);
 		console.error("エラー:", message);
 		setError(message);
+	};
+
+	const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+		const file = e.target.files?.[0];
+		if (!file) return;
+
+		setError("");
+		try {
+			const base64 = await convertToBase64(file);
+			console.log(base64);
+			setBase64(base64);
+		} catch (error) {
+			console.error("Base64変換失敗:", error);
+		}
 	};
 
 	const handleOCR = async (base64: string) => {
@@ -96,17 +97,22 @@ export default function ImageUploader() {
 		}
 	};
 
-	const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-		const file = e.target.files?.[0];
-		if (!file) return;
+	const handleRegister = async () => {
+		if (!json) {
+			handleError("構造化されたレシートデータがありません");
+			return;
+		}
 
-		setError("");
 		try {
-			const base64 = await convertToBase64(file);
-			console.log(base64);
-			setBase64(base64);
+			const result = await createReceiptWithDetails(json);
+			if (!result.success) {
+				handleError(result.error.message);
+				return;
+			}
+			alert(`✅ 登録成功! レシートID: ${result.data.id}`);
+			console.log("登録完了:", result.data);
 		} catch (error) {
-			console.error("Base64変換失敗:", error);
+			handleError(`登録中にエラーが発生しました: ${String(error)}`);
 		}
 	};
 
@@ -118,7 +124,7 @@ export default function ImageUploader() {
 						htmlFor="fileInput"
 						className="cursor-pointer border border-gray-300 rounded-md px-4 py-2 inline-block bg-white hover:bg-gray-100 text-sm font-medium text-gray-700"
 					>
-						画像をアップロードする
+						🖼️画像をアップロードする
 					</label>
 					<input
 						id="fileInput"
@@ -141,6 +147,13 @@ export default function ImageUploader() {
 					className="cursor-pointer border border-gray-300 rounded-md px-4 py-2 inline-block bg-white hover:bg-gray-100 text-sm font-medium text-gray-700"
 				>
 					📊AI送信
+				</button>
+				<button
+					type="button"
+					onClick={handleRegister}
+					className="cursor-pointer border border-green-500 text-green-700 bg-white hover:bg-green-100 rounded-md px-4 py-2 m-2 text-sm"
+				>
+					🛒 構造化データを登録
 				</button>
 			</div>
 			{base64 && (

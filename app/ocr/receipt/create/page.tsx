@@ -15,8 +15,12 @@ import {
 import { createReceiptWithDetails } from "@/lib/api/receipt/server/createReceiptWithDetails";
 
 const mockInput: CreateReceiptWithItemDetails = {
-	totalPrice: 1980,
-
+	totalPrice: 384,
+	date: "2024-04-01T12:00:00Z",
+	store: {
+		rawName: "LAWSON 渋谷駅前",
+		normalized: "ローソン",
+	},
 	details: [
 		{
 			item: {
@@ -25,9 +29,9 @@ const mockInput: CreateReceiptWithItemDetails = {
 				category: "snacks",
 			},
 			amount: 2,
-			unitPrice: 900,
-			subTotalPrice: 1800,
-			tax: 180,
+			unitPrice: 138,
+			subTotalPrice: 276,
+			tax: 20,
 			currency: "JPY",
 		},
 		{
@@ -37,9 +41,9 @@ const mockInput: CreateReceiptWithItemDetails = {
 				category: "drink",
 			},
 			amount: 1,
-			unitPrice: 180,
-			subTotalPrice: 180,
-			tax: 18,
+			unitPrice: 108,
+			subTotalPrice: 108,
+			tax: 8,
 			currency: "JPY",
 		},
 	],
@@ -55,6 +59,15 @@ export default function TestCreateReceiptPage() {
 		startTransition(async () => {
 			const optimisticReceipt: ReceiptWithItemDetails = {
 				...mockInput,
+				store: {
+					id: "-",
+					rawName: mockInput.store?.rawName ?? "-",
+					normalized: mockInput.store?.normalized ?? "-",
+					createdAt: new Date().toISOString(),
+					updatedAt: new Date().toISOString(),
+					deletedAt: null,
+				},
+				date: mockInput.date ?? null,
 				totalPrice: mockInput.totalPrice,
 				id: "-",
 				createdAt: new Date().toISOString(),
@@ -118,10 +131,19 @@ export default function TestCreateReceiptPage() {
 
 const dummyReceipt: ReceiptWithItemDetails = {
 	id: "dummy-receipt-id",
-	totalPrice: 1980,
 	createdAt: new Date().toISOString(),
 	updatedAt: new Date().toISOString(),
 	deletedAt: null,
+	totalPrice: 999,
+	date: new Date().toISOString(),
+	store: {
+		rawName: "ダミー店舗",
+		normalized: "正規化済みダミー店舗",
+		id: "store-dummy-id",
+		createdAt: new Date().toISOString(),
+		updatedAt: new Date().toISOString(),
+		deletedAt: null,
+	},
 	details: [
 		{
 			id: "dummy-detail-1",
@@ -134,9 +156,9 @@ const dummyReceipt: ReceiptWithItemDetails = {
 				updatedAt: new Date().toISOString(),
 			},
 			amount: 2,
-			unitPrice: 900,
-			subTotalPrice: 1800,
-			tax: 180,
+			unitPrice: 333,
+			subTotalPrice: 666,
+			tax: 19,
 			currency: "JPY",
 			createdAt: new Date().toISOString(),
 			updatedAt: new Date().toISOString(),
@@ -153,9 +175,9 @@ const dummyReceipt: ReceiptWithItemDetails = {
 				updatedAt: new Date().toISOString(),
 			},
 			amount: 1,
-			unitPrice: 180,
-			subTotalPrice: 180,
-			tax: 18,
+			unitPrice: 333,
+			subTotalPrice: 333,
+			tax: 25,
 			currency: "JPY",
 			createdAt: new Date().toISOString(),
 			updatedAt: new Date().toISOString(),
