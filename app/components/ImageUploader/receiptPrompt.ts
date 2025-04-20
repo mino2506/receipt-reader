@@ -68,13 +68,9 @@ export const receiptFunctionCallingSchema = {
 					description: "全体の割引",
 				},
 				totalTax: {
-					anyOf: [
-						{
-							type: "object",
-							additionalProperties: { type: "number" },
-						},
-						{ type: "null" },
-					],
+					type: "object",
+					additionalProperties: { type: "number" },
+					properties: {},
 					description: ` 
             **必須**
             - 税率ごとの税額（例: { "8": 120, "10": 380 }）。

@@ -13,7 +13,7 @@ import { receiptColumns } from "./columns";
 
 import type { ReceiptWithItemDetails } from "@/lib/api/receipt/get.schema";
 
-import ReceiptDetailPreviewTable from "./ReceiptDetailPreviewTable";
+import ReceiptDetailPreviewTable from "./ReceiptDetailSubTable";
 
 export default function ReceiptTable({
 	data,
