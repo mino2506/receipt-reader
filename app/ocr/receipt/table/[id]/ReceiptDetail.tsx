@@ -10,20 +10,46 @@ import { useState } from "react";
 
 import { getReceiptDetailColumns } from "@/app/ocr/receipt/table/[id]/receiptDetail.columns";
 import { getFullReceiptDetailColumns } from "@/app/ocr/receipt/table/[id]/receiptDetail.full.columns";
-import type { ReceiptDetailWithItem } from "@/lib/api/receipt/get.schema";
+import type {
+	ReceiptDetailWithItem,
+	ReceiptWithItemDetails,
+} from "@/lib/api/receipt/get.schema";
 
-export default function ReceiptDetail({
-	details,
-}: { details: ReceiptDetailWithItem[] }) {
+export default function ReceiptDetail(props: {
+	receipt: ReceiptWithItemDetails;
+}) {
 	const [editingRowId, setEditingRowId] = useState<string | null>(null);
-	const [tempData, setTempData] = useState<Record<string, number | string>>({});
+	const [receipt, setReceipt] = useState<ReceiptWithItemDetails>(props.receipt);
 
+	const details = receipt.details;
+
+	const utils = trpc.useUtils();
 	const mutation = trpc.receipt.updateDetail.useMutation({
-		onSuccess: (data) => {
-			console.log("更新完了:", data);
+		onMutate: async (updated) => {
+			const prevReceipt = receipt;
+
+			// 楽観的に state 更新（UIには即反映）
+			setReceipt((prev) => ({
+				...prev,
+				details: prev.details.map((d) =>
+					d.id === updated.id ? { ...d, ...updated } : d,
+				),
+			}));
+
+			return { prevReceipt };
 		},
-		onError: (err) => {
-			console.error("更新失敗:", err.message);
+
+		onError: (error, _, context) => {
+			// エラー時にはロールバック
+			if (context?.prevReceipt) {
+				setReceipt(context.prevReceipt);
+			}
+			console.error("更新失敗:", error.message);
+		},
+
+		onSettled: () => {
+			// サーバと整合性を取るため再取得
+			utils.receipt.getReceiptById.invalidate({ id: receipt.id });
 		},
 	});
 
@@ -31,9 +57,20 @@ export default function ReceiptDetail({
 		editingRowId,
 		setEditingRowId,
 		updateRow: (id, updated) => {
-			console.log("更新", id, updated);
-			// mutate or setState here if needed
-			setEditingRowId(null);
+			const detail = details.find((d) => d.id === id);
+			if (!detail) return;
+
+			const payload = {
+				id,
+				amount: updated.amount ?? detail.amount,
+				unitPrice: updated.unitPrice ?? detail.unitPrice,
+				subTotalPrice: updated.subTotalPrice ?? detail.subTotalPrice,
+				tax: updated.tax ?? detail.tax,
+				currency: detail.currency,
+				itemId: detail.item.id,
+			};
+
+			mutation.mutate(payload);
 		},
 	});
 	const fullReceiptDetailColumns = getFullReceiptDetailColumns({

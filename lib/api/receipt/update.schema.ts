@@ -52,10 +52,7 @@ export const UpdateReceiptDetailSchema = z.object({
 	unitPrice: z.number().min(0),
 	subTotalPrice: z.number().min(0),
 	tax: z.number().min(0),
-	discount: z.number().nullable(),
 	currency: CurrencyEnum,
-	taxRate: z.number().int(),
-	taxRateSource: z.enum(["explicit", "inferred"]),
 	itemId: z.string().uuid(),
 });
 export type UpdateReceiptDetailInput = z.infer<

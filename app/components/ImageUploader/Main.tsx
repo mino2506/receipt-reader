@@ -300,9 +300,11 @@ export default function ImageUploader() {
 					<img src={base64} alt={"Preview"} />
 				</div>
 			)}
-			<ReceiptDetail
-				details={optimisticReceipt?.details ?? receipt?.details ?? []}
-			/>
+			{(optimisticReceipt ?? receipt) && (
+				<ReceiptDetail
+					receipt={optimisticReceipt ?? (receipt as ReceiptWithItemDetails)}
+				/>
+			)}
 			{!base64 && (
 				<div className="relative w-full max-w-md">
 					<img src="receipt-dummy.png" alt={"Dummy"} />
