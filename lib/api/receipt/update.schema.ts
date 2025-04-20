@@ -54,6 +54,7 @@ export const UpdateReceiptDetailSchema = z.object({
 	tax: z.number().min(0),
 	currency: CurrencyEnum,
 	itemId: z.string().uuid(),
+	order: z.number().int().min(1),
 });
 export type UpdateReceiptDetailInput = z.infer<
 	typeof UpdateReceiptDetailSchema

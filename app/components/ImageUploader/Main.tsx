@@ -40,7 +40,7 @@ function transformToRegisterReceipt(
 
 	const transformed = {
 		...rest,
-		details: details.map((d) => {
+		details: details.map((d, i) => {
 			return {
 				...d,
 				amount: d.amount ?? DEFAULT_AMOUNT,
@@ -56,6 +56,7 @@ function transformToRegisterReceipt(
 									(REDUCED_TAX_CATEGORYS.includes(d.item.category)
 										? REDUCED_TAX_RATE
 										: STANDARD_TAX_RATE))),
+				order: i + 1,
 			};
 		}),
 	};

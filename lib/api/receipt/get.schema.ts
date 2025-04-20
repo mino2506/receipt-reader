@@ -53,15 +53,18 @@ export type Receipt = z.infer<typeof ReceiptSchema>;
  */
 export const ReceiptDetailWithItemSchema = z.object({
 	id: z.string().uuid(),
-	createdAt: IsoDateSchema,
-	updatedAt: IsoDateSchema,
-	deletedAt: IsoDateSchema.nullable(),
 	amount: z.number().int().min(1),
 	unitPrice: z.number().int().min(0),
 	subTotalPrice: z.number().int().min(0),
 	tax: z.number().int().min(0),
 	currency: CurrencyEnum,
 	item: ItemSchema,
+
+	order: z.number().int().min(1),
+
+	createdAt: IsoDateSchema,
+	updatedAt: IsoDateSchema,
+	deletedAt: IsoDateSchema.nullable(),
 });
 export type ReceiptDetailWithItem = z.infer<typeof ReceiptDetailWithItemSchema>;
 

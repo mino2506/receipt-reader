@@ -52,6 +52,7 @@ export const CreateReceiptDetailSchema = z.object({
 	subTotalPrice: z.number().int().min(0),
 	tax: z.number().int().min(0),
 	currency: CurrencyEnum,
+	order: z.number().int().min(1),
 });
 export type CreateReceiptDetail = z.infer<typeof CreateReceiptDetailSchema>;
 
@@ -81,6 +82,7 @@ export const CreateReceiptDetailWithItemSchema = z.object({
 	subTotalPrice: z.number().int().min(0),
 	tax: z.number().int().min(0),
 	currency: CurrencyEnum,
+	order: z.number().int().min(1),
 });
 export type CreateReceiptDetailWithItem = z.infer<
 	typeof CreateReceiptDetailWithItemSchema

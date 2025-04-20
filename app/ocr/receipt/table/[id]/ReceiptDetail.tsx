@@ -68,6 +68,7 @@ export default function ReceiptDetail(props: {
 				tax: updated.tax ?? detail.tax,
 				currency: detail.currency,
 				itemId: detail.item.id,
+				order: detail.order,
 			};
 
 			mutation.mutate(payload);
