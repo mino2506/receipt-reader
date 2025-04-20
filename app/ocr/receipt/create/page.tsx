@@ -26,6 +26,7 @@ const mockInput: CreateReceiptWithItemDetails = {
 			subTotalPrice: 276,
 			tax: 20,
 			currency: "JPY",
+			order: 1,
 		},
 		{
 			item: {
@@ -38,6 +39,7 @@ const mockInput: CreateReceiptWithItemDetails = {
 			subTotalPrice: 108,
 			tax: 8,
 			currency: "JPY",
+			order: 2,
 		},
 	],
 };
@@ -155,6 +157,7 @@ const dummyReceipt: ReceiptWithItemDetails = {
 			createdAt: new Date().toISOString(),
 			updatedAt: new Date().toISOString(),
 			deletedAt: null,
+			order: 1,
 		},
 		{
 			id: "dummy-detail-2",
@@ -174,6 +177,7 @@ const dummyReceipt: ReceiptWithItemDetails = {
 			createdAt: new Date().toISOString(),
 			updatedAt: new Date().toISOString(),
 			deletedAt: null,
+			order: 2,
 		},
 	],
 };
