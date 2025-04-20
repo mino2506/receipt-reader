@@ -41,6 +41,7 @@ export async function insertReceiptWithDetails(
 					currency: detail.currency,
 					itemId,
 					receiptId: createdReceipt.id,
+					order: detail.order,
 				};
 			},
 		);

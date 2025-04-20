@@ -27,6 +27,9 @@ export const getReceipts = protectedProcedure
 					include: {
 						item: true,
 					},
+					orderBy: {
+						order: "asc",
+					},
 				},
 			},
 			...(lastCursor && {

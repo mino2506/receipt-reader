@@ -15,19 +15,19 @@ datasource db {
 }
 
 model Post{
-  id Int @id @default(autoincrement())
-  title String
-  description String
-  date DateTime @default(now())
+  id                Int         @id @default(autoincrement())
+  title             String
+  description       String
+  date              DateTime    @default(now())
 }
 
 model User {
-  id                String @id @db.Uuid
-  email             String @unique
+  id                String      @id @db.Uuid
+  email             String      @unique
   display_name      String?
   avatar_url        String?
-  created_at        DateTime @default(now())
-  updated_at        DateTime @updatedAt
+  created_at        DateTime    @default(now())
+  updated_at        DateTime    @updatedAt
   provider          String?
   receipts          Receipt[]
 }
@@ -64,6 +64,8 @@ model ReceiptDetail{
   receiptId         String      @db.Uuid
   receipt           Receipt     @relation(fields: [receiptId], references: [id])
 
+  order             Int
+
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
   deletedAt         DateTime?
@@ -83,14 +85,14 @@ model Item {
 }
 
 model Store {
-  id          String    @id @default(uuid()) @db.Uuid
+  id                String      @id @default(uuid()) @db.Uuid
 
-  rawName     String    // OCRやAIによる補正、手入力された店舗名
-  normalized  String?   @db.VarChar(255) @unique  // 正規化済み店舗名（外部マスタと突合などに使用）
+  rawName           String      // OCRやAIによる補正、手入力された店舗名
+  normalized        String?     @db.VarChar(255) @unique  // 正規化済み店舗名（外部マスタと突合などに使用）
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  deletedAt   DateTime?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  deletedAt         DateTime?
   
-  receipts    Receipt[] // Store <- Receipt リレーション（1対多）
+  receipts          Receipt[]   // Store <- Receipt リレーション（1対多）
 }
