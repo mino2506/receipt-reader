@@ -21,20 +21,63 @@ import {
 } from "./action";
 import { type OpenAiReceiptData, OpenAiReceiptDataSchema } from "./schema";
 
-import ReceiptDetailsTable from "@/app/ocr/receipt/table/[id]/ReceiptDetail";
-import { CreateReceiptWithItemDetailsSchema } from "@/lib/api/receipt";
+import ReceiptDetail from "@/app/ocr/receipt/table/[id]/ReceiptDetail";
+import {
+	type CreateReceiptWithItemDetails,
+	CreateReceiptWithItemDetailsSchema,
+} from "@/lib/api/receipt";
 import { createReceiptWithDetails } from "@/lib/api/receipt/server/createReceiptWithDetails";
 
+function transformToRegisterReceipt(
+	rawReceipt: OpenAiReceiptData,
+): CreateReceiptWithItemDetails {
+	const { details, ...rest } = rawReceipt;
+
+	const DEFAULT_AMOUNT = 1;
+	const REDUCED_TAX_CATEGORYS = ["food", "drink", "snacks"];
+	const REDUCED_TAX_RATE = 8;
+	const STANDARD_TAX_RATE = 10;
+
+	const transformed = {
+		...rest,
+		details: details.map((d) => {
+			return {
+				...d,
+				amount: d.amount ?? DEFAULT_AMOUNT,
+				unitPrice:
+					d.unitPrice ??
+					(d.amount !== null && d.amount > 0 ? d.subTotalPrice / d.amount : 0),
+				tax:
+					d.tax ??
+					d.subTotalPrice -
+						(d.subTotalPrice * 100) /
+							(100 +
+								(d.tax ??
+									(REDUCED_TAX_CATEGORYS.includes(d.item.category)
+										? REDUCED_TAX_RATE
+										: STANDARD_TAX_RATE))),
+			};
+		}),
+	};
+
+	if (transformed.details.length === 0) {
+		throw new Error("構造化されたレシートデータがありません");
+	}
+
+	return transformed;
+}
+
 function createOptimisticReceipt(
-	receipt: ReceiptWithItemDetails | null,
-): ReceiptWithItemDetails | null {
-	if (!receipt) return null;
+	receipt: CreateReceiptWithItemDetails,
+): ReceiptWithItemDetails {
+	if (receipt.details.length === 0)
+		throw new Error("レシートの明細がありません");
 	return {
 		...receipt,
 		store: {
 			id: "-",
 			rawName: receipt.store?.rawName ?? "-",
-			normalized: receipt.store?.normalized ?? "-",
+			normalized: receipt.store?.normalized ?? null,
 			createdAt: new Date().toISOString(),
 			updatedAt: new Date().toISOString(),
 			deletedAt: null,
@@ -54,7 +97,7 @@ function createOptimisticReceipt(
 			item: {
 				id: `00000000-0000-0000-0000-${index.toString().padStart(12, "0")}`,
 				rawName: detail.item.rawName,
-				normalized: detail.item.normalized ?? "",
+				normalized: detail.item.normalized ?? null,
 				category: detail.item.category,
 				createdAt: new Date().toISOString(),
 				updatedAt: new Date().toISOString(),
@@ -68,7 +111,7 @@ export default function ImageUploader() {
 
 	const [base64, setBase64] = useState<string>("");
 	const [plainText, setPlainText] = useState<string>("");
-	const [json, setJson] = useState<OpenAiReceiptData | null>(null);
+	const [json, setJson] = useState<CreateReceiptWithItemDetails | null>(null);
 
 	const [receipt, setReceipt] = useState<ReceiptWithItemDetails | null>(null);
 	const [optimisticReceipt, setOptimisticReceipt] = useOptimistic(receipt);
@@ -128,6 +171,8 @@ export default function ImageUploader() {
 	};
 
 	const handleAI = async (text: string) => {
+		setError(null);
+
 		try {
 			const aiResult: ApiResponseFromType<OpenAiReceiptData> =
 				await parseReceiptToJsonWithAi(text);
@@ -144,7 +189,11 @@ export default function ImageUploader() {
 				return;
 			}
 
-			setJson(validated.data);
+			const transformed = transformToRegisterReceipt(validated.data);
+			setJson(transformed);
+
+			const optimistic = createOptimisticReceipt(transformed);
+			setReceipt(optimistic);
 		} catch (error) {
 			handleError(`通信エラーが発生しました。${String(error)}`);
 		}
@@ -158,34 +207,34 @@ export default function ImageUploader() {
 			}
 
 			try {
-				const transformed = {
-					...json,
-					details: json.details.map((d) => {
-						return {
-							...d,
-							unitPrice:
-								d.unitPrice ??
-								(d.amount !== null && d.amount > 0
-									? d.subTotalPrice / d.amount
-									: 0),
-						};
-					}),
-				};
+				// const transformed = {
+				// 	...json,
+				// 	details: json.details.map((d) => {
+				// 		return {
+				// 			...d,
+				// 			unitPrice:
+				// 				d.unitPrice ??
+				// 				(d.amount !== null && d.amount > 0
+				// 					? d.subTotalPrice / d.amount
+				// 					: 0),
+				// 		};
+				// 	}),
+				// };
 
-				if (transformed.details.length === 0) {
-					handleError("構造化されたレシートデータがありません");
-					return;
-				}
+				// if (transformed.details.length === 0) {
+				// 	handleError("構造化されたレシートデータがありません");
+				// 	return;
+				// }
 
 				const toRegister =
-					CreateReceiptWithItemDetailsSchema.strip().safeParse(transformed);
+					CreateReceiptWithItemDetailsSchema.strip().safeParse(json);
 
 				if (!toRegister.data) {
 					handleError("構造化されたレシートデータがありません");
 					return;
 				}
 
-				const optimisticReceipt = createOptimisticReceipt(receipt);
+				const optimisticReceipt = createOptimisticReceipt(toRegister.data);
 				setOptimisticReceipt(optimisticReceipt);
 
 				const result = await createReceiptWithDetails(toRegister.data);
@@ -251,7 +300,7 @@ export default function ImageUploader() {
 					<img src={base64} alt={"Preview"} />
 				</div>
 			)}
-			<ReceiptDetailsTable
+			<ReceiptDetail
 				details={optimisticReceipt?.details ?? receipt?.details ?? []}
 			/>
 			{!base64 && (
