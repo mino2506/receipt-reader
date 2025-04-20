@@ -42,7 +42,7 @@ export default async function ReceiptPage({
 					</tr>
 				</tbody>
 			</table>
-			<ReceiptDetail details={receipt.details} />
+			<ReceiptDetail receipt={receipt} />
 		</div>
 	);
 }
