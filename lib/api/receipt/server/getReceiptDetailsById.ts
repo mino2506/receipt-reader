@@ -38,10 +38,11 @@ export async function getReceiptDetailsById(
 		}
 
 		const fetched = await prisma.receipt.findUnique({
-			where: { id: receiptId, userId: user.id },
+			where: { id: receiptId, userId: user.id, deletedAt: null },
 			include: {
 				store: true,
 				receiptDetails: {
+					where: { deletedAt: null },
 					include: {
 						item: true,
 					},

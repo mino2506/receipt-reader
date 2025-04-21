@@ -15,6 +15,10 @@ export function getReceiptDetailColumns({
 }: Props): ColumnDef<ReceiptDetailWithItem>[] {
 	return [
 		{
+			header: "順番",
+			accessorKey: "order",
+		},
+		{
 			header: "商品名",
 			accessorFn: (row) => row.item.normalized ?? row.item.rawName,
 		},

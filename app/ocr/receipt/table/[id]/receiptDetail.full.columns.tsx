@@ -44,8 +44,8 @@ export const getFullReceiptDetailColumns = ({
 	baseColumnDef,
 	onEdit,
 	onDelete,
-}: Props<ReceiptDetailWithItem>): ColumnDef<ReceiptDetailWithItem>[] => {
-	return getFullColumnDef({
+}: Props<ReceiptDetailWithItem>) => {
+	return getFullColumnDef<ReceiptDetailWithItem>({
 		baseColumnDef,
 		onEdit,
 		onDelete,

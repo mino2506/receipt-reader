@@ -22,6 +22,7 @@ export default function ReceiptDetail(props: {
 	const [receipt, setReceipt] = useState<ReceiptWithItemDetails>(props.receipt);
 
 	const details = receipt.details;
+	const hasDetails = details.length > 0;
 
 	const utils = trpc.useUtils();
 	const mutation = trpc.receipt.updateDetail.useMutation({
@@ -52,6 +53,21 @@ export default function ReceiptDetail(props: {
 			utils.receipt.getReceiptById.invalidate({ id: receipt.id });
 		},
 	});
+	const deleteMutation = trpc.receipt.deleteDetail.useMutation({
+		onMutate: async (input) => {
+			const prevReceipt = receipt;
+
+			setReceipt((prev) => ({
+				...prev,
+				details: prev.details.filter((d) => d.id !== input.id),
+			}));
+
+			return { prevReceipt };
+		},
+		onSettled: () => {
+			utils.receipt.getReceiptById.invalidate({ id: receipt.id });
+		},
+	});
 
 	const baseReceiptDetailColumns = getReceiptDetailColumns({
 		editingRowId,
@@ -77,8 +93,8 @@ export default function ReceiptDetail(props: {
 	const fullReceiptDetailColumns = getFullReceiptDetailColumns({
 		baseColumnDef: baseReceiptDetailColumns,
 		onEdit: () => {},
-		onDelete: () => {
-			alert("削除");
+		onDelete: (row) => {
+			deleteMutation.mutate({ id: row.id });
 		},
 	});
 
@@ -89,34 +105,39 @@ export default function ReceiptDetail(props: {
 	});
 
 	return (
-		<table className="w-full table-auto border mt-4">
-			<thead>
-				{table.getHeaderGroups().map((headerGroup) => (
-					<tr key={headerGroup.id}>
-						{headerGroup.headers.map((header) => (
-							<th key={header.id} className="border px-2 py-1 bg-gray-200">
-								{header.isPlaceholder
-									? null
-									: flexRender(
-											header.column.columnDef.header,
-											header.getContext(),
-										)}
-							</th>
-						))}
-					</tr>
-				))}
-			</thead>
-			<tbody>
-				{table.getRowModel().rows.map((row) => (
-					<tr key={row.id}>
-						{row.getVisibleCells().map((cell) => (
-							<td key={cell.id} className="border px-2 py-1">
-								{flexRender(cell.column.columnDef.cell, cell.getContext())}
-							</td>
-						))}
-					</tr>
-				))}
-			</tbody>
-		</table>
+		<div>
+			<table className="w-full table-auto border mt-4">
+				<thead>
+					{table.getHeaderGroups().map((headerGroup) => (
+						<tr key={headerGroup.id}>
+							{headerGroup.headers.map((header) => (
+								<th key={header.id} className="border px-2 py-1 bg-gray-200">
+									{header.isPlaceholder
+										? null
+										: flexRender(
+												header.column.columnDef.header,
+												header.getContext(),
+											)}
+								</th>
+							))}
+						</tr>
+					))}
+				</thead>
+				<tbody>
+					{table.getRowModel().rows.map((row) => (
+						<tr key={row.id}>
+							{row.getVisibleCells().map((cell) => (
+								<td key={cell.id} className="border px-2 py-1">
+									{flexRender(cell.column.columnDef.cell, cell.getContext())}
+								</td>
+							))}
+						</tr>
+					))}
+				</tbody>
+			</table>
+			<div>
+				<span className="text-red-700">明細がありません</span>
+			</div>
+		</div>
 	);
 }

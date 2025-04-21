@@ -72,9 +72,9 @@ export type ReceiptDetailWithItem = z.infer<typeof ReceiptDetailWithItemSchema>;
  * Zod Schema
  * - レシート詳細の配列のGET用のスキーマ定義
  */
-export const ReceiptDetailWithItemArraySchema = z
-	.array(ReceiptDetailWithItemSchema)
-	.min(1);
+export const ReceiptDetailWithItemArraySchema = z.array(
+	ReceiptDetailWithItemSchema,
+);
 export type ReceiptDetailWithItemArray = z.infer<
 	typeof ReceiptDetailWithItemArraySchema
 >;

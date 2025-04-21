@@ -195,6 +195,7 @@ function ReceiptTable({
 						<th className="px-4 py-2">Subtotal Price</th>
 						<th className="px-4 py-2">Tax</th>
 						<th className="px-4 py-2">Currency</th>
+						<th className="px-4 py-2">Order</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -208,6 +209,7 @@ function ReceiptTable({
 							<td className="border px-4 py-2">{detail.subTotalPrice}</td>
 							<td className="border px-4 py-2">{detail.tax}</td>
 							<td className="border px-4 py-2">{detail.currency}</td>
+							<td className="border px-4 py-2">{detail.order}</td>
 						</tr>
 					))}
 				</tbody>

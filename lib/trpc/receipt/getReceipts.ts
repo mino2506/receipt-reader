@@ -19,11 +19,12 @@ export const getReceipts = protectedProcedure
 		const lastCursor = input.cursor;
 
 		const receipts = await prisma.receipt.findMany({
-			where: { userId: ctx.user.id },
+			where: { userId: ctx.user.id, deletedAt: null },
 			orderBy: { createdAt: "desc" },
 			take: plusOneLimit,
 			include: {
 				receiptDetails: {
+					where: { deletedAt: null },
 					include: {
 						item: true,
 					},
