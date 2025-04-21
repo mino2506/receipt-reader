@@ -5,9 +5,12 @@ export async function selectReceiptWithDetails(
 	userId: string,
 ) {
 	return await prisma.receipt.findUnique({
-		where: { id: receiptId, userId: userId },
+		where: { id: receiptId, userId: userId, deletedAt: null },
 		include: {
 			receiptDetails: {
+				where: {
+					deletedAt: null,
+				},
 				include: {
 					item: true,
 				},

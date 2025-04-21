@@ -11,7 +11,7 @@ export const getReceiptById = protectedProcedure
 	)
 	.query(async ({ ctx, input }) => {
 		return await prisma.receipt.findUnique({
-			where: { id: input.id, userId: ctx.user.id },
+			where: { id: input.id, userId: ctx.user.id, deletedAt: null },
 			include: {
 				store: true,
 				receiptDetails: {

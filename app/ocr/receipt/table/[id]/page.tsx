@@ -20,7 +20,7 @@ export default async function ReceiptPage({
 	const receipt = fetched.data;
 
 	return (
-		<div>
+		<div className="w-full max-w-screen-md mx-auto p-4">
 			<h1>{`レシートID: ${receipt.id}`}</h1>
 			<table className="w-full justify-center items-center">
 				<thead>

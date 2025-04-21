@@ -10,7 +10,7 @@ export const updateDetail = protectedProcedure
 		const { id, itemId, ...data } = input;
 
 		const updated = await prisma.receiptDetail.update({
-			where: { id },
+			where: { id, deletedAt: null },
 			data: {
 				...data,
 				item: {

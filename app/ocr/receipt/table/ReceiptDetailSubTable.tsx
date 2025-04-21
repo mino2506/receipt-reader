@@ -9,6 +9,8 @@ export default function ReceiptDetailPreviewTable({
 	details: ReceiptDetailWithItem[];
 	pageSize?: number;
 }) {
+	const hasDetails = details.length > 0;
+
 	const [page, setPage] = useState(0);
 	const pageCount = Math.ceil(details.length / pageSize);
 
@@ -31,19 +33,23 @@ export default function ReceiptDetailPreviewTable({
 						<th className="border p-1">単価</th>
 						<th className="border p-1">小計</th>
 						<th className="border p-1">カテゴリー</th>
+						<th className="border p-1">順番</th>
 					</tr>
 				</thead>
-				<tbody>
-					{currentPageItems.map((detail) => (
-						<tr key={detail.id}>
-							<td className="border px-2 py-1">{detail.item.rawName}</td>
-							<td className="border px-2 py-1">{detail.amount}</td>
-							<td className="border px-2 py-1">{detail.unitPrice}</td>
-							<td className="border px-2 py-1">{detail.subTotalPrice}</td>
-							<td className="border px-2 py-1">{detail.item.category}</td>
-						</tr>
-					))}
-				</tbody>
+				{hasDetails && (
+					<tbody>
+						{currentPageItems.map((detail) => (
+							<tr key={detail.id}>
+								<td className="border px-2 py-1">{detail.item.rawName}</td>
+								<td className="border px-2 py-1">{detail.amount}</td>
+								<td className="border px-2 py-1">{detail.unitPrice}</td>
+								<td className="border px-2 py-1">{detail.subTotalPrice}</td>
+								<td className="border px-2 py-1">{detail.item.category}</td>
+								<td className="border px-2 py-1">{detail.order}</td>
+							</tr>
+						))}
+					</tbody>
+				)}
 			</table>
 			<div className="flex gap-2 justify-end mt-1 text-xs">
 				<button
@@ -66,6 +72,11 @@ export default function ReceiptDetailPreviewTable({
 					次 →
 				</button>
 			</div>
+			{!hasDetails && (
+				<div>
+					<span className="text-red-700">明細がありません</span>
+				</div>
+			)}
 		</div>
 	);
 }
