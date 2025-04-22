@@ -8,6 +8,7 @@ import {
 } from "@tanstack/react-table";
 import { useState } from "react";
 
+import ItemSelector from "@/app/components/ItemSelector";
 import { getReceiptDetailColumns } from "@/app/ocr/receipt/table/[id]/receiptDetail.columns";
 import { getFullReceiptDetailColumns } from "@/app/ocr/receipt/table/[id]/receiptDetail.full.columns";
 import type {
@@ -135,9 +136,24 @@ export default function ReceiptDetail(props: {
 					))}
 				</tbody>
 			</table>
-			<div>
-				<span className="text-red-700">明細がありません</span>
-			</div>
+			{!hasDetails && (
+				<div>
+					<span className="text-red-700">明細がありません</span>
+				</div>
+			)}
+			<ItemSelector
+				value={{
+					id: "dummy-id",
+					rawName: "dummy-name",
+					normalized: null,
+					category: "other",
+					createdAt: new Date().toISOString(),
+					updatedAt: new Date().toISOString(),
+				}}
+				onSelect={(item) => {
+					alert(JSON.stringify(item));
+				}}
+			/>
 		</div>
 	);
 }
