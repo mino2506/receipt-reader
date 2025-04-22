@@ -30,6 +30,22 @@ export const CategoryEnum = z.enum([
 	"utility",
 	"other",
 ]);
+export type Category = z.infer<typeof CategoryEnum>;
+export const CATEGORY_LABELS: Record<Category, string> = {
+	food: "食費",
+	drink: "飲料費",
+	snacks: "お菓子",
+	daily: "日用品",
+	medical: "医療費",
+	beauty_products: "美容",
+	clothing: "衣類",
+	eating_out: "外食",
+	pet: "ペット",
+	leisure: "娯楽",
+	transport: "交通費",
+	utility: "光熱費",
+	other: "その他",
+};
 
 /**
  * Zod Schema
@@ -46,3 +62,15 @@ export const CurrencyEnum = z.enum([
 	"CAD",
 	"other",
 ]);
+export type Currency = z.infer<typeof CurrencyEnum>;
+export const CURRENCY_LABELS: Record<Currency, string> = {
+	JPY: "円",
+	USD: "ドル",
+	EUR: "ユーロ",
+	CNY: "人民元",
+	KRW: "ウォン",
+	GBP: "ポンド",
+	AUD: "豪ドル",
+	CAD: "カナダドル",
+	other: "その他",
+};
