@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-sync-params */
 
 import { prisma } from "@/lib/prisma/client";
+import { z } from "zod";
 
 import {
 	type ReceiptWithItemDetails,
@@ -9,11 +10,17 @@ import {
 import { getReceiptDetailsById } from "@/lib/api/receipt/server/getReceiptDetailsById";
 import ReceiptDetail from "./ReceiptDetail";
 
+const ReceiptIdSchema = z.string().uuid();
+
 export default async function ReceiptPage({
 	params,
 }: { params: { id: string } }) {
-	const receiptIdByUrl = params.id;
-	const fetched = await getReceiptDetailsById(receiptIdByUrl);
+	const receiptIdByUrl = await params.id;
+	const parsedReceiptId = ReceiptIdSchema.safeParse(receiptIdByUrl);
+	if (!parsedReceiptId.success) {
+		return <div>URLが不正です</div>;
+	}
+	const fetched = await getReceiptDetailsById(parsedReceiptId.data);
 
 	if (!fetched.success) return <div>データの取得に失敗しました</div>;
 

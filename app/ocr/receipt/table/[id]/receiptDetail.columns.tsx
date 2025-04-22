@@ -1,5 +1,6 @@
 import type { ColumnDef } from "@tanstack/react-table";
 
+import ItemSelector from "@/app/components/ItemSelector";
 import type { ReceiptDetailWithItem } from "@/lib/api/receipt/get.schema";
 
 type Props = {
@@ -21,6 +22,24 @@ export function getReceiptDetailColumns({
 		{
 			header: "商品名",
 			accessorFn: (row) => row.item.normalized ?? row.item.rawName,
+			cell: ({ row, getValue }) =>
+				editingRowId === row.original.id ? (
+					<ItemSelector
+						value={row.original.item}
+						onSelect={(item) => {
+							updateRow(row.original.id, { item: item });
+							setEditingRowId(null);
+						}}
+					/>
+				) : (
+					// biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
+					<span
+						className="w-full"
+						onClick={() => setEditingRowId(row.original.id)}
+					>
+						{getValue<number>()}
+					</span>
+				),
 		},
 		{
 			header: "数量",
@@ -37,6 +56,7 @@ export function getReceiptDetailColumns({
 						}}
 					/>
 				) : (
+					// biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
 					<span
 						className="w-full"
 						onClick={() => setEditingRowId(row.original.id)}
@@ -60,6 +80,7 @@ export function getReceiptDetailColumns({
 						}}
 					/>
 				) : (
+					// biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
 					<span
 						className="w-full"
 						onClick={() => setEditingRowId(row.original.id)}
@@ -85,6 +106,7 @@ export function getReceiptDetailColumns({
 						}}
 					/>
 				) : (
+					// biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
 					<span
 						className="w-full"
 						onClick={() => setEditingRowId(row.original.id)}
@@ -96,25 +118,6 @@ export function getReceiptDetailColumns({
 		{
 			header: "税",
 			accessorKey: "tax",
-			cell: ({ row, getValue }) =>
-				editingRowId === row.original.id ? (
-					<input
-						type="number"
-						className="w-full"
-						defaultValue={getValue<number>()}
-						onBlur={(e) => {
-							updateRow(row.original.id, { tax: Number(e.target.value) });
-							setEditingRowId(null);
-						}}
-					/>
-				) : (
-					<span
-						className="w-full"
-						onClick={() => setEditingRowId(row.original.id)}
-					>
-						{getValue<number>()}
-					</span>
-				),
 		},
 		{ header: "カテゴリ", accessorFn: (row) => row.item.category },
 	];
