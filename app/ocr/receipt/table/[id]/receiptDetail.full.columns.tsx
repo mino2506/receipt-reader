@@ -1,6 +1,8 @@
-import type { ColumnDef, Row } from "@tanstack/react-table";
+import type { ColumnDef } from "@tanstack/react-table";
 
+import { Button } from "@/components/ui/button";
 import type { ReceiptDetailWithItem } from "@/lib/api/receipt/get.schema";
+import { MoreHorizontal, Pencil, Trash } from "lucide-react";
 
 interface Props<T> {
 	baseColumnDef: ColumnDef<T>[];
@@ -16,24 +18,33 @@ export function getFullColumnDef<T>({
 	return [
 		...baseColumnDef,
 		{
-			header: "操作",
 			id: "actions",
+			header: () => (
+				<div className="flex justify-center p-1 text-gray-600 text-md tracking-wider uppercase">
+					<MoreHorizontal />
+				</div>
+			),
 			cell: ({ row }) => (
-				<div className="flex gap-1 justify-center">
-					<button
-						type="button"
-						className="text-blue-600 hover:underline"
+				<div className="flex gap-1 justify-between p-1">
+					<Button
+						variant="outline"
+						size="icon"
 						onClick={() => onEdit(row.original)}
+						className="text-blue-600 hover:text-blue-700 hover:bg-blue-100"
 					>
-						編集
-					</button>
-					<button
-						type="button"
-						className="text-red-600 hover:underline"
+						<Pencil className="h-4 w-4" />
+						<span className="sr-only">編集</span>
+					</Button>
+
+					<Button
+						variant="destructive"
+						size="icon"
 						onClick={() => onDelete(row.original)}
+						className="bg-red-500 hover:bg-red-300"
 					>
-						削除
-					</button>
+						<Trash className="h-4 w-4" />
+						<span className="sr-only">削除</span>
+					</Button>
 				</div>
 			),
 		},

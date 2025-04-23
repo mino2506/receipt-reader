@@ -3,6 +3,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
+import { EditableNumberCell } from "@/app/components/receipt/EditableNumberCell";
 import { ItemSelector } from "@/app/components/receipt/ItemSelector";
 import { CATEGORY_LABELS, CURRENCY_LABELS } from "@/lib/api/receipt";
 import type { ReceiptDetailWithItem } from "@/lib/api/receipt/get.schema";
@@ -20,11 +21,24 @@ export function getReceiptDetailColumns({
 }: Props): ColumnDef<ReceiptDetailWithItem>[] {
 	return [
 		{
-			header: "順番",
+			id: "order",
+			header: () => (
+				<div className="text-center p-1 text-gray-600 text-md tracking-wider uppercase">
+					順番
+				</div>
+			),
 			accessorKey: "order",
+			cell: ({ getValue }) => (
+				<div className="text-center text-sm w-[48px]">{getValue<number>()}</div>
+			),
 		},
 		{
-			header: "商品名",
+			id: "item",
+			header: () => (
+				<div className="text-left px-2 py-1 text-gray-600 text-md tracking-wider uppercase">
+					商品名
+				</div>
+			),
 			accessorFn: (row) => row.item.normalized ?? row.item.rawName,
 			cell: ({ row, getValue }) =>
 				editingRowId === row.original.id ? (
@@ -37,103 +51,124 @@ export function getReceiptDetailColumns({
 					/>
 				) : (
 					// biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
-					<span
-						className="w-full"
+					<div
+						className="flex items-center w-full h-13 px-2 py-1 text-sm text-gray-800 cursor-pointer"
 						onClick={() => setEditingRowId(row.original.id)}
 					>
 						{getValue<number>()}
-					</span>
+					</div>
 				),
 		},
 		{
-			header: "カテゴリ",
+			id: "category",
+			header: () => (
+				<div className="text-center p-1 text-gray-600 text-md text-nowrap tracking-wider uppercase">
+					分類
+				</div>
+			),
 			accessorFn: (row) => CATEGORY_LABELS[row.item.category],
+			cell: ({ getValue }) => (
+				<div className="flex items-center text-sm text-nowrap h-13 py-1 px-2">
+					{getValue<string>()}
+				</div>
+			),
 		},
 		{
-			header: "数量",
+			id: "amount",
+			header: () => (
+				<div className="text-center p-1 text-gray-600 text-md tracking-wider uppercase">
+					数量
+				</div>
+			),
 			accessorKey: "amount",
 			cell: ({ row, getValue }) => {
 				const isEditing = editingRowId === row.original.id;
 
 				return (
-					<Input
-						type="number"
-						defaultValue={getValue<number>()}
-						readOnly={!isEditing}
-						onBlur={(e) => {
-							if (!isEditing) return;
-							updateRow(row.original.id, { amount: Number(e.target.value) });
-							setEditingRowId(null);
-						}}
-						onClick={() => {
-							if (!isEditing) setEditingRowId(row.original.id);
-						}}
-						className={cn(
-							"w-full h-full px-2 py-1 text-sm",
-							!isEditing &&
-								"bg-transparent border-none text-gray-800 cursor-pointer",
-						)}
+					<EditableNumberCell
+						value={getValue<number>()}
+						isEditing={isEditing}
+						onSubmit={(value) => updateRow(row.original.id, { amount: value })}
+						onEditStart={() => setEditingRowId(row.original.id)}
+						className=" h-12"
 					/>
 				);
 			},
 		},
 		{
-			header: "単価",
+			id: "unitPrice",
+			header: () => (
+				<div className="text-center p-1 text-gray-600 text-md tracking-wider uppercase">
+					単価
+				</div>
+			),
 			accessorKey: "unitPrice",
-			cell: ({ row, getValue }) =>
-				editingRowId === row.original.id ? (
-					<input
-						type="number"
-						className="w-full"
-						defaultValue={getValue<number>()}
-						onBlur={(e) => {
-							updateRow(row.original.id, { unitPrice: Number(e.target.value) });
-							setEditingRowId(null);
-						}}
+			cell: ({ row, getValue }) => {
+				const isEditing = editingRowId === row.original.id;
+
+				return (
+					<EditableNumberCell
+						value={getValue<number>()}
+						isEditing={isEditing}
+						onSubmit={(value) =>
+							updateRow(row.original.id, { unitPrice: value })
+						}
+						onEditStart={() => setEditingRowId(row.original.id)}
+						className=" h-12"
 					/>
-				) : (
-					// biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
-					<span
-						className="w-full"
-						onClick={() => setEditingRowId(row.original.id)}
-					>
-						{getValue<number>()}
-					</span>
-				),
+				);
+			},
 		},
 		{
-			header: "小計",
+			id: "subTotalPrice",
+
+			header: () => (
+				<div className="text-center p-1 text-gray-600 text-md tracking-wider uppercase">
+					小計
+				</div>
+			),
 			accessorKey: "subTotalPrice",
-			cell: ({ row, getValue }) =>
-				editingRowId === row.original.id ? (
-					<input
-						type="number"
-						className="w-full"
-						defaultValue={getValue<number>()}
-						onBlur={(e) => {
-							updateRow(row.original.id, {
-								subTotalPrice: Number(e.target.value),
-							});
-							setEditingRowId(null);
-						}}
+			cell: ({ row, getValue }) => {
+				const isEditing = editingRowId === row.original.id;
+
+				return (
+					<EditableNumberCell
+						value={getValue<number>()}
+						isEditing={isEditing}
+						onSubmit={(value) =>
+							updateRow(row.original.id, { subTotalPrice: value })
+						}
+						onEditStart={() => setEditingRowId(row.original.id)}
+						className=" h-12"
 					/>
-				) : (
-					// biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
-					<span
-						className="w-full"
-						onClick={() => setEditingRowId(row.original.id)}
-					>
-						{getValue<number>()}
-					</span>
-				),
+				);
+			},
 		},
 		{
-			header: "税",
+			id: "tax",
+			header: () => (
+				<div className="text-center p-1 text-gray-600 text-md tracking-wider uppercase">
+					税
+				</div>
+			),
 			accessorKey: "tax",
+			cell: ({ getValue }) => (
+				<div className="text-right text-sm py-1 px-2">{getValue<number>()}</div>
+			),
 		},
 		{
-			header: "通貨",
+			id: "currency",
+			header: () => (
+				<div className="text-center p-1 text-gray-600 text-md tracking-wider uppercase">
+					通貨
+				</div>
+			),
 			accessorFn: (row) => CURRENCY_LABELS[row.currency],
+			cell: ({ getValue }) => (
+				<div className="text-center text-sm py-1 px-2">
+					{getValue<string>()}
+				</div>
+			),
 		},
 	];
 }

@@ -62,12 +62,12 @@ export function ItemSelector({ value, onSelect }: Props) {
 			// biome-ignore lint/a11y/useSemanticElements: <explanation>
 			role="combobox"
 			aria-expanded={open}
-			className="w-[200px] justify-between p-7"
+			className="w-[250px] justify-between h-12"
 		>
 			<span className="text-left whitespace-normal break-words line-clamp-2">
 				{item?.rawName ?? item?.normalized ?? "商品名を選択..."}
 			</span>
-			<ChevronsUpDown className="opacity-50" />
+			<ChevronsUpDown className="opacity-50 shrink-0" />
 		</Button>
 	);
 
@@ -134,7 +134,7 @@ export function ItemSelector({ value, onSelect }: Props) {
 			}}
 		>
 			<PopoverTrigger asChild>{renderSelectorButton()}</PopoverTrigger>
-			<PopoverContent className="w-[200px] p-0">
+			<PopoverContent className="w-[250px] p-0">
 				{mode === "selecting" && renderSuggestionList()}
 				{mode === "creating" && renderNewItemForm()}
 			</PopoverContent>
