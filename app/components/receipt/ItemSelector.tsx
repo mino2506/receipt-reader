@@ -22,6 +22,7 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { Plus } from "lucide-react";
 import { NewItemForm } from "./NewItemForm";
 
 type Props = {
@@ -64,7 +65,7 @@ export function ItemSelector({ value, onSelect }: Props) {
 			className="w-[200px] justify-between p-7"
 		>
 			<span className="text-left whitespace-normal break-words line-clamp-2">
-				{item?.rawName ?? item?.normalized ?? "Select Item..."}
+				{item?.rawName ?? item?.normalized ?? "商品名を選択..."}
 			</span>
 			<ChevronsUpDown className="opacity-50" />
 		</Button>
@@ -76,7 +77,7 @@ export function ItemSelector({ value, onSelect }: Props) {
 				<CommandInput
 					value={input}
 					onValueChange={(v) => setInput(v)}
-					placeholder="Search item..."
+					placeholder="商品名を選択..."
 					className="h-9"
 				/>
 				<CommandList>
@@ -108,7 +109,8 @@ export function ItemSelector({ value, onSelect }: Props) {
 						className="pointer-events-auto text-blue-700 hover:bg-blue-100 cursor-pointer"
 						onSelect={() => setMode("creating")}
 					>
-						+ New Item
+						<Plus />
+						新しい商品
 					</CommandItem>
 				</CommandGroup>
 			</Command>

@@ -151,7 +151,7 @@ export default function ReceiptDetail(props: {
 					{table.getHeaderGroups().map((headerGroup) => (
 						<tr key={headerGroup.id}>
 							{headerGroup.headers.map((header) => (
-								<th key={header.id} className="border px-2 py-1 bg-gray-200">
+								<th key={header.id} className="border bg-gray-200">
 									{header.isPlaceholder
 										? null
 										: flexRender(
@@ -167,7 +167,7 @@ export default function ReceiptDetail(props: {
 					{table.getRowModel().rows.map((row) => (
 						<tr key={row.id}>
 							{row.getVisibleCells().map((cell) => (
-								<td key={cell.id} className="border px-2 py-1">
+								<td key={cell.id} className="border">
 									{flexRender(cell.column.columnDef.cell, cell.getContext())}
 								</td>
 							))}
