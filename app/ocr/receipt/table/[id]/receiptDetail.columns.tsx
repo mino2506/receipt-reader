@@ -1,5 +1,8 @@
 import type { ColumnDef } from "@tanstack/react-table";
 
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+
 import { ItemSelector } from "@/app/components/receipt/ItemSelector";
 import { CATEGORY_LABELS, CURRENCY_LABELS } from "@/lib/api/receipt";
 import type { ReceiptDetailWithItem } from "@/lib/api/receipt/get.schema";
@@ -49,26 +52,30 @@ export function getReceiptDetailColumns({
 		{
 			header: "数量",
 			accessorKey: "amount",
-			cell: ({ row, getValue }) =>
-				editingRowId === row.original.id ? (
-					<input
+			cell: ({ row, getValue }) => {
+				const isEditing = editingRowId === row.original.id;
+
+				return (
+					<Input
 						type="number"
-						className="w-full"
 						defaultValue={getValue<number>()}
+						readOnly={!isEditing}
 						onBlur={(e) => {
+							if (!isEditing) return;
 							updateRow(row.original.id, { amount: Number(e.target.value) });
 							setEditingRowId(null);
 						}}
+						onClick={() => {
+							if (!isEditing) setEditingRowId(row.original.id);
+						}}
+						className={cn(
+							"w-full h-full px-2 py-1 text-sm",
+							!isEditing &&
+								"bg-transparent border-none text-gray-800 cursor-pointer",
+						)}
 					/>
-				) : (
-					// biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
-					<span
-						className="w-full"
-						onClick={() => setEditingRowId(row.original.id)}
-					>
-						{getValue<number>()}
-					</span>
-				),
+				);
+			},
 		},
 		{
 			header: "単価",
