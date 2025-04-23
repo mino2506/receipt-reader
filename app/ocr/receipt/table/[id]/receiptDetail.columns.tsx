@@ -1,6 +1,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
 
-import ItemSelector from "@/app/components/ItemSelector";
+import { ItemSelector } from "@/app/components/receipt/ItemSelector";
+import { CATEGORY_LABELS, CURRENCY_LABELS } from "@/lib/api/receipt";
 import type { ReceiptDetailWithItem } from "@/lib/api/receipt/get.schema";
 
 type Props = {
@@ -40,6 +41,10 @@ export function getReceiptDetailColumns({
 						{getValue<number>()}
 					</span>
 				),
+		},
+		{
+			header: "カテゴリ",
+			accessorFn: (row) => CATEGORY_LABELS[row.item.category],
 		},
 		{
 			header: "数量",
@@ -119,6 +124,9 @@ export function getReceiptDetailColumns({
 			header: "税",
 			accessorKey: "tax",
 		},
-		{ header: "カテゴリ", accessorFn: (row) => row.item.category },
+		{
+			header: "通貨",
+			accessorFn: (row) => CURRENCY_LABELS[row.currency],
+		},
 	];
 }

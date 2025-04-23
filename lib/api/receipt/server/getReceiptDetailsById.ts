@@ -43,6 +43,9 @@ export async function getReceiptDetailsById(
 				store: true,
 				receiptDetails: {
 					where: { deletedAt: null },
+					orderBy: {
+						order: "asc",
+					},
 					include: {
 						item: true,
 					},
