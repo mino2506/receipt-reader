@@ -187,12 +187,15 @@ export default function ReceiptDetail(props: {
 	);
 }
 
-import type { CreateReceiptDetail, Item } from "@/lib/api/receipt";
+import type { Category, CreateReceiptDetail, Item } from "@/lib/api/receipt";
 import {
 	CATEGORY_LABELS,
 	CURRENCY_LABELS,
 	type Currency,
 } from "@/lib/api/receipt";
+
+import { Button } from "@/components/ui/button";
+import { Check, ListPlus } from "lucide-react";
 
 export function NewReceiptDetailRow({
 	receipt,
@@ -234,46 +237,50 @@ export function NewReceiptDetailRow({
 	return (
 		<>
 			<tr>
-				<td className="border">new</td>
+				<td className="border h-13">
+					<ListPlus className="text-center text-sm w-[48px]" />
+				</td>
 				<td>
 					<ItemSelector value={item} onSelect={setItem} />
 				</td>
-				<td className="border px-2 py-1">
-					<div className="text-sm w-full h-full">{item?.category}</div>
+				<td className="border text-center px-2 py-1 h-13">
+					<div className="flex justify-center text-sm items-center h-full">
+						{CATEGORY_LABELS[item?.category as Category]}
+					</div>
 				</td>
-				<td className="border px-2 py-1">
+				<td className="border px-2 py-1 h-13">
 					<input
 						type="number"
 						value={amount}
 						onChange={(e) => setAmount(Number(e.target.value))}
-						className="w-full text-sm"
+						className="text-right w-full text-sm"
 					/>
 				</td>
-				<td className="border px-2 py-1">
+				<td className="border px-2 py-1 h-13">
 					<input
 						type="unitPrice"
 						value={unitPrice}
 						onChange={(e) => setUnitPrice(Number(e.target.value))}
-						className="w-full text-sm"
+						className="text-right w-full text-sm"
 					/>
 				</td>
-				<td className="border px-2 py-1">
+				<td className="border px-2 py-1 h-13">
 					<input
 						type="subTotalPrice"
 						value={subTotalPrice}
 						onChange={(e) => setSubTotalPrice(Number(e.target.value))}
-						className="w-full text-sm"
+						className="text-right w-full text-sm"
 					/>
 				</td>
-				<td className="border px-2 py-1">
+				<td className="border px-2 py-1 h-13">
 					<input
 						type="tax"
 						value={tax}
 						onChange={(e) => setTax(Number(e.target.value))}
-						className="w-full text-sm"
+						className="text-right w-full text-sm"
 					/>
 				</td>
-				<td className="border px-2 py-1">
+				<td className="border px-2 py-1 h-13">
 					<div className="relative">
 						<input
 							type="text"
@@ -284,8 +291,8 @@ export function NewReceiptDetailRow({
 								setCurrencyInput(e.target.value);
 							}}
 							onChange={(e) => setCurrencyInput(e.target.value)}
-							className="w-full h-full text-sm"
-							placeholder="通貨を入力"
+							className="text-center w-full h-full text-sm"
+							placeholder="円..."
 						/>
 					</div>
 					{isCurrencyEditing && (
@@ -308,10 +315,17 @@ export function NewReceiptDetailRow({
 						</ul>
 					)}
 				</td>
-				<td>
-					<button type="button" onClick={handleCreate}>
-						登録
-					</button>
+				<td className="text-center h-13">
+					<div className="flex justify-center items-center h-full">
+						<Button
+							onClick={handleCreate}
+							variant="default"
+							className="flex gap-1 text-xs sm:text-sm"
+						>
+							<Check />
+							<span className="">登録</span>
+						</Button>
+					</div>
 				</td>
 			</tr>
 			<tr>
