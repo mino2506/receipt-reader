@@ -8,15 +8,36 @@ import {
 } from "@tanstack/react-table";
 import { useState } from "react";
 
+import { ItemSelector } from "@/app/components/receipt/ItemSelector";
 import { getReceiptDetailColumns } from "@/app/ocr/receipt/table/[id]/receiptDetail.columns";
 import { getFullReceiptDetailColumns } from "@/app/ocr/receipt/table/[id]/receiptDetail.full.columns";
-import { CategoryEnum } from "@/lib/api/receipt/common.schema";
 import {
+	type ReceiptDetailWithItem,
 	ReceiptDetailWithItemSchema,
 	type ReceiptWithItemDetails,
 } from "@/lib/api/receipt/get.schema";
-import type { UpdateReceiptDetailInput } from "@/lib/api/receipt/update.schema";
-import { update } from "lodash";
+import { buildUpdatePayload } from "./buildUpdatePayload";
+
+const dummyRowInit: ReceiptDetailWithItem = {
+	id: "new",
+	amount: 1,
+	unitPrice: 0,
+	subTotalPrice: 0,
+	tax: 0,
+	currency: "JPY",
+	order: 0,
+	createdAt: new Date().toISOString(),
+	updatedAt: new Date().toISOString(),
+	deletedAt: null,
+	item: {
+		id: "",
+		rawName: "",
+		normalized: null,
+		category: "other",
+		createdAt: new Date().toISOString(),
+		updatedAt: new Date().toISOString(),
+	},
+};
 
 export default function ReceiptDetail(props: {
 	receipt: ReceiptWithItemDetails;
@@ -83,47 +104,9 @@ export default function ReceiptDetail(props: {
 		updateRow: (id, updated) => {
 			const detail = details.find((d) => d.id === id);
 			if (!detail) return;
+			if (detail.id.startsWith("new")) return;
 
-			const item = updated.item ?? detail.item;
-			const amount = updated.amount ?? detail.amount;
-			const unitPrice = updated.unitPrice ?? detail.unitPrice;
-			const subTotalPrice = updated.subTotalPrice ?? detail.subTotalPrice;
-			const tax = updated.tax ?? detail.tax;
-
-			const REDUCED_TAX_RATE = 0.08;
-			const STANDARD_TAX_RATE = 0.1;
-			const REDUCED_TAXES = ["food", "drink", "snacks"];
-			const isReducedTax = REDUCED_TAXES.includes(item.category);
-			const calcTax = (subtotal: number, isReduced: boolean) => {
-				const rate = isReduced ? REDUCED_TAX_RATE : STANDARD_TAX_RATE;
-				return Math.round(subtotal - subtotal * (1 / (1 + rate)));
-			};
-
-			const draft = { ...item, amount, unitPrice, subTotalPrice, tax };
-			if (updated.unitPrice) {
-				draft.subTotalPrice = updated.unitPrice * amount;
-				draft.tax = calcTax(draft.subTotalPrice, isReducedTax);
-			}
-			if (updated.subTotalPrice) {
-				draft.unitPrice = updated.subTotalPrice / amount;
-				draft.tax = calcTax(updated.subTotalPrice, isReducedTax);
-			}
-			if (updated.amount) {
-				draft.subTotalPrice = updated.amount * unitPrice;
-				draft.tax = calcTax(draft.subTotalPrice, isReducedTax);
-			}
-
-			const payload = {
-				id,
-				amount: draft.amount,
-				unitPrice: draft.unitPrice,
-				subTotalPrice: draft.subTotalPrice,
-				tax: draft.tax,
-
-				currency: detail.currency,
-				itemId: updated.item?.id ?? detail.item.id,
-				order: detail.order,
-			};
+			const payload = buildUpdatePayload(detail, updated);
 
 			// 楽観更新: item が含まれていれば state を先に更新
 			// updateDetail.useMutation の input は、
@@ -191,6 +174,9 @@ export default function ReceiptDetail(props: {
 						</tr>
 					))}
 				</tbody>
+				<tfoot>
+					<NewReceiptDetailRow receipt={receipt} onCreate={() => {}} />
+				</tfoot>
 			</table>
 			{!hasDetails && (
 				<div>
@@ -201,9 +187,136 @@ export default function ReceiptDetail(props: {
 	);
 }
 
-function buildUpdatePayload(
-	detail: ReceiptDetail,
-	updated: Partial<ReceiptWithItemDetails>,
-): UpdateReceiptDetailInput {
-	// この中で補完・税計算まで完了させて返す
+import type { CreateReceiptDetail, Item } from "@/lib/api/receipt";
+import {
+	CATEGORY_LABELS,
+	CURRENCY_LABELS,
+	type Currency,
+} from "@/lib/api/receipt";
+
+export function NewReceiptDetailRow({
+	receipt,
+	onCreate,
+}: {
+	receipt: ReceiptWithItemDetails;
+	onCreate: (data: CreateReceiptDetail) => void;
+}) {
+	const [error, setError] = useState<string | null>(null);
+	const [item, setItem] = useState<Item | null>(null);
+	const [amount, setAmount] = useState(1);
+	const [unitPrice, setUnitPrice] = useState(0);
+	const [subTotalPrice, setSubTotalPrice] = useState(0);
+	const [tax, setTax] = useState(0);
+	const [currency, setCurrency] = useState<Currency>("JPY");
+	const [isCurrencyEditing, setIsCurrencyEditing] = useState(false);
+	const [currencyInput, setCurrencyInput] = useState<string>("");
+
+	const handleCreate = () => {
+		setError(null);
+		if (!item) {
+			setError("商品を選択してください");
+			return;
+		}
+		const draft: CreateReceiptDetail = {
+			receiptId: receipt.id,
+			itemId: item.id,
+			amount,
+			unitPrice,
+			subTotalPrice,
+			tax,
+			currency: "JPY",
+			order: receipt.details.length + 1,
+		};
+
+		onCreate(draft);
+	};
+
+	return (
+		<>
+			<tr>
+				<td className="border">new</td>
+				<td>
+					<ItemSelector value={item} onSelect={setItem} />
+				</td>
+				<td className="border px-2 py-1">
+					<div className="text-sm w-full h-full">{item?.category}</div>
+				</td>
+				<td className="border px-2 py-1">
+					<input
+						type="number"
+						value={amount}
+						onChange={(e) => setAmount(Number(e.target.value))}
+						className="w-full text-sm"
+					/>
+				</td>
+				<td className="border px-2 py-1">
+					<input
+						type="unitPrice"
+						value={unitPrice}
+						onChange={(e) => setUnitPrice(Number(e.target.value))}
+						className="w-full text-sm"
+					/>
+				</td>
+				<td className="border px-2 py-1">
+					<input
+						type="subTotalPrice"
+						value={subTotalPrice}
+						onChange={(e) => setSubTotalPrice(Number(e.target.value))}
+						className="w-full text-sm"
+					/>
+				</td>
+				<td className="border px-2 py-1">
+					<input
+						type="tax"
+						value={tax}
+						onChange={(e) => setTax(Number(e.target.value))}
+						className="w-full text-sm"
+					/>
+				</td>
+				<td className="border px-2 py-1">
+					<div className="relative">
+						<input
+							type="text"
+							value={currencyInput}
+							onFocus={() => setIsCurrencyEditing(true)}
+							onBlur={(e) => {
+								setIsCurrencyEditing(false);
+								setCurrencyInput(e.target.value);
+							}}
+							onChange={(e) => setCurrencyInput(e.target.value)}
+							className="w-full h-full text-sm"
+							placeholder="通貨を入力"
+						/>
+					</div>
+					{isCurrencyEditing && (
+						<ul className="absolute z-10 bg-white border w-full shadow text-sm">
+							{Object.entries(CURRENCY_LABELS)
+								.filter(
+									([k, v]) =>
+										k.includes(currencyInput) || v.includes(currencyInput),
+								)
+								.map(([key, label]) => (
+									// biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
+									<li
+										key={key}
+										className="px-2 py-1 hover:bg-blue-100 cursor-pointer"
+										onClick={() => setCurrency(key as Currency)}
+									>
+										{label}
+									</li>
+								))}
+						</ul>
+					)}
+				</td>
+				<td>
+					<button type="button" onClick={handleCreate}>
+						登録
+					</button>
+				</td>
+			</tr>
+			<tr>
+				<span className=" text-red-700"> {error}</span>
+			</tr>
+		</>
+	);
 }
