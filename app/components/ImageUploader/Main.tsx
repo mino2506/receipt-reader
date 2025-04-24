@@ -21,7 +21,7 @@ import {
 } from "./action";
 import { type OpenAiReceiptData, OpenAiReceiptDataSchema } from "./schema";
 
-import ReceiptDetail from "@/app/ocr/receipt/table/[id]/ReceiptDetail";
+import ReceiptDetail from "@/app/receipt/table/[id]/ReceiptDetail";
 import {
 	type CreateReceiptWithItemDetails,
 	CreateReceiptWithItemDetailsSchema,
