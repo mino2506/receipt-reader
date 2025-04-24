@@ -1,4 +1,4 @@
-import ImageUploader from "@/app/components/ImageUploader";
+import ImageUploader from "@/app/receipt/new/ImageUploader";
 import TestCreateReceiptPage from "../create/page";
 
 export default function ReceiptImage() {

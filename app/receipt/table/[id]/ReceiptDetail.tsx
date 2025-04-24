@@ -10,6 +10,7 @@ import { useState } from "react";
 
 import { getReceiptDetailColumns } from "@/app/receipt/table/[id]/receiptDetail.columns";
 import { getFullReceiptDetailColumns } from "@/app/receipt/table/[id]/receiptDetail.full.columns";
+import type { CreateReceiptDetail, Item } from "@/lib/api/receipt";
 import {
 	type ReceiptDetailWithItem,
 	ReceiptDetailWithItemSchema,
@@ -83,6 +84,21 @@ export default function ReceiptDetail(props: {
 			utils.receipt.getReceiptById.invalidate({ id: receipt.id });
 		},
 	});
+	const createMutation = trpc.receipt.createDetail.useMutation({
+		onMutate: async (input) => {
+			const prevReceipt = { ...receipt, details: receipt.details.slice(-1) };
+			return { prevReceipt };
+		},
+		onError: (error, _, context) => {
+			if (context?.prevReceipt) {
+				setReceipt(context.prevReceipt);
+			}
+			console.error("更新失敗:", error.message);
+		},
+		onSettled: () => {
+			utils.receipt.getReceiptById.invalidate({ id: receipt.id });
+		},
+	});
 	const deleteMutation = trpc.receipt.deleteDetail.useMutation({
 		onMutate: async (input) => {
 			const prevReceipt = receipt;
@@ -145,6 +161,25 @@ export default function ReceiptDetail(props: {
 		getCoreRowModel: getCoreRowModel(),
 	});
 
+	const handleCreate = (detail: CreateReceiptDetail, item: Item) => {
+		// 楽観更新
+		setReceipt((prev) => ({
+			...prev,
+			details: [
+				...prev.details,
+				{
+					...detail,
+					id: "",
+					item,
+					createdAt: new Date().toISOString(),
+					updatedAt: new Date().toISOString(),
+					deletedAt: null,
+				},
+			],
+		}));
+		createMutation.mutate(detail);
+	};
+
 	return (
 		<div>
 			<table className="w-full table-auto border mt-4">
@@ -178,7 +213,7 @@ export default function ReceiptDetail(props: {
 				<tfoot>
 					<NewReceiptDetailRow
 						receipt={receipt}
-						onCreate={(data) => {}}
+						onCreate={(detail, item) => handleCreate(detail, item)}
 						onError={(error) => {
 							setError(error);
 						}}

@@ -13,6 +13,15 @@ import {
 } from "@/lib/api/receipt";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import { set } from "lodash";
 import { Check, ListPlus } from "lucide-react";
 
 export function NewReceiptDetailRow({
@@ -21,7 +30,7 @@ export function NewReceiptDetailRow({
 	onError,
 }: {
 	receipt: ReceiptWithItemDetails;
-	onCreate: (data: CreateReceiptDetail) => void;
+	onCreate: (detail: CreateReceiptDetail, item: Item) => void;
 	onError: (error: string | null) => void;
 }) {
 	const [error, setError] = useState<string | null>(null);
@@ -31,8 +40,6 @@ export function NewReceiptDetailRow({
 	const [subTotalPrice, setSubTotalPrice] = useState(0);
 	const [tax, setTax] = useState(0);
 	const [currency, setCurrency] = useState<Currency>("JPY");
-	const [isCurrencyEditing, setIsCurrencyEditing] = useState(false);
-	const [currencyInput, setCurrencyInput] = useState<string>("");
 
 	const handleCreate = () => {
 		setError(null);
@@ -52,91 +59,75 @@ export function NewReceiptDetailRow({
 			order: receipt.details.length + 1,
 		};
 
-		onCreate(draft);
+		onCreate(draft, item);
 	};
 
 	return (
 		<>
 			<tr>
-				<td className="border h-13">
-					<ListPlus className="text-center text-sm w-[48px]" />
+				<td className="flex justify-center items-center border table-fixed h-12">
+					<ListPlus className="w-5 h-5" />
 				</td>
 				<td>
 					<ItemSelector value={item} onSelect={setItem} />
 				</td>
-				<td className="border text-center px-2 py-1 h-13">
+				<td className="border table-fixed text-center px-2 py-1 h-12">
 					<div className="flex justify-center text-sm items-center h-full">
-						{CATEGORY_LABELS[item?.category as Category]}
+						{item ? CATEGORY_LABELS[item?.category as Category] : "-"}
 					</div>
 				</td>
-				<td className="border px-2 py-1 h-13">
-					<input
+				<td className="border table-fixed h-12">
+					<Input
 						type="number"
-						value={amount}
+						defaultValue={amount}
 						onChange={(e) => setAmount(Number(e.target.value))}
-						className="text-right w-full text-sm"
+						className="w-full h-full px-2 py-1 text-sm text-right"
 					/>
 				</td>
-				<td className="border px-2 py-1 h-13">
-					<input
-						type="unitPrice"
-						value={unitPrice}
+				<td className="border table-fixed h-12">
+					<Input
+						type="number"
+						defaultValue={unitPrice}
 						onChange={(e) => setUnitPrice(Number(e.target.value))}
-						className="text-right w-full text-sm"
+						className="w-full h-full px-2 py-1 text-sm text-right"
 					/>
 				</td>
-				<td className="border px-2 py-1 h-13">
-					<input
-						type="subTotalPrice"
-						value={subTotalPrice}
+				<td className="border table-fixed h-12">
+					<Input
+						type="number"
+						defaultValue={subTotalPrice}
 						onChange={(e) => setSubTotalPrice(Number(e.target.value))}
-						className="text-right w-full text-sm"
+						className="w-full h-full px-2 py-1 text-sm text-right"
 					/>
 				</td>
-				<td className="border px-2 py-1 h-13">
-					<input
-						type="tax"
-						value={tax}
+				<td className="border table-fixed h-12">
+					<Input
+						type="number"
+						defaultValue={tax}
 						onChange={(e) => setTax(Number(e.target.value))}
-						className="text-right w-full text-sm"
+						className="w-full h-full px-2 py-1 text-sm text-right"
 					/>
 				</td>
-				<td className="border px-2 py-1 h-13">
-					<div className="relative">
-						<input
-							type="text"
-							value={currencyInput}
-							onFocus={() => setIsCurrencyEditing(true)}
-							onBlur={(e) => {
-								setIsCurrencyEditing(false);
-								setCurrencyInput(e.target.value);
-							}}
-							onChange={(e) => setCurrencyInput(e.target.value)}
-							className="text-center w-full h-full text-sm"
-							placeholder="円..."
-						/>
-					</div>
-					{isCurrencyEditing && (
-						<ul className="absolute z-10 bg-white border w-full shadow text-sm">
-							{Object.entries(CURRENCY_LABELS)
-								.filter(
-									([k, v]) =>
-										k.includes(currencyInput) || v.includes(currencyInput),
-								)
-								.map(([key, label]) => (
-									// biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
-									<li
-										key={key}
-										className="px-2 py-1 hover:bg-blue-100 cursor-pointer"
-										onClick={() => setCurrency(key as Currency)}
-									>
-										{label}
-									</li>
-								))}
-						</ul>
-					)}
+				<td className="border table-fixed h-12">
+					<Select
+						value={currency}
+						onValueChange={(value) => {
+							setCurrency(value as Currency);
+						}}
+					>
+						<SelectTrigger className="w-full h-full ">
+							<SelectValue placeholder="通貨" />
+						</SelectTrigger>
+						<SelectContent>
+							{Object.entries(CURRENCY_LABELS).map(([key, label]) => (
+								<SelectItem key={key} value={key}>
+									{label}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
 				</td>
-				<td className="text-center h-13">
+				<td className="text-center table-fixed h-12">
 					<div className="flex justify-center items-center h-full">
 						<Button
 							onClick={handleCreate}
