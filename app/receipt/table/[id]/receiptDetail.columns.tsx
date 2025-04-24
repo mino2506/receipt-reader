@@ -52,7 +52,7 @@ export function getReceiptDetailColumns({
 				) : (
 					// biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
 					<div
-						className="flex items-center w-full h-13 px-2 py-1 text-sm text-gray-800 cursor-pointer"
+						className="flex items-center w-full h-12 px-2 py-1 text-sm text-gray-800 cursor-pointer"
 						onClick={() => setEditingRowId(row.original.id)}
 					>
 						{getValue<number>()}
@@ -68,7 +68,7 @@ export function getReceiptDetailColumns({
 			),
 			accessorFn: (row) => CATEGORY_LABELS[row.item.category],
 			cell: ({ getValue }) => (
-				<div className="flex items-center text-sm text-nowrap h-13 py-1 px-2">
+				<div className="flex items-center text-sm text-nowrap h-12 py-1 px-2">
 					{getValue<string>()}
 				</div>
 			),
@@ -165,7 +165,7 @@ export function getReceiptDetailColumns({
 			),
 			accessorFn: (row) => CURRENCY_LABELS[row.currency],
 			cell: ({ getValue }) => (
-				<div className="text-center text-sm py-1 px-2">
+				<div className=" text-center text-sm py-1 px-2">
 					{getValue<string>()}
 				</div>
 			),

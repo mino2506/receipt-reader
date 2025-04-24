@@ -23,6 +23,7 @@ export const getReceipts = protectedProcedure
 			orderBy: { createdAt: "desc" },
 			take: plusOneLimit,
 			include: {
+				store: true,
 				receiptDetails: {
 					where: { deletedAt: null },
 					include: {

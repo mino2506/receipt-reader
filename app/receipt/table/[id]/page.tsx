@@ -1,12 +1,7 @@
 /* eslint-disable @next/next/no-sync-params */
 
-import { prisma } from "@/lib/prisma/client";
 import { z } from "zod";
 
-import {
-	type ReceiptWithItemDetails,
-	ReceiptWithItemDetailsSchema,
-} from "@/lib/api/receipt/get.schema";
 import { getReceiptDetailsById } from "@/lib/api/receipt/server/getReceiptDetailsById";
 import { fomatDateString } from "@/utils/date";
 import ReceiptDetail from "./ReceiptDetail";
@@ -28,10 +23,9 @@ export default async function ReceiptPage({
 	const receipt = fetched.data;
 	return (
 		<div className="w-full max-w-screen-md mx-auto p-4">
-			<h1>{`レシートID: ${receipt.id}`}</h1>
 			<table className="w-full justify-center items-center">
 				<thead>
-					<tr className="border px-2 py-1 bg-gray-200">
+					<tr className="border px-2 py-1 bg-gray-200 text-gray-600">
 						<th className="border px-2 py-1">店舗名</th>
 						<th className="border px-2 py-1">明細数</th>
 						<th className="border px-2 py-1">合計</th>
@@ -51,6 +45,7 @@ export default async function ReceiptPage({
 					</tr>
 				</tbody>
 			</table>
+			<div className="text-end text-sm text-muted-foreground">{`Receipt-Id: ${receipt.id}`}</div>
 			<ReceiptDetail receipt={receipt} />
 		</div>
 	);

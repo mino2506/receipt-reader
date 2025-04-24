@@ -1,5 +1,7 @@
 "use client";
 
+import { trpc } from "@/lib/trpc/client";
+import { useRouter } from "next/navigation";
 import React from "react";
 import { useState } from "react";
 
@@ -9,11 +11,16 @@ import {
 	getExpandedRowModel,
 	useReactTable,
 } from "@tanstack/react-table";
-import { receiptColumns } from "./columns";
+import { receiptColumns } from "./receiptTable.columns";
 
 import type { ReceiptWithItemDetails } from "@/lib/api/receipt/get.schema";
+import { getFullReceiptColumns } from "./receiptTable.full.columns";
 
-import ReceiptDetailPreviewTable from "./ReceiptDetailSubTable";
+import { ReceiptDetailSubTable } from "./ReceiptDetailSubTable";
+
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { ChevronDown } from "lucide-react";
 
 export default function ReceiptTable({
 	data,
@@ -22,9 +29,17 @@ export default function ReceiptTable({
 }) {
 	const [expanded, setExpanded] = useState({});
 
+	const router = useRouter();
+
+	const fullReceiptColumns = getFullReceiptColumns({
+		baseColumnDef: receiptColumns,
+		onEdit: (row) => router.push(`/receipt/table/${row.id}`),
+		onDelete: (row) => {},
+	});
+
 	const table = useReactTable({
 		data,
-		columns: receiptColumns,
+		columns: fullReceiptColumns,
 		state: { expanded },
 		onExpandedChange: setExpanded,
 		getCoreRowModel: getCoreRowModel(),
@@ -33,16 +48,17 @@ export default function ReceiptTable({
 	});
 
 	return (
-		<table className="table-auto border-separate border-spacing-0 w-full text-sm">
+		<table className="w-full table-auto border mt-4">
 			<thead className="">
 				{table.getHeaderGroups().map((headerGroup) => (
-					<tr key={headerGroup.id} className="border">
-						<th className="border px-2 py-1 bg-gray-200">actions</th>
+					<tr key={headerGroup.id} className="">
+						<th className="border bg-gray-200">
+							<div className="w-12 text-center p-1 text-gray-600 text-md tracking-wider">
+								{}
+							</div>
+						</th>
 						{headerGroup.headers.map((header) => (
-							<th
-								key={header.id}
-								className="border border-l-0 px-2 py-1 bg-gray-200"
-							>
+							<th key={header.id} className="border bg-gray-200">
 								{flexRender(
 									header.column.columnDef.header,
 									header.getContext(),
@@ -55,32 +71,27 @@ export default function ReceiptTable({
 			<tbody>
 				{table.getRowModel().rows.map((row) => (
 					<React.Fragment key={row.id}>
-						<tr className=" border border-t-0 bg-amber-800 ">
-							<td className=" border border-t-0 h-full flex items-stretch justify-center">
-								<div className="h-8 px-1 py-1">
-									<button
-										type="button"
+						<tr className="">
+							<td className="border">
+								<div className="flex justify-center items-center">
+									<Button
+										variant="ghost"
 										onClick={row.getToggleExpandedHandler()}
-										className={`flex justify-center items-center text-lg w-full h-full aspect-square bg-black  ${row.getIsExpanded() ? "text-red-700" : "text-blue-700"}`}
 									>
-										{row.getIsExpanded() ? "-" : "+"}
-									</button>
-								</div>
-								<div className="h-8 px-1 py-1">
-									<button
-										type="button"
-										onClick={row.getToggleExpandedHandler()}
-										className={`flex justify-center items-center text-lg w-full h-full aspect-square bg-black  ${row.getIsExpanded() ? "text-red-700" : "text-blue-700"}`}
-									>
-										{row.getIsExpanded() ? ">" : "<"}
-									</button>
+										<ChevronDown
+											className={cn(
+												"h-4 w-4 transition-transform duration-200",
+												{
+													"rotate-0": row.getIsExpanded(),
+													"rotate-180": row.getIsExpanded(),
+												},
+											)}
+										/>
+									</Button>
 								</div>
 							</td>
 							{row.getVisibleCells().map((cell) => (
-								<td
-									key={cell.id}
-									className="border border-t-0 border-l-0 px-1.5 py-1"
-								>
+								<td key={cell.id} className="border">
 									{flexRender(cell.column.columnDef.cell, cell.getContext())}
 								</td>
 							))}
@@ -88,8 +99,8 @@ export default function ReceiptTable({
 						{row.getIsExpanded() && (
 							<tr>
 								<td colSpan={row.getVisibleCells().length + 1}>
-									<div className="p-2 bg-red-400">
-										<ReceiptDetailPreviewTable
+									<div className="">
+										<ReceiptDetailSubTable
 											details={row.original.details}
 											pageSize={5}
 										/>
