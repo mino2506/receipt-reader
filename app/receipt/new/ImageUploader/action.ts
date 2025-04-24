@@ -6,25 +6,18 @@ import {
 	messagePrefixPrompt,
 	receiptFunctionCallingSchema,
 	rolePrompt,
-} from "@/app/components/ImageUploader/receiptPrompt";
+} from "@/app/receipt/new/ImageUploader/receiptPrompt";
 import {
-	type OpenAIReceiptRequest,
-	OpenAIReceiptRequestSchema,
-	type OpenAiApiReceiptResponse,
-	OpenAiApiReceiptResponseSchema,
 	type OpenAiReceiptData,
 	OpenAiReceiptDataSchema,
-} from "@/app/components/ImageUploader/schema";
+} from "@/app/receipt/new/ImageUploader/schema";
 import type { ApiResponseFromType } from "@/lib/api/common.schema";
 import { tryParseAndFetchGCV } from "@/lib/googleCloudVision";
 import {
 	OpenAIApiResponseSchema,
-	type OpenAIRequest,
 	OpenAIRequestSchema,
 } from "@/lib/openai/schema";
 import { formatZodError } from "@/lib/zod/error";
-import { NextResponse } from "next/server";
-import { z } from "zod";
 
 /**
  * クライアントから直接使えるGCVラッパー（画像検証＋OCR呼び出し）
