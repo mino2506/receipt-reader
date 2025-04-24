@@ -30,7 +30,9 @@ import { createReceiptWithDetails } from "@/lib/api/receipt/server/createReceipt
 import { createOptimisticReceipt } from "./createOptimisticReceipt";
 import { transformToRegisterReceipt } from "./transformToRegisterReceipt";
 
+import { CameraCaptureDialog } from "@/app/components/CameraCapture";
 import { Button } from "@/components/ui/button";
+import { set } from "lodash";
 import { Loader2, ScanText, UploadIcon } from "lucide-react";
 
 export default function ImageUploader() {
@@ -67,6 +69,7 @@ export default function ImageUploader() {
 		const message = error instanceof Error ? error.message : String(error);
 		console.error("エラー:", message);
 		setError(message);
+		setStep("idle");
 	};
 
 	const uploadImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -88,7 +91,7 @@ export default function ImageUploader() {
 			if (!result.success) return showError(result.error.message);
 			const pages = extractPagesFromGCV(result.data);
 			const lines = pages.flatMap((page) =>
-				groupWordsWithDeskew(page.words, page.size.height),
+				groupWordsWithDeskew(page.words, page.size.height, 0.025, 0.1),
 			);
 			return lines.join("\n");
 		} catch (error) {
@@ -167,6 +170,11 @@ export default function ImageUploader() {
 	return (
 		<div>
 			<div className="flex justify-between items-center w-full">
+				<CameraCaptureDialog
+					onSubmit={(image) => {
+						setBase64(image);
+					}}
+				/>
 				<div className="m-2">
 					<Button
 						asChild
