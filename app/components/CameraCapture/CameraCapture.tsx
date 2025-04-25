@@ -1,5 +1,6 @@
 "use client";
 
+import { CameraStreamController } from "@/app/components/CameraCapture/CameraStreamController";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -14,9 +15,8 @@ import {
 	CheckCircle,
 	RefreshCw,
 	RotateCcw,
-	X,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 interface CameraCaptureDialogProps {
 	onSubmit: (base64Image: string) => void;
@@ -29,57 +29,12 @@ export function CameraCaptureDialog({
 	triggerText = "写真を撮影",
 	title = "カメラキャプチャ",
 }: CameraCaptureDialogProps) {
-	const [open, setOpen] = useState(false);
-	const [stream, setStream] = useState<MediaStream | null>(null);
-	const [capturedImage, setCapturedImage] = useState<string | null>(null);
 	const [error, setError] = useState<string | null>(null);
+	const [open, setOpen] = useState(false);
+	const [capturedImage, setCapturedImage] = useState<string | null>(null);
 	const [rotation, setRotation] = useState<number>(0); // 回転角度（0, 90, 180, 270）
 	const videoRef = useRef<HTMLVideoElement>(null);
 	const canvasRef = useRef<HTMLCanvasElement>(null);
-
-	// カメラ起動
-	const startCamera = useCallback(async () => {
-		setError(null);
-		try {
-			const mediaStream = await navigator.mediaDevices.getUserMedia({
-				video: { facingMode: "environment", width: 1280, height: 720 },
-				audio: false,
-			});
-			setTimeout(() => {
-				if (videoRef.current) {
-					videoRef.current.srcObject = mediaStream;
-					videoRef.current.play().catch((e) => {
-						setError(`カメラ再生に失敗しました: ${e.message}`);
-					});
-				}
-			}, 0);
-		} catch (e) {
-			console.error("カメラ取得エラー", e);
-			setError(
-				`カメラの起動に失敗しました: ${e instanceof Error ? e.message : String(e)}`,
-			);
-		}
-	}, []);
-
-	// カメラ停止
-	const stopCamera = useCallback(() => {
-		if (videoRef.current?.srcObject instanceof MediaStream) {
-			const currentStream = videoRef.current.srcObject;
-		}
-		if (videoRef.current) videoRef.current.srcObject = null;
-	}, []);
-
-	// open状態変化時にカメラ起動・停止
-	useEffect(() => {
-		if (open && !capturedImage) {
-			startCamera();
-		} else {
-			stopCamera();
-		}
-		return () => {
-			stopCamera();
-		};
-	}, [open, capturedImage, startCamera, stopCamera]);
 
 	const handleCapture = () => {
 		const video = videoRef.current;
@@ -113,13 +68,10 @@ export function CameraCaptureDialog({
 
 		const base64 = canvas.toDataURL("image/png");
 		setCapturedImage(base64);
-		// stopCamera();
 	};
 
 	const handleRetake = () => {
 		setCapturedImage(null);
-		// setRotation(0);
-		// startCamera();
 	};
 
 	const handleSubmit = () => {
@@ -135,11 +87,6 @@ export function CameraCaptureDialog({
 		setRotation((prev) => (prev + 90) % 360);
 	};
 
-	const getRotationStyle = () => {
-		if (rotation % 180 === 0) return "w-full h-auto rotate-0"; // 横向き（通常）
-		return "w-auto h-[75vh] rotate-90"; // 縦向き：高さ優先
-	};
-
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>
@@ -150,6 +97,9 @@ export function CameraCaptureDialog({
 			</DialogTrigger>
 
 			<DialogContent className="w-[90vw] max-w-none max-h-[90vh] space-y-4">
+				<p id="dialog-desc" className="sr-only">
+					カメラキャプチャモーダルです
+				</p>
 				<DialogHeader>
 					<DialogTitle>{title}</DialogTitle>
 				</DialogHeader>
@@ -221,6 +171,10 @@ export function CameraCaptureDialog({
 
 				<canvas ref={canvasRef} className="hidden" />
 			</DialogContent>
+			<CameraStreamController
+				videoRef={videoRef}
+				isActive={open && !capturedImage}
+			/>
 		</Dialog>
 	);
 }
