@@ -1,7 +1,7 @@
 "use client";
 
 import Script from "next/script";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 export default function OpenCvExample() {
 	const [ready, setReady] = useState(false);

@@ -30,9 +30,8 @@ import { createReceiptWithDetails } from "@/lib/api/receipt/server/createReceipt
 import { createOptimisticReceipt } from "./createOptimisticReceipt";
 import { transformToRegisterReceipt } from "./transformToRegisterReceipt";
 
-import { CameraCaptureDialog } from "@/app/components/CameraCapture";
+import { CameraCaptureDialog } from "@/app/components/CameraCapture/CameraCapture";
 import { Button } from "@/components/ui/button";
-import { set } from "lodash";
 import { Loader2, ScanText, UploadIcon } from "lucide-react";
 
 export default function ImageUploader() {
