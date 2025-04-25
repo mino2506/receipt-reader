@@ -16,7 +16,7 @@ import {
 	RotateCcw,
 	X,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface CameraCaptureDialogProps {
 	onSubmit: (base64Image: string) => void;
@@ -38,37 +38,36 @@ export function CameraCaptureDialog({
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 
 	// カメラ起動
-	const startCamera = async () => {
+	const startCamera = useCallback(async () => {
 		setError(null);
 		try {
 			const mediaStream = await navigator.mediaDevices.getUserMedia({
 				video: { facingMode: "environment", width: 1280, height: 720 },
 				audio: false,
 			});
-			setStream(mediaStream);
 			setTimeout(() => {
 				if (videoRef.current) {
 					videoRef.current.srcObject = mediaStream;
 					videoRef.current.play().catch((e) => {
-						setError("カメラ再生に失敗しました: " + e.message);
+						setError(`カメラ再生に失敗しました: ${e.message}`);
 					});
 				}
 			}, 0);
 		} catch (e) {
 			console.error("カメラ取得エラー", e);
 			setError(
-				"カメラの起動に失敗しました: " +
-					(e instanceof Error ? e.message : String(e)),
+				`カメラの起動に失敗しました: ${e instanceof Error ? e.message : String(e)}`,
 			);
 		}
-	};
+	}, []);
 
 	// カメラ停止
-	const stopCamera = () => {
-		stream?.getTracks().forEach((t) => t.stop());
-		setStream(null);
+	const stopCamera = useCallback(() => {
+		if (videoRef.current?.srcObject instanceof MediaStream) {
+			const currentStream = videoRef.current.srcObject;
+		}
 		if (videoRef.current) videoRef.current.srcObject = null;
-	};
+	}, []);
 
 	// open状態変化時にカメラ起動・停止
 	useEffect(() => {
@@ -80,7 +79,7 @@ export function CameraCaptureDialog({
 		return () => {
 			stopCamera();
 		};
-	}, [open, capturedImage]);
+	}, [open, capturedImage, startCamera, stopCamera]);
 
 	const handleCapture = () => {
 		const video = videoRef.current;
@@ -112,15 +111,15 @@ export function CameraCaptureDialog({
 		ctx.drawImage(video, -w / 2, -h / 2, w, h);
 		ctx.restore();
 
-		const base64 = canvas.toDataURL("image/jpeg", 0.9);
+		const base64 = canvas.toDataURL("image/png");
 		setCapturedImage(base64);
-		stopCamera();
+		// stopCamera();
 	};
 
 	const handleRetake = () => {
 		setCapturedImage(null);
-		setRotation(0);
-		startCamera();
+		// setRotation(0);
+		// startCamera();
 	};
 
 	const handleSubmit = () => {
@@ -136,6 +135,11 @@ export function CameraCaptureDialog({
 		setRotation((prev) => (prev + 90) % 360);
 	};
 
+	const getRotationStyle = () => {
+		if (rotation % 180 === 0) return "w-full h-auto rotate-0"; // 横向き（通常）
+		return "w-auto h-[75vh] rotate-90"; // 縦向き：高さ優先
+	};
+
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>
@@ -145,7 +149,7 @@ export function CameraCaptureDialog({
 				</Button>
 			</DialogTrigger>
 
-			<DialogContent className="max-w-md space-y-4">
+			<DialogContent className="w-[90vw] max-w-none max-h-[90vh] space-y-4">
 				<DialogHeader>
 					<DialogTitle>{title}</DialogTitle>
 				</DialogHeader>
@@ -168,15 +172,23 @@ export function CameraCaptureDialog({
 						>
 							<RotateCcw />
 						</Button>
-						<div className="relative w-full">
-							<video
-								ref={videoRef}
-								autoPlay
-								playsInline
-								muted
-								className="w-full rounded border bg-gray-100"
+						<div className="relative w-full flex justify-center items-center overflow-hidden object-contain">
+							<div
+								className={`relative ${
+									rotation % 180 === 0
+										? "w-full h-auto scale-150"
+										: "h-[75vh] w-auto scale-150"
+								}`}
 								style={{ transform: `rotate(${rotation}deg)` }}
-							/>
+							>
+								<video
+									ref={videoRef}
+									autoPlay
+									playsInline
+									muted
+									className="block w-full h-full object-contain"
+								/>
+							</div>
 						</div>
 						<Button onClick={handleCapture} className="w-full">
 							<Camera className="w-5 h-5 mr-1" />
@@ -188,7 +200,7 @@ export function CameraCaptureDialog({
 						<img
 							src={capturedImage}
 							alt="Captured"
-							className="w-full rounded border"
+							className="max-w-full max-h-[75vh] mx-auto rounded border"
 						/>
 						<div className="flex gap-2">
 							<Button
