@@ -91,7 +91,7 @@ export default function ImageUploader() {
 			if (!result.success) return showError(result.error.message);
 			const pages = extractPagesFromGCV(result.data);
 			const lines = pages.flatMap((page) =>
-				groupWordsWithDeskew(page.words, page.size.height, 0.025, 0.1),
+				groupWordsWithDeskew(page.words, page.size.height, 0.025, 0),
 			);
 			return lines.join("\n");
 		} catch (error) {
