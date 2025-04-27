@@ -10,13 +10,13 @@ const ReceiptIdSchema = z.string().uuid();
 
 export default async function ReceiptPage({
 	params,
-}: { params: { id: string } }) {
-	const receiptIdByUrl = await params.id;
-	const parsedReceiptId = ReceiptIdSchema.safeParse(receiptIdByUrl);
-	if (!parsedReceiptId.success) {
+}: { params: Promise<{ id: string }> }) {
+	const { id } = await params;
+	const parsedId = ReceiptIdSchema.safeParse(id);
+	if (!parsedId.success) {
 		return <div>URLが不正です</div>;
 	}
-	const fetched = await getReceiptDetailsById(parsedReceiptId.data);
+	const fetched = await getReceiptDetailsById(parsedId.data);
 
 	if (!fetched.success) return <div>データの取得に失敗しました</div>;
 

@@ -1,5 +1,3 @@
-// lib/googleCloudVision/googleCloudVisionClient.ts
-
 import vision from "@google-cloud/vision";
 
 export const googleCloudVisionClient = new vision.ImageAnnotatorClient({

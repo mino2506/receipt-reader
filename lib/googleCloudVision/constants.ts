@@ -1,4 +1,4 @@
-import { GCVFeatureType } from ".";
+import { GCVFeatureType } from "./schema";
 
 export const DEFAULT_GCV_FEATURES = [
 	{ type: GCVFeatureType.DOCUMENT_TEXT_DETECTION },
