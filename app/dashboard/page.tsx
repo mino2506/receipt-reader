@@ -23,10 +23,7 @@ export default function Dashboard() {
 
 	if (session) {
 		return (
-			<div className="w-screen h-screen flex flex-col items-center p-3 bg-gray-100">
-				<div className="flex-wrap m-3 bg-gray-500 max-w-full break-words">
-					ようこそ、{session.user.email} さん！aaaaaaaaaaaaaaaaaaa
-				</div>
+			<div className="w-full flex flex-col items-center p-1 bg-background">
 				<AllReceiptsTable />
 				<ReceiptImage />
 				<SignOutButton />

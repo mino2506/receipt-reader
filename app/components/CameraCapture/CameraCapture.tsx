@@ -1,10 +1,16 @@
 "use client";
 
+import type { CV } from "@/types/opencv";
+import { useRef, useState } from "react";
+
 import { CameraStreamController } from "@/app/components/CameraCapture/CameraStreamController";
+import { OpenCvLoader } from "@/app/components/OpenCvLoader";
+
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
 	DialogContent,
+	DialogDescription,
 	DialogHeader,
 	DialogTitle,
 	DialogTrigger,
@@ -16,7 +22,7 @@ import {
 	RefreshCw,
 	RotateCcw,
 } from "lucide-react";
-import { useRef, useState } from "react";
+import { CameraPreviewCanvas } from "./CameraPreviewCanvas";
 
 interface CameraCaptureDialogProps {
 	onSubmit: (base64Image: string) => void;
@@ -26,9 +32,10 @@ interface CameraCaptureDialogProps {
 
 export function CameraCaptureDialog({
 	onSubmit,
-	triggerText = "写真を撮影",
-	title = "カメラキャプチャ",
+	triggerText = "写真を撮る",
+	title = "",
 }: CameraCaptureDialogProps) {
+	const [cv, setCv] = useState<CV | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [open, setOpen] = useState(false);
 	const [capturedImage, setCapturedImage] = useState<string | null>(null);
@@ -97,49 +104,32 @@ export function CameraCaptureDialog({
 			</DialogTrigger>
 
 			<DialogContent className="w-[90vw] max-w-none max-h-[90vh] space-y-4">
-				<p id="dialog-desc" className="sr-only">
-					カメラキャプチャモーダルです
-				</p>
 				<DialogHeader>
 					<DialogTitle>{title}</DialogTitle>
+					<DialogDescription className="sr-only">
+						カメラキャプチャモーダルです
+					</DialogDescription>
 				</DialogHeader>
 
-				{error && (
-					<div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 p-3 rounded">
-						<AlertCircle className="w-4 h-4" />
-						{error}
-					</div>
-				)}
+				{/* {rotation} */}
+				<CameraPreviewCanvas
+					cv={cv}
+					videoRef={videoRef}
+					rotation={rotation}
+					isActive={open && !capturedImage}
+					onError={setError}
+				/>
 
 				{!capturedImage ? (
 					<div className="flex flex-col gap-2">
 						<Button
 							onClick={rotateClockwise}
 							variant="ghost"
-							size="icon"
-							className="absolute top-10 right-10"
+							className="absolute top-15 right-10"
 							title="回転"
 						>
 							<RotateCcw />
 						</Button>
-						<div className="relative w-full flex justify-center items-center overflow-hidden object-contain">
-							<div
-								className={`relative ${
-									rotation % 180 === 0
-										? "w-full h-auto scale-150"
-										: "h-[75vh] w-auto scale-150"
-								}`}
-								style={{ transform: `rotate(${rotation}deg)` }}
-							>
-								<video
-									ref={videoRef}
-									autoPlay
-									playsInline
-									muted
-									className="block w-full h-full object-contain"
-								/>
-							</div>
-						</div>
 						<Button onClick={handleCapture} className="w-full">
 							<Camera className="w-5 h-5 mr-1" />
 							撮影する
@@ -147,11 +137,11 @@ export function CameraCaptureDialog({
 					</div>
 				) : (
 					<div className="flex flex-col gap-2">
-						<img
+						{/* <img
 							src={capturedImage}
 							alt="Captured"
 							className="max-w-full max-h-[75vh] mx-auto rounded border"
-						/>
+						/> */}
 						<div className="flex gap-2">
 							<Button
 								variant="outline"
@@ -168,9 +158,16 @@ export function CameraCaptureDialog({
 						</div>
 					</div>
 				)}
-
+				{error && (
+					<div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 p-3 rounded">
+						<AlertCircle className="w-4 h-4" />
+						{error}
+					</div>
+				)}
+				<video ref={videoRef} autoPlay playsInline muted className="hidden" />
 				<canvas ref={canvasRef} className="hidden" />
 			</DialogContent>
+			<OpenCvLoader onReady={setCv} />
 			<CameraStreamController
 				videoRef={videoRef}
 				isActive={open && !capturedImage}
