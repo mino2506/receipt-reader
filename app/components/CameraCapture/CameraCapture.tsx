@@ -99,7 +99,7 @@ export function CameraCaptureDialog({
 			<DialogTrigger asChild>
 				<Button variant="outline" className="flex items-center gap-2">
 					<Camera className="w-5 h-5" />
-					{triggerText}
+					<span className="hidden md:flex">{triggerText}</span>
 				</Button>
 			</DialogTrigger>
 
