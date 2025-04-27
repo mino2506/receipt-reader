@@ -6,11 +6,11 @@ import {
 	messagePrefixPrompt,
 	receiptFunctionCallingSchema,
 	rolePrompt,
-} from "@/app/receipt/new/ImageUploader/receiptPrompt";
+} from "@/app/dashboard/receipts/new/ImageUploader/receiptPrompt";
 import {
 	type OpenAiReceiptData,
 	OpenAiReceiptDataSchema,
-} from "@/app/receipt/new/ImageUploader/schema";
+} from "@/app/dashboard/receipts/new/ImageUploader/schema";
 import type { ApiResponseFromType } from "@/lib/api/common.schema";
 import { tryParseAndFetchGCV } from "@/lib/googleCloudVision";
 import {

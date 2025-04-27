@@ -158,7 +158,7 @@ export default function ImageUploader() {
 			setStep("idle");
 
 			if (result) {
-				router.push(`/receipt/table/${result.id}`);
+				router.push(`table/${result.id}`);
 			}
 		} catch (error) {
 			setStep("idle");
@@ -218,16 +218,17 @@ export default function ImageUploader() {
 			</div>
 			{error && <p className="text-red-700">{error}</p>}
 			<div className="flex justify-center">
-				{base64 ? (
-					<img src={base64} alt={"Preview"} />
-				) : (
-					<div className="relative w-full max-w-md">
-						<img src="receipt-dummy.png" alt={"Dummy"} />
+				<div className="relative w-full max-w-md">
+					<img
+						src={base64 !== "" ? base64 : "/receipt-dummy.png"}
+						alt={base64 ? "Preview" : "Dummy"}
+					/>
+					{base64 ?? (
 						<div className="absolute inset-0 flex items-center justify-center bg-black/40 text-white text-5xl font-semibold">
 							No Receipt
 						</div>
-					</div>
-				)}
+					)}
+				</div>
 			</div>
 			{/* {(receipt ?? optimisticReceipt) && (
 				<ReceiptDetail

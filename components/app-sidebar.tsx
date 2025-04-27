@@ -25,22 +25,22 @@ const items = [
 		icon: LayoutDashboard,
 	},
 	{
-		title: "レシート登録",
+		title: "登録する",
 		url: "/dashboard/receipts/new",
 		icon: FilePlus,
 	},
 	{
-		title: "レシート編集",
-		url: "/dashboard/receipts/edit",
+		title: "確認する",
+		url: "/dashboard/receipts/table",
 		icon: FileEdit,
 	},
 	{
-		title: "分析",
+		title: "分析する",
 		url: "/dashboard/analytics",
 		icon: BarChart3,
 	},
 	{
-		title: "Settings",
+		title: "設定",
 		url: "#",
 		icon: Settings,
 	},

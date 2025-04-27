@@ -6,8 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 import SignOutButton from "@/app/components/SignOutButton";
-import ReceiptImage from "@/app/receipt/receiptImage/page";
-import AllReceiptsTable from "@/app/receipt/table/page";
+import AllReceiptsTable from "@/app/dashboard/receipts/table/page";
 
 export default function Dashboard() {
 	const router = useRouter();
@@ -25,8 +24,6 @@ export default function Dashboard() {
 		return (
 			<div className="w-full flex flex-col items-center p-1 bg-background">
 				<AllReceiptsTable />
-				<ReceiptImage />
-				<SignOutButton />
 			</div>
 		);
 	}

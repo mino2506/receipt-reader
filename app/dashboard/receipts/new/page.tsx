@@ -1,4 +1,4 @@
-import ImageUploader from "@/app/receipt/new/ImageUploader";
+import ImageUploader from "@/app/dashboard/receipts/new/ImageUploader";
 
 export default function NewReceiptPage() {
 	return (
