@@ -102,7 +102,7 @@ console.log("2", "[type]", "testAge", ":", typeof testAge);
 console.log("3", "[__kind]", "testAge", ":", testAge.__kind);
 console.log("4", "[calc]", "testAge + 10", ":", testAge + 1);
 console.log("5", "[calc]", "tenYearsLater", ":", tenYearsLater);
-console.log("6", "[__kind]", "tenYearsLater", ":", tenYearsLater.__kind);
+// console.log("6", "[__kind]", "tenYearsLater", ":", tenYearsLater._kind);
 console.log("7", "[value]", "cloneAge", ":", cloneAge);
 console.log("8", "[__kind]", "cloneAge", ":", cloneAge.__kind);
 
@@ -116,7 +116,7 @@ const preson = { name: "test", age: 10 };
 const testPerson = createPerson(preson);
 console.log("1", "[value]", "testPerson", ":", testPerson);
 console.log("2", "[type]", "testTest", ":", typeof testPerson);
-console.log("3", "[__kind]", "testTest", ":", testPerson.__kind);
+// console.log("3", "[__kind]", "testTest", ":", testPerson.__kind);
 
 // biome-ignore format:
 const arrayMonth = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];

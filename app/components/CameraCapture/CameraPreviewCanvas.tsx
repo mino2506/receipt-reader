@@ -247,95 +247,95 @@ interface DeskewOptions {
  * @param options - オプション（Cannyの閾値など）
  * @returns 傾き補正後のカラー Mat
  */
-function preprocessForDeskew(
-	cv: CV,
-	srcColor: Mat,
-	options?: DeskewOptions,
-): Mat {
-	const { cannyThreshold1 = 50, cannyThreshold2 = 150 } = options || {};
+// function preprocessForDeskew(
+// 	cv: CV,
+// 	srcColor: Mat,
+// 	options?: DeskewOptions,
+// ): Mat {
+// 	const { cannyThreshold1 = 50, cannyThreshold2 = 150 } = options || {};
 
-	// Matたちを初期化
-	const gray = new cv.Mat();
-	const binary = new cv.Mat();
-	const edges = new cv.Mat();
-	const contours = new cv.MatVector();
-	const hierarchy = new cv.Mat();
-	const deskewed = new cv.Mat();
+// 	// Matたちを初期化
+// 	const gray = new cv.Mat();
+// 	const binary = new cv.Mat();
+// 	const edges = new cv.Mat();
+// 	const contours = new cv.MatVector();
+// 	const hierarchy = new cv.Mat();
+// 	const deskewed = new cv.Mat();
 
-	try {
-		// 1. グレースケール化
-		cv.cvtColor(srcColor, gray, cv.COLOR_RGBA2GRAY);
+// 	try {
+// 		// 1. グレースケール化
+// 		cv.cvtColor(srcColor, gray, cv.COLOR_RGBA2GRAY);
 
-		// 2. 二値化（単純なしきい値、仮）
-		cv.threshold(gray, binary, 127, 255, cv.THRESH_BINARY);
+// 		// 2. 二値化（単純なしきい値、仮）
+// 		cv.threshold(gray, binary, 127, 255, cv.THRESH_BINARY);
 
-		// 3. エッジ検出（Canny）
-		cv.Canny(binary, edges, cannyThreshold1, cannyThreshold2);
+// 		// 3. エッジ検出（Canny）
+// 		cv.Canny(binary, edges, cannyThreshold1, cannyThreshold2);
 
-		// 4. 輪郭検出
-		cv.findContours(
-			edges,
-			contours,
-			hierarchy,
-			cv.RETR_EXTERNAL,
-			cv.CHAIN_APPROX_SIMPLE,
-		);
+// 		// 4. 輪郭検出
+// 		cv.findContours(
+// 			edges,
+// 			contours,
+// 			hierarchy,
+// 			cv.RETR_EXTERNAL,
+// 			cv.CHAIN_APPROX_SIMPLE,
+// 		);
 
-		if (contours.size() === 0) {
-			throw new Error("No contours found for deskewing");
-		}
+// 		if (contours.size() === 0) {
+// 			throw new Error("No contours found for deskewing");
+// 		}
 
-		// 5. 最大輪郭を取得
-		let largestContour = contours.get(0);
-		let maxArea = cv.contourArea(largestContour);
+// 		// 5. 最大輪郭を取得
+// 		let largestContour = contours.get(0);
+// 		let maxArea = cv.contourArea(largestContour);
 
-		for (let i = 1; i < contours.size(); i++) {
-			const cnt = contours.get(i);
-			const area = cv.contourArea(cnt);
-			if (area > maxArea) {
-				largestContour = cnt;
-				maxArea = area;
-			}
-		}
+// 		for (let i = 1; i < contours.size(); i++) {
+// 			const cnt = contours.get(i);
+// 			const area = cv.contourArea(cnt);
+// 			if (area > maxArea) {
+// 				largestContour = cnt;
+// 				maxArea = area;
+// 			}
+// 		}
 
-		// 6. 外接矩形から角度を取得
-		const rotatedRect = cv.minAreaRect(largestContour);
-		let angle = rotatedRect.angle;
-		if (angle < -45) {
-			angle += 90;
-		}
+// 		// 6. 外接矩形から角度を取得
+// 		const rotatedRect = cv.minAreaRect(largestContour);
+// 		let angle = rotatedRect.angle;
+// 		if (angle < -45) {
+// 			angle += 90;
+// 		}
 
-		// 7. 回転補正（deskew）
-		const center = new cv.Point(srcColor.cols / 2, srcColor.rows / 2);
-		const M = cv.getRotationMatrix2D(center, angle, 1.0);
-		cv.warpAffine(
-			srcColor,
-			deskewed,
-			M,
-			new cv.Size(srcColor.cols, srcColor.rows),
-			cv.INTER_LINEAR,
-			cv.BORDER_CONSTANT,
-			new cv.Scalar(),
-		);
+// 		// 7. 回転補正（deskew）
+// 		const center = new cv.Point(srcColor.cols / 2, srcColor.rows / 2);
+// 		const M = cv.getRotationMatrix2D(center, angle, 1.0);
+// 		cv.warpAffine(
+// 			srcColor,
+// 			deskewed,
+// 			M,
+// 			new cv.Size(srcColor.cols, srcColor.rows),
+// 			cv.INTER_LINEAR,
+// 			cv.BORDER_CONSTANT,
+// 			new cv.Scalar(),
+// 		);
 
-		M.delete();
+// 		M.delete();
 
-		// 🔥 deskewedだけ呼び出し元に渡す
-		return deskewed.clone(); // 呼び出し元で delete() してね
-	} catch (e) {
-		if (e instanceof Error) {
-			console.error(e.message);
-			throw e;
-		}
-		console.error("Unknown error", e);
-		throw new Error("Unknown error during OpenCV deskewing");
-	} finally {
-		// 🎯 例外が出ても必ずdelete
-		gray.delete();
-		binary.delete();
-		edges.delete();
-		contours.delete();
-		hierarchy.delete();
-		deskewed.delete();
-	}
-}
+// 		// 🔥 deskewedだけ呼び出し元に渡す
+// 		return deskewed.clone(); // 呼び出し元で delete() してね
+// 	} catch (e) {
+// 		if (e instanceof Error) {
+// 			console.error(e.message);
+// 			throw e;
+// 		}
+// 		console.error("Unknown error", e);
+// 		throw new Error("Unknown error during OpenCV deskewing");
+// 	} finally {
+// 		// 🎯 例外が出ても必ずdelete
+// 		gray.delete();
+// 		binary.delete();
+// 		edges.delete();
+// 		contours.delete();
+// 		hierarchy.delete();
+// 		deskewed.delete();
+// 	}
+// }

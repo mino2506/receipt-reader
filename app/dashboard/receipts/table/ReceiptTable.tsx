@@ -33,7 +33,7 @@ export default function ReceiptTable({
 
 	const fullReceiptColumns = getFullReceiptColumns({
 		baseColumnDef: receiptColumns,
-		onEdit: (row) => router.push(`/receipt/table/${row.id}`),
+		onEdit: (row) => router.push(`/dashboard/receipts/table/${row.id}`),
 		onDelete: (row) => {},
 	});
 

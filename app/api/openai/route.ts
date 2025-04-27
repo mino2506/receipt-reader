@@ -17,7 +17,6 @@ type ToolChoice =
 
 export const POST = async (
 	req: Request,
-	res: NextResponse,
 ): Promise<NextResponse<OpenAIApiResponse>> => {
 	console.log("\n\n~~~📨📮   POOOOOOOOOST!!!🚀🚀🚀🆕🆕🆕\n");
 	const API_NAME = "OpenAI API";

@@ -9,24 +9,24 @@ import {
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
-const reqMock = {
-	body: {
-		image:
-			"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFBAJ/wlseKgAAAABJRU5ErkJggg==",
-		features: [
-			{
-				type: "DOCUMENT_TEXT_DETECTION",
-			},
-			{
-				type: "LABEL_DETECTION",
-			},
-		],
-	},
-};
+// const reqMock = {
+// 	body: {
+// 		image:
+// 			"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFBAJ/wlseKgAAAABJRU5ErkJggg==",
+// 		features: [
+// 			{
+// 				type: "DOCUMENT_TEXT_DETECTION",
+// 			},
+// 			{
+// 				type: "LABEL_DETECTION",
+// 			},
+// 		],
+// 	},
+// };
 
 type OcrApiResponse = ApiResponseFromType<GCVSingleResponse>;
 
-export const POST = async (req: Request, res: NextResponse) => {
+export const POST = async (req: Request) => {
 	console.log("\n\n~~~📨📮   POOOOOOOOOST!!!🚀🚀🚀🆕🆕🆕\n");
 	console.log("📨 GCV OCR API called");
 
