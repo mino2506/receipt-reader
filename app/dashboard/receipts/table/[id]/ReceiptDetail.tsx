@@ -8,8 +8,8 @@ import {
 } from "@tanstack/react-table";
 import { useState } from "react";
 
-import { getReceiptDetailColumns } from "@/app/receipt/table/[id]/receiptDetail.columns";
-import { getFullReceiptDetailColumns } from "@/app/receipt/table/[id]/receiptDetail.full.columns";
+import { getReceiptDetailColumns } from "@/app/dashboard/receipts/table/[id]/receiptDetail.columns";
+import { getFullReceiptDetailColumns } from "@/app/dashboard/receipts/table/[id]/receiptDetail.full.columns";
 import type { CreateReceiptDetail, Item } from "@/lib/api/receipt";
 import {
 	type ReceiptDetailWithItem,

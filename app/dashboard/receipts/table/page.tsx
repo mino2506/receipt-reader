@@ -1,3 +1,5 @@
+"use client";
+
 import { trpc } from "@/lib/trpc/client";
 
 import ReceiptTable from "./ReceiptTable";
