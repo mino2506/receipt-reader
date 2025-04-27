@@ -190,6 +190,7 @@ export default function ImageUploader() {
 						type="file"
 						accept="image/*"
 						onChange={uploadImage}
+						capture="environment"
 						className="hidden"
 					/>
 				</div>
