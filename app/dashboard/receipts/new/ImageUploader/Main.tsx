@@ -32,14 +32,15 @@ import { transformToRegisterReceipt } from "./transformToRegisterReceipt";
 
 import { CameraCaptureDialog } from "@/app/components/CameraCapture/CameraCapture";
 import { Button } from "@/components/ui/button";
+import { retry } from "@/utils/retry";
 import { Loader2, ScanText, UploadIcon } from "lucide-react";
 
 export default function ImageUploader() {
 	const [error, setError] = useState<string | null>(null);
 	const [step, setStep] = useState<"idle" | "ocr" | "ai" | "submit">("idle");
 
-	const [base64, setBase64] = useState<string>("");
-	const [plainText, setPlainText] = useState<string>("");
+	const [base64, setBase64] = useState<string>(""); // TODO: base64をstring | nullにして、未選択状態を厳密に区別する
+	const [plainText, setPlainText] = useState<string>(""); // base64をstring | nullにして、未選択状態を厳密に区別する
 	const [receipt, setReceipt] = useState<ReceiptWithItemDetails | null>(null);
 	const [optimisticReceipt, setOptimisticReceipt] = useOptimistic(receipt);
 	const [isPending, startTransition] = useTransition();
@@ -149,7 +150,9 @@ export default function ImageUploader() {
 			setPlainText(text);
 
 			setStep("ai");
-			const parsed = await parseWithAI(text);
+
+			const parsed = await retry(() => parseWithAI(text), 3, 1000);
+			// const parsed = await parseWithAI(text);
 			if (!parsed) return;
 
 			setStep("submit");
@@ -223,7 +226,7 @@ export default function ImageUploader() {
 						src={base64 !== "" ? base64 : "/receipt-dummy.png"}
 						alt={base64 ? "Preview" : "Dummy"}
 					/>
-					{base64 ?? (
+					{!base64 && (
 						<div className="absolute inset-0 flex items-center justify-center bg-black/40 text-white text-5xl font-semibold">
 							No Receipt
 						</div>

@@ -1,16 +1,16 @@
 import type { ReactNode } from "react";
 
 import { AppSidebar } from "@/components/app-sidebar";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
-import { DashboardHeader } from "./DashboardHeader";
+import { AppHeader } from "@/components/app-header";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
 	return (
 		<SidebarProvider>
 			<AppSidebar />
-			<main>
-				<SidebarTrigger />
+			<main className="w-full">
+				<AppHeader />
 				{children}
 			</main>
 		</SidebarProvider>
