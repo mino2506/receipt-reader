@@ -7,13 +7,13 @@ export const receiptColumns: ColumnDef<ReceiptWithItemDetails>[] = [
 	{
 		id: "updatedAt",
 		header: () => (
-			<div className="text-center p-1 text-gray-600 text-md tracking-wider uppercase">
+			<div className="hidden lg:flex text-center p-1 text-gray-600 text-md tracking-wider uppercase">
 				更新日時
 			</div>
 		),
 		accessorFn: (row) => row.updatedAt,
 		cell: ({ getValue }) => (
-			<div className="text-center text-sm w-24">
+			<div className="hidden lg:flex text-center text-sm w-24">
 				{fomatDateString(getValue<string>())}
 			</div>
 		),
@@ -27,7 +27,7 @@ export const receiptColumns: ColumnDef<ReceiptWithItemDetails>[] = [
 		),
 		accessorFn: (row) => row.date ?? "",
 		cell: ({ getValue }) => (
-			<div className="text-center text-sm w-24">
+			<div className="text-center text-sm w-24 ">
 				{fomatDateString(getValue<string>())}
 			</div>
 		),
@@ -41,7 +41,7 @@ export const receiptColumns: ColumnDef<ReceiptWithItemDetails>[] = [
 		),
 		accessorFn: (row) => row.store?.normalized ?? row.store?.rawName,
 		cell: ({ getValue }) => (
-			<div className="w-xs px-2 text-sm">{getValue<string>()}</div>
+			<div className="w-3xs lg:w-xs px-2 text-sm">{getValue<string>()}</div>
 		),
 	},
 	{
