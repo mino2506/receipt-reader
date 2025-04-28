@@ -5,12 +5,15 @@ import { upsertStore } from "@/lib/api/receipt/prisma/upsertStore";
 
 import type { CreateReceiptDetailArray } from "@/lib/api/receipt/create.schema";
 import type { CreateReceiptWithItemDetails } from "@/lib/api/receipt/create.schema";
+import { Prisma } from "@prisma/client";
+
+
 
 export async function insertReceiptWithDetails(
 	input: CreateReceiptWithItemDetails,
 	userId: string,
 ) {
-	return await prisma.$transaction(async (tx) => {
+	return await prisma.$transaction(async (tx:Prisma.TransactionClient) => {
 		const storeId = input.store ? await upsertStore(tx, input.store) : null;
 
 		const createdReceipt = await tx.receipt.create({
@@ -21,6 +24,7 @@ export async function insertReceiptWithDetails(
 				storeId,
 			},
 		});
+    
 
 		const itemMap = await upsertItems(
 			tx,
