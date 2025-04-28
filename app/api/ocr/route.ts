@@ -6,9 +6,8 @@ import {
 	GCVSingleResponseSchema,
 	googleCloudVisionClient,
 } from "@/lib/googleCloudVision";
-import { createApiClient } from "@/lib/supabase/api";
-import { createClient as createServerClient } from "@/lib/supabase/server";
-import { type NextRequest, NextResponse } from "next/server";
+import { createClient as createServerClient } from "@/lib/supabase/client.server";
+import { NextResponse } from "next/server";
 
 // const reqMock = {
 // 	body: {
@@ -27,26 +26,37 @@ import { type NextRequest, NextResponse } from "next/server";
 
 type OcrApiResponse = ApiResponseFromType<GCVSingleResponse>;
 
-export const POST = async (req: NextRequest) => {
+export const POST = async (req: Request) => {
 	console.log("\n\n~~~📨📮   POOOOOOOOOST!!!🚀🚀🚀🆕🆕🆕\n");
 	console.log("📨 GCV OCR API called");
+
+	console.log("req:", JSON.stringify(req));
 
 	// 🔐 認証チェック
 	console.log("🔐 認証チェックを開始します。");
 	const supabase = await createServerClient();
 	console.log("Supabase client created");
-	const res = new NextResponse();
-	const supabaseApi = createApiClient(req, res);
-	console.log("Supabase  APIclient created");
 	const {
 		data: { user },
 		error,
 	} = await supabase.auth.getUser();
 
-	const { data: User2, error: Error2 } = await supabaseApi.auth.getUser();
+	console.log("User:", JSON.stringify(user));
+	console.log("Error:", JSON.stringify(error));
 
-	console.log("User2:", JSON.stringify(User2));
-	console.log("Error2:", JSON.stringify(Error2));
+	if (error) {
+		return NextResponse.json<OcrApiResponse>(
+			{
+				success: false,
+				error: {
+					code: "auth_user_fetch_failed",
+					message: "認証ユーザー情報の取得に失敗しました",
+					field: "auth",
+				},
+			},
+			{ status: 500 },
+		);
+	}
 	if (!user) {
 		return NextResponse.json<OcrApiResponse>(
 			{
@@ -67,32 +77,6 @@ export const POST = async (req: NextRequest) => {
 	// 		data: { user },
 	// 		error,
 	// 	} = await supabase.auth.getUser();
-
-	// 	if (error) {
-	// 		return NextResponse.json<OcrApiResponse>(
-	// 			{
-	// 				success: false,
-	// 				error: {
-	// 					code: "auth_user_fetch_failed",
-	// 					message: "認証ユーザー情報の取得に失敗しました",
-	// 					field: "auth",
-	// 				},
-	// 			},
-	// 			{ status: 500 },
-	// 		);
-	// 	}
-	// 	return NextResponse.json<OcrApiResponse>(
-	// 		{
-	// 			success: false,
-	// 			error: {
-	// 				code: "unauthorized",
-	// 				message: "ユーザーが認証されていません",
-	// 				field: "auth",
-	// 			},
-	// 		},
-	// 		{ status: 401 },
-	// 	);
-	// }
 
 	const reqBody = await req.json();
 	const requestToGCV = reqBody.request;

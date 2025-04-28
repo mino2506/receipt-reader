@@ -289,66 +289,66 @@ export function groupWordsIntoLinesByRatio(
 // import { inspect } from "node:util";
 // console.log(inspect(response, { depth: null, colors: true }));
 
-const parsedGCVResponse = parseGCVResponse(normalReceipt.data);
-// console.log(parsedGCVResponse);
-const normalPages = extractPagesFromGCV(parsedGCVResponse);
+// const parsedGCVResponse = parseGCVResponse(normalReceipt.data);
+// // console.log(parsedGCVResponse);
+// const normalPages = extractPagesFromGCV(parsedGCVResponse);
 
-console.log("🌟真っすぐなレシート\n");
+// console.log("🌟真っすぐなレシート\n");
 
-console.log("回転補正❌なし");
-for (const page of normalPages) {
-	console.log(page.size);
-	const words = page.words;
-	const lines: string[] = groupWordsIntoLinesByRatio(words, page.size.height);
+// console.log("回転補正❌なし");
+// for (const page of normalPages) {
+// 	console.log(page.size);
+// 	const words = page.words;
+// 	const lines: string[] = groupWordsIntoLinesByRatio(words, page.size.height);
 
-	// console.log(lines);
-	// console.log(JSON.stringify(lines.join("\n")));
+// 	// console.log(lines);
+// 	// console.log(JSON.stringify(lines.join("\n")));
 
-	console.log(JSON.stringify(lines).length);
-	console.log(lines.join("\n"));
-}
+// 	console.log(JSON.stringify(lines).length);
+// 	console.log(lines.join("\n"));
+// }
 
-console.log("回転補正✅あり！");
-for (const page of normalPages) {
-	console.log(page.size);
-	const words = page.words;
-	const lines: string[] = groupWordsWithDeskew(words, page.size.height);
+// console.log("回転補正✅あり！");
+// for (const page of normalPages) {
+// 	console.log(page.size);
+// 	const words = page.words;
+// 	const lines: string[] = groupWordsWithDeskew(words, page.size.height);
 
-	// console.log(lines);
-	// console.log(JSON.stringify(lines.join("\n")));
+// 	// console.log(lines);
+// 	// console.log(JSON.stringify(lines.join("\n")));
 
-	console.log(JSON.stringify(lines).length);
-	console.log(lines.join("\n"));
-}
+// 	console.log(JSON.stringify(lines).length);
+// 	console.log(lines.join("\n"));
+// }
 
-const parsedGCVResponseAngled = parseGCVResponse(angledReceipt.data);
-// console.log(parsedGCVResponse);
-const angledPages = extractPagesFromGCV(parsedGCVResponseAngled);
+// const parsedGCVResponseAngled = parseGCVResponse(angledReceipt.data);
+// // console.log(parsedGCVResponse);
+// const angledPages = extractPagesFromGCV(parsedGCVResponseAngled);
 
-console.log("🌟傾いたレシート\n");
+// console.log("🌟傾いたレシート\n");
 
-console.log("回転補正❌なし");
-for (const page of angledPages) {
-	console.log(page.size);
-	const words = page.words;
-	const lines: string[] = groupWordsIntoLinesByRatio(words, page.size.height);
+// console.log("回転補正❌なし");
+// for (const page of angledPages) {
+// 	console.log(page.size);
+// 	const words = page.words;
+// 	const lines: string[] = groupWordsIntoLinesByRatio(words, page.size.height);
 
-	// console.log(lines);
-	// console.log(JSON.stringify(lines.join("\n")));
+// 	// console.log(lines);
+// 	// console.log(JSON.stringify(lines.join("\n")));
 
-	console.log(JSON.stringify(lines).length);
-	console.log(lines.join("\n"));
-}
+// 	console.log(JSON.stringify(lines).length);
+// 	console.log(lines.join("\n"));
+// }
 
-console.log("回転補正✅あり！");
-for (const page of angledPages) {
-	console.log(page.size);
-	const words = page.words;
-	const lines: string[] = groupWordsWithDeskew(words, page.size.height);
+// console.log("回転補正✅あり！");
+// for (const page of angledPages) {
+// 	console.log(page.size);
+// 	const words = page.words;
+// 	const lines: string[] = groupWordsWithDeskew(words, page.size.height);
 
-	// console.log(lines);
-	// console.log(JSON.stringify(lines.join("\n")));
+// 	// console.log(lines);
+// 	// console.log(JSON.stringify(lines.join("\n")));
 
-	console.log(JSON.stringify(lines).length);
-	console.log(lines.join("\n"));
-}
+// 	console.log(JSON.stringify(lines).length);
+// 	console.log(lines.join("\n"));
+// }

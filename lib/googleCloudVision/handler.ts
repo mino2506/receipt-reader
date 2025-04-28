@@ -1,5 +1,7 @@
 // lib/googleCloudVision/handler.ts
 
+import { cookies } from "next/headers";
+
 import type { ApiResponseFromType } from "@/lib/api/common.schema";
 import {
 	type Base64Image,
@@ -60,14 +62,20 @@ export function createGCVRequest(input: Base64Image | Url): GCVRequestBody {
 
 export async function fetchGCVResult(
 	input: GCVRequestBody,
+	cookieHeader: string,
 ): Promise<ApiResponseFromType<GCVSingleResponse>> {
+	// const cookieHeader = await cookies();
+	// console.log("Cookeis:", JSON.stringify(cookieHeader, null, 2));
+
 	const url = `${process.env.NEXT_PUBLIC_SITE_ORIGIN}${API_ENDPOINTS.OCR}`;
 	console.log("fetchGCVResult from", url);
+
 	try {
 		const res = await fetch(url, {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
+				Cookie: cookieHeader,
 			},
 			body: JSON.stringify({ request: input }),
 			credentials: "include",
@@ -145,11 +153,12 @@ export async function fetchGCVResult(
  */
 export async function tryParseAndFetchGCV(
 	input: unknown,
+	cookieHeader: string,
 ): Promise<ApiResponseFromType<GCVSingleResponse>> {
 	try {
 		const validated = validateImageInput(input);
 		const request = createGCVRequest(validated);
-		return await fetchGCVResult(request);
+		return await fetchGCVResult(request, cookieHeader);
 	} catch (error) {
 		const message = error instanceof Error ? error.message : "Unknown error";
 		return {

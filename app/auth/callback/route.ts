@@ -1,6 +1,6 @@
 // app/auth/callback/route.ts
 
-import { createClient as createServerClient } from "@/lib/supabase/server";
+import { createClient as createServerClient } from "@/lib/supabase/client.server";
 import { type NextRequest, NextResponse } from "next/server";
 
 import { upsertUser } from "@/lib/supabase/upsertUser";
