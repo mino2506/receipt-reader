@@ -114,6 +114,7 @@ export async function parseReceiptToJsonWithAi(
 				"Content-Type": "application/json",
 			},
 			body: JSON.stringify(validatedRequest.data),
+			credentials: "include",
 		});
 
 		// レスポンスの成功判定
