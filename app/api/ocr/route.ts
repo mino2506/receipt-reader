@@ -6,8 +6,9 @@ import {
 	GCVSingleResponseSchema,
 	googleCloudVisionClient,
 } from "@/lib/googleCloudVision";
+import { createApiClient } from "@/lib/supabase/api";
 import { createClient as createServerClient } from "@/lib/supabase/server";
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
 // const reqMock = {
 // 	body: {
@@ -26,7 +27,7 @@ import { NextResponse } from "next/server";
 
 type OcrApiResponse = ApiResponseFromType<GCVSingleResponse>;
 
-export const POST = async (req: Request) => {
+export const POST = async (req: NextRequest) => {
 	console.log("\n\n~~~📨📮   POOOOOOOOOST!!!🚀🚀🚀🆕🆕🆕\n");
 	console.log("📨 GCV OCR API called");
 
@@ -34,13 +35,17 @@ export const POST = async (req: Request) => {
 	console.log("🔐 認証チェックを開始します。");
 	const supabase = await createServerClient();
 	console.log("Supabase client created");
+	const res = new NextResponse();
+	const supabaseApi = createApiClient(req, res);
 	const {
 		data: { user },
 		error,
 	} = await supabase.auth.getUser();
 
-	console.log("User:", JSON.stringify(user));
-	console.log("Error:", JSON.stringify(error));
+	const { data: User2, error: Error2 } = await supabaseApi.auth.getUser();
+
+	console.log("User2:", JSON.stringify(User2));
+	console.log("Error2:", JSON.stringify(Error2));
 	if (!user) {
 		return NextResponse.json<OcrApiResponse>(
 			{
