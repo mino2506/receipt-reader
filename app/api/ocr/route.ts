@@ -31,40 +31,61 @@ export const POST = async (req: Request) => {
 	console.log("📨 GCV OCR API called");
 
 	// 🔐 認証チェック
+	console.log("🔐 認証チェックを開始します。");
 	const supabase = await createServerClient();
-	if (process.env.NODE_ENV === "development") {
-		console.log("🔐 開発環境です。認証をスキップしました。");
-	} else {
-		const {
-			data: { user },
-			error,
-		} = await supabase.auth.getUser();
+	console.log("Supabase client created");
+	const {
+		data: { user },
+		error,
+	} = await supabase.auth.getUser();
 
-		if (error) {
-			return NextResponse.json<OcrApiResponse>(
-				{
-					success: false,
-					error: {
-						code: "auth_user_fetch_failed",
-						message: "認証ユーザー情報の取得に失敗しました",
-						field: "auth",
-					},
-				},
-				{ status: 500 },
-			);
-		}
+	console.log("User:", user);
+	if (!user) {
 		return NextResponse.json<OcrApiResponse>(
 			{
 				success: false,
 				error: {
-					code: "unauthorized",
-					message: "ユーザーが認証されていません",
+					code: "auth_user_fetch_failed",
+					message: "認証ユーザー情報の取得に失敗しました",
 					field: "auth",
 				},
 			},
-			{ status: 401 },
+			{ status: 500 },
 		);
 	}
+	// if (process.env.NODE_ENV === "development") {
+	// 	console.log("🔐 開発環境です。認証をスキップしました。");
+	// } else {
+	// 	const {
+	// 		data: { user },
+	// 		error,
+	// 	} = await supabase.auth.getUser();
+
+	// 	if (error) {
+	// 		return NextResponse.json<OcrApiResponse>(
+	// 			{
+	// 				success: false,
+	// 				error: {
+	// 					code: "auth_user_fetch_failed",
+	// 					message: "認証ユーザー情報の取得に失敗しました",
+	// 					field: "auth",
+	// 				},
+	// 			},
+	// 			{ status: 500 },
+	// 		);
+	// 	}
+	// 	return NextResponse.json<OcrApiResponse>(
+	// 		{
+	// 			success: false,
+	// 			error: {
+	// 				code: "unauthorized",
+	// 				message: "ユーザーが認証されていません",
+	// 				field: "auth",
+	// 			},
+	// 		},
+	// 		{ status: 401 },
+	// 	);
+	// }
 
 	const reqBody = await req.json();
 	const requestToGCV = reqBody.request;
