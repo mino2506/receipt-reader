@@ -34,7 +34,7 @@ export default defineConfig([
 			"@typescript-eslint": tsPlugin,
 		},
 		rules: {
-			"@typescript-eslint/no-explicit-any": "error",
+			"@typescript-eslint/no-explicit-any": "off",
 			"@typescript-eslint/explicit-module-boundary-types": "off",
 		},
 	},

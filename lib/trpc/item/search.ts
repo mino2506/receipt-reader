@@ -11,6 +11,7 @@ export const search = protectedProcedure
 			limit: z.number().min(1).max(100).optional(),
 		}),
 	)
+	.output(z.array(ItemSchema))
 	.query(async ({ input }) => {
 		const DEFAULT_LIMIT = 10;
 
