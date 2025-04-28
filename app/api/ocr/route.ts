@@ -6,7 +6,7 @@ import {
 	GCVSingleResponseSchema,
 	googleCloudVisionClient,
 } from "@/lib/googleCloudVision";
-import { createClient as createServerClient } from "@/lib/supabase/client.server";
+import { getUser } from "@/lib/supabase/auth.server";
 import { NextResponse } from "next/server";
 
 // const reqMock = {
@@ -34,42 +34,11 @@ export const POST = async (req: Request) => {
 
 	// 🔐 認証チェック
 	console.log("🔐 認証チェックを開始します。");
-	const supabase = await createServerClient();
-	console.log("Supabase client created");
-	const {
-		data: { user },
-		error,
-	} = await supabase.auth.getUser();
-
-	console.log("User:", JSON.stringify(user));
-	console.log("Error:", JSON.stringify(error));
-
-	if (error) {
-		return NextResponse.json<OcrApiResponse>(
-			{
-				success: false,
-				error: {
-					code: "auth_user_fetch_failed",
-					message: "認証ユーザー情報の取得に失敗しました",
-					field: "auth",
-				},
-			},
-			{ status: 500 },
-		);
+	const user = await getUser();
+	if (user instanceof NextResponse) {
+		return user;
 	}
-	if (!user) {
-		return NextResponse.json<OcrApiResponse>(
-			{
-				success: false,
-				error: {
-					code: "auth_user_fetch_failed",
-					message: "認証ユーザー情報の取得に失敗しました",
-					field: "auth",
-				},
-			},
-			{ status: 500 },
-		);
-	}
+	console.log("🔐 認証チェックが成功しました。");
 	// if (process.env.NODE_ENV === "development") {
 	// 	console.log("🔐 開発環境です。認証をスキップしました。");
 	// } else {

@@ -4,7 +4,7 @@ import {
 	OpenAIChatCompletionResponseSchema,
 	OpenAIRequestSchema,
 } from "@/lib/openai/schema";
-import { createClient as createServerClient } from "@/lib/supabase/client.server";
+import { getUser } from "@/lib/supabase/auth.server";
 import { NextResponse } from "next/server";
 import type {
 	ChatCompletionNamedToolChoice,
@@ -22,43 +22,12 @@ export const POST = async (
 	const API_NAME = "OpenAI API";
 	console.log(`📊 ${API_NAME} called`);
 
-	// 🔐 認証チェック
-	console.log(`[${API_NAME}]`, "🔐 認証チェック");
-	const supabase = await createServerClient();
-	console.log(`[${API_NAME}]`, "Supabase client created");
-	const {
-		data: { user },
-		error,
-	} = await supabase.auth.getUser();
-	console.log("User:", JSON.stringify(user));
-	console.log("Error:", JSON.stringify(error));
-
-	if (error) {
-		return NextResponse.json<OpenAIApiResponse>(
-			{
-				success: false,
-				error: {
-					code: "auth_user_fetch_failed",
-					message: "認証ユーザー情報の取得に失敗しました",
-					field: "auth",
-				},
-			},
-			{ status: 500 },
-		);
+	console.log("🔐 認証チェックを開始します。");
+	const user = await getUser();
+	if (user instanceof NextResponse) {
+		return user;
 	}
-	if (!user) {
-		return NextResponse.json<OpenAIApiResponse>(
-			{
-				success: false,
-				error: {
-					code: "unauthorized",
-					message: "ユーザーが認証されていません",
-					field: "auth",
-				},
-			},
-			{ status: 401 },
-		);
-	}
+	console.log("🔐 認証チェックが成功しました。");
 
 	// 📝 リクエストボディのパー
 	console.log(`[${API_NAME}]`, "📝 リクエストボディのパース");
