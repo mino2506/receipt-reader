@@ -20,6 +20,18 @@ export const ApiErrorSchema = z.object({
 });
 
 /**
+ * APIエラー型（共通）
+ */
+export type ApiError = z.infer<typeof ApiErrorSchema>;
+
+export const ApiErrorResponseSchema = z.object({
+	success: z.literal(false),
+	error: ApiErrorSchema,
+});
+
+export type ApiErrorResponse = z.infer<typeof ApiErrorResponseSchema>;
+
+/**
  * Zodスキーマから API レスポンススキーマを生成する
  *
  * @param dataSchema - レスポンス本体（data）のZodスキーマ
@@ -37,16 +49,8 @@ export const createApiResponseSchema = <T extends z.ZodTypeAny>(
 			data: dataSchema,
 			message: z.string().optional(),
 		}),
-		z.object({
-			success: z.literal(false),
-			error: ApiErrorSchema,
-		}),
+		ApiErrorResponseSchema,
 	]);
-
-/**
- * APIエラー型（共通）
- */
-export type ApiError = z.infer<typeof ApiErrorSchema>;
 
 /**
  * Zodスキーマから生成された型ベースのレスポンス型

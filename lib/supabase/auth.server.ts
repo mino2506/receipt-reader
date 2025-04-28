@@ -1,8 +1,11 @@
-import type { ApiError, ApiResponseFromType } from "@/lib/api/common.schema";
+import type { ApiErrorResponse } from "@/lib/api/common.schema";
 import { createClient as createServerClient } from "@/lib/supabase/client.server";
+import type { User } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
-export async function getUser<ApiResponseFromType>(): ApiError {
+export async function getUser(): Promise<
+	NextResponse<ApiErrorResponse> | User
+> {
 	const supabase = await createServerClient();
 	console.log("Supabase client created");
 	const {
@@ -14,7 +17,7 @@ export async function getUser<ApiResponseFromType>(): ApiError {
 	console.log("Error:", JSON.stringify(error));
 
 	if (error) {
-		return NextResponse.json<ApiError>(
+		return NextResponse.json<ApiErrorResponse>(
 			{
 				success: false,
 				error: {
@@ -27,7 +30,7 @@ export async function getUser<ApiResponseFromType>(): ApiError {
 		);
 	}
 	if (!user) {
-		return NextResponse.json<ApiError>(
+		return NextResponse.json<ApiErrorResponse>(
 			{
 				success: false,
 				error: {
@@ -40,5 +43,5 @@ export async function getUser<ApiResponseFromType>(): ApiError {
 		);
 	}
 
-	return { user, errorResponse: null };
+	return user;
 }
