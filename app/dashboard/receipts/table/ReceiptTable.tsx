@@ -34,7 +34,9 @@ export default function ReceiptTable({
 	const fullReceiptColumns = getFullReceiptColumns({
 		baseColumnDef: receiptColumns,
 		onEdit: (row) => router.push(`/dashboard/receipts/table/${row.id}`),
-		onDelete: (row) => {},
+		onDelete: (row) => {
+			alert("未実装");
+		}, // TODO: 削除機能を実装する
 	});
 
 	const table = useReactTable({
