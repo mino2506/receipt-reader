@@ -21,7 +21,6 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { set } from "lodash";
 import { Check, ListPlus } from "lucide-react";
 
 export function NewReceiptDetailRow({

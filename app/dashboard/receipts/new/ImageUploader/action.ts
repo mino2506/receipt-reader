@@ -2,6 +2,14 @@
 
 "use server";
 
+import { cookies } from "next/headers";
+
+import {
+	createGCVRequest,
+	fetchGCVResult,
+	validateImageInput,
+} from "@/lib/googleCloudVision";
+
 import {
 	messagePrefixPrompt,
 	receiptFunctionCallingSchema,
@@ -12,7 +20,6 @@ import {
 	OpenAiReceiptDataSchema,
 } from "@/app/dashboard/receipts/new/ImageUploader/schema";
 import type { ApiResponseFromType } from "@/lib/api/common.schema";
-import { tryParseAndFetchGCV } from "@/lib/googleCloudVision";
 import {
 	OpenAIApiResponseSchema,
 	OpenAIRequestSchema,
@@ -26,7 +33,16 @@ import { formatZodError } from "@/lib/zod/error";
  * @returns GCV処理結果（success + data または error）
  */
 export async function tryParseAndFetchGCVFromClient(input: unknown) {
-	return await tryParseAndFetchGCV(input);
+	const cookie = await cookies();
+	const cookieHeader = cookie
+		.getAll()
+		.map((c) => `${c.name}=${c.value}`)
+		.join("; ");
+	// console.log("🍪", cookieHeader);
+
+	const validated = validateImageInput(input);
+	const request = createGCVRequest(validated);
+	return await fetchGCVResult(request, cookieHeader);
 }
 
 export async function parseReceiptToJsonWithAi(
@@ -35,6 +51,13 @@ export async function parseReceiptToJsonWithAi(
 	const ACTION_NAME = "parseReceiptToJsonWithAi";
 	console.log(`📊RUNNING ServerAction - ${parseReceiptToJsonWithAi}`);
 	console.log(`[${ACTION_NAME}]`, "input: \n", input.slice(0, 300));
+
+	const cookie = await cookies();
+	const cookieHeader = cookie
+		.getAll()
+		.map((c) => `${c.name}=${c.value}`)
+		.join("; ");
+	// console.log("🍪", cookieHeader);
 
 	// Promptを作成
 	const actionPrompt: string = `
@@ -112,6 +135,7 @@ export async function parseReceiptToJsonWithAi(
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
+				Cookie: cookieHeader,
 			},
 			body: JSON.stringify(validatedRequest.data),
 			credentials: "include",

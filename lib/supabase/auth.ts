@@ -2,7 +2,7 @@
 
 import type { Session } from "@supabase/supabase-js";
 import { createClient as createBrowserClient } from "./client";
-import { createClient as createServerClient } from "./server";
+import { createClient as createServerClient } from "./client.server";
 
 /**
  * クライアント側で現在の Supabase セッションを取得する

@@ -1,5 +1,5 @@
 // app/page.tsx
-import { createClient as createServerClient } from "@/lib/supabase/server";
+import { createClient as createServerClient } from "@/lib/supabase/client.server";
 import { redirect } from "next/navigation";
 
 import Dashboard from "./dashboard/page";

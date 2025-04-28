@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { createClient as createServerClient } from "@/lib/supabase/server";
+import { createClient as createServerClient } from "@/lib/supabase/client.server";
 
 import type { ApiResponseFromType } from "@/lib/api/common.schema";
 import {
