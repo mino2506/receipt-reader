@@ -14,7 +14,13 @@
 		"module": "esnext",
 		"moduleResolution": "bundler",
 		"resolveJsonModule": true,
+
 		"isolatedModules": true,
+		"forceConsistentCasingInFileNames": true,
+		"composite": true,
+		"declaration": true,
+		"noImplicitAny": true,
+
 		"jsx": "preserve",
 		"incremental": true,
 		"plugins": [
