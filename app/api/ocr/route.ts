@@ -39,7 +39,8 @@ export const POST = async (req: Request) => {
 		error,
 	} = await supabase.auth.getUser();
 
-	console.log("User:", user);
+	console.log("User:", JSON.stringify(user));
+	console.log("Error:", JSON.stringify(error));
 	if (!user) {
 		return NextResponse.json<OcrApiResponse>(
 			{
