@@ -1,7 +1,6 @@
 {
-	"name": "bolg",
+	"name": "receipt-reader",
 	"version": "0.1.0-alpha",
-
 	"private": true,
 	"scripts": {
 		"dev": "next dev --turbopack",
