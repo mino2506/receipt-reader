@@ -37,6 +37,7 @@ export const POST = async (req: NextRequest) => {
 	console.log("Supabase client created");
 	const res = new NextResponse();
 	const supabaseApi = createApiClient(req, res);
+	console.log("Supabase  APIclient created");
 	const {
 		data: { user },
 		error,
