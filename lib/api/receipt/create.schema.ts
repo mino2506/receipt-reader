@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-import { e } from "mathjs";
 import { CategoryEnum, CurrencyEnum, IsoDateSchema } from "./common.schema";
 
 /**
