@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const UuidIdSchema = z.string().uuid().brand("UuidId");
+export const UuidIdSchema = z.string().uuid();
 export type UuidId = z.infer<typeof UuidIdSchema>;
 
 /**
@@ -10,8 +10,7 @@ export type UuidId = z.infer<typeof UuidIdSchema>;
  */
 export const IsoDateSchema = z
 	.union([z.string().datetime(), z.date()])
-	.transform((v) => (v instanceof Date ? v.toISOString() : v))
-	.brand("IsoDate");
+	.transform((v) => (v instanceof Date ? v.toISOString() : v));
 
 export type IsoDate = z.infer<typeof IsoDateSchema>;
 
