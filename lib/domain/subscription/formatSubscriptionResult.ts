@@ -1,6 +1,6 @@
 import { toUnknownError } from "@/lib/error/common.error";
+import type { PrismaTaggedError } from "@/lib/error/prisma.error";
 import type {
-	PrismaTaggedError,
 	SubscriptionFormatError,
 	SubscriptionResult,
 } from "@/lib/error/subscription.error";

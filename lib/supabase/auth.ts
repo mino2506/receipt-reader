@@ -28,30 +28,6 @@ export async function getClientSession(): Promise<Session | null> {
 }
 
 /**
- * サーバー側で現在の Supabase ユーザー情報を取得する
- *
- * @returns - 認証済みユーザー。未ログイン時は null を返す
- *
- * @example
- * const user = await getUser();
- * if (!user) redirect("/login");
- */
-export async function getServerUser() {
-	const supabase = await createServerClient();
-	const {
-		data: { user },
-		error,
-	} = await supabase.auth.getUser();
-
-	if (error) {
-		console.error("ユーザー取得エラー:", error.message);
-		return null;
-	}
-
-	return user;
-}
-
-/**
  * クライアント側でメールアドレスとパスワードによるサインインを行う
  *
  * @param email - サインイン用のメールアドレス

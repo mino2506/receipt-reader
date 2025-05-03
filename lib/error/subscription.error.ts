@@ -2,17 +2,11 @@ import type { SubscriptionHistory } from "@/lib/model/user/subscriptionHistory.s
 import type { Tier } from "@/lib/model/user/tier.schema";
 import type { ZodError } from "zod";
 import type { UnknownError } from "./common.error";
+import type { PrismaTaggedError } from "./prisma.error";
 
 export type SubscriptionHistoryValidationError =
 	| { _tag: "TierInvalid"; cause: ZodError }
 	| UnknownError;
-
-export type PrismaTaggedError =
-	| { _tag: "UniqueConstraintViolation"; target: string[] }
-	| { _tag: "ForeignKeyConstraintViolation"; field: string }
-	| { _tag: "RecordNotFound"; model?: string }
-	| { _tag: "ValidationError"; reason: string }
-	| { _tag: "InternalPrismaError"; cause: unknown };
 
 export type SubscriptionFormatError =
 	| { _tag: "TierMissing"; subscriptionId: string }
@@ -28,3 +22,5 @@ export type SubscriptionResult = {
 	tier: Tier;
 	tierName: string;
 };
+
+export type SubscriptionInitError = PrismaTaggedError;
