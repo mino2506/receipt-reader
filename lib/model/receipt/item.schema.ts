@@ -1,15 +1,10 @@
 import { Effect } from "effect";
-import { unknown, z } from "zod";
+import { z } from "zod";
 
-import { type Category, CategoryEnum } from "./common.schema";
+import { type Category, CategoryEnum } from "@/lib/api/receipt/common.schema";
+import { IsoDateSchema, UuidIdSchema } from "@/lib/model/common.schema";
 
-export const UuidIdSchema = z.string().uuid().brand("UuidId");
 const ItemIdSchema = UuidIdSchema.brand("ItemId");
-
-export const IsoDateSchema = z
-	.union([z.string().datetime(), z.date()])
-	.transform((v) => (v instanceof Date ? v.toISOString() : v))
-	.brand("IsoDate");
 
 export const BaseNameSchema = z.string().min(1).max(255);
 const RawNameSchema = BaseNameSchema.brand("RawName");
