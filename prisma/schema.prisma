@@ -30,7 +30,51 @@ model User {
   updated_at        DateTime    @updatedAt
   provider          String?
   receipts          Receipt[]
+
+  subscriptionHistories  SubscriptionHistory[] 
+  googleCloudVisionUsageLogs    GoogleCloudVisionUsageLog[]
+  openAiUsageLogs     OpenAiUsageLog[]
 }
+
+model Tier {
+  id              String   @id @db.Uuid @default(uuid())
+  name            String   @unique
+  maxAiTokens     Int?
+  maxAiCalls      Int?
+  maxOcrCalls     Int?
+  priceJPY        Int?
+  createdAt       DateTime @default(now())
+  subscriptionHistories  SubscriptionHistory[] 
+}
+
+model SubscriptionHistory {
+  id         String   @id @default(cuid())
+  userId     String   @db.Uuid
+  user       User     @relation(fields: [userId], references: [id])
+  tierId     String
+  tier       Tier     @relation(fields: [tierId], references: [id])
+  startedAt  DateTime
+  endedAt    DateTime?
+}
+
+model OpenAiUsageLog {
+  id        String   @id @default(cuid())
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id])
+  tokenIn   Int
+  tokenOut  Int
+  success   Boolean
+  createdAt DateTime @default(now())
+}
+
+model GoogleCloudVisionUsageLog {
+  id        String   @id @default(cuid())
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id])
+  success   Boolean
+  createdAt DateTime @default(now())
+}
+
 
 model Receipt{
   id                String      @id @db.Uuid @default(uuid())
@@ -96,3 +140,5 @@ model Store {
   
   receipts          Receipt[]   // Store <- Receipt リレーション（1対多）
 }
+
+
