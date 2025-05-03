@@ -51,7 +51,7 @@ model SubscriptionHistory {
   id         String   @id @default(cuid())
   userId     String   @db.Uuid
   user       User     @relation(fields: [userId], references: [id])
-  tierId     String
+  tierId     String   @db.Uuid
   tier       Tier     @relation(fields: [tierId], references: [id])
   startedAt  DateTime
   endedAt    DateTime?
