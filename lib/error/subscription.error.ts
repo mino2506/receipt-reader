@@ -24,3 +24,11 @@ export type SubscriptionResult = {
 };
 
 export type SubscriptionInitError = PrismaTaggedError;
+
+export type TierValidationError =
+	| { _tag: "TierInvalid"; cause: ZodError }
+	| UnknownError;
+
+export type CreateInitialSubscriptionError =
+	| PrismaTaggedError
+	| TierValidationError;

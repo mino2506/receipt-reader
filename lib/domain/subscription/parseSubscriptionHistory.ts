@@ -7,7 +7,7 @@ import {
 import { Effect } from "effect";
 import { ZodError } from "zod";
 
-export const toSubscriptionHistoryValidationError = (
+export const toSubscriptionHistoryParseError = (
 	e: unknown,
 ): SubscriptionHistoryValidationError => {
 	if (e instanceof ZodError) return { _tag: "TierInvalid", cause: e };
@@ -23,9 +23,11 @@ export const parseSubscriptionHistory = (
 > =>
 	Effect.try({
 		try: () => {
+			console.log(subscriptionHistory);
 			const parsed = SubscriptionHistorySchema.safeParse(subscriptionHistory);
+			console.log(parsed);
 			if (!parsed.success) throw parsed.error;
 			return parsed.data;
 		},
-		catch: toSubscriptionHistoryValidationError,
+		catch: toSubscriptionHistoryParseError,
 	});
