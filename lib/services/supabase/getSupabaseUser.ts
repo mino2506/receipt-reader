@@ -6,7 +6,7 @@ export type SupabaseTaggedError =
 	| { _tag: "AuthGetUserError"; message: string }
 	| { _tag: "AuthNoUserFound" };
 
-export const getUser = () =>
+export const getSupabaseUser = () =>
 	Effect.gen(function* (_) {
 		const { supabase } = yield* _(SupabaseService);
 

@@ -1,14 +1,16 @@
 // app/auth/callback/route.ts
 
-import { createClient as createServerClient } from "@/lib/supabase/client.server";
-import { type NextRequest, NextResponse } from "next/server";
-
 import { createInitialSubscription } from "@/lib/flow/createInitialSubscription";
 import type { UserId } from "@/lib/model/user/user.schema";
 import { PrismaServiceLayer } from "@/lib/services/prismaService";
-import { upsertUser } from "@/lib/supabase/upsertUser";
+import { exchangeCodeForSessionEffect } from "@/lib/services/supabase/exchangeCodeForSessionEffect";
+import { getSupabaseUser } from "@/lib/services/supabase/getSupabaseUser";
+import { SupabaseServiceLayer } from "@/lib/services/supabase/supabaseService";
+import { saveUser } from "@/lib/services/supabase/upsertUser";
+import { debug, log } from "@/lib/utils/log";
 import { Effect, pipe } from "effect";
 import { runPromise } from "effect/Effect";
+import { type NextRequest, NextResponse } from "next/server";
 
 /**
  * OAuth 認証後に Supabase のセッションを確立し、指定の `next` へリダイレクトする
@@ -35,45 +37,30 @@ export async function GET(request: NextRequest) {
 	console.log("\n");
 
 	if (code) {
-		const supabase = await createServerClient();
-
-		await supabase.auth.exchangeCodeForSession(code);
-
-		const {
-			data: { user },
-		} = await supabase.auth.getUser();
-
-		if (user) {
-			await upsertUser(user);
-			console.log(
-				JSON.stringify(createInitialSubscription(user.id as UserId), null, 2),
+		try {
+			await runPromise(
+				pipe(
+					exchangeCodeForSessionEffect(code),
+					Effect.flatMap(() => getSupabaseUser()),
+					Effect.tap((user) => saveUser(user)),
+					Effect.tap((user) => ensureSubscriptionExists(user.id as UserId)),
+					Effect.provide(SupabaseServiceLayer),
+					Effect.provide(PrismaServiceLayer),
+				),
 			);
-
-			try {
-				const result = await runPromise(
-					Effect.provide(
-						createInitialSubscription(user.id as UserId),
-						PrismaServiceLayer,
-					),
-				);
-				console.log("✅ 成功:", result);
-			} catch (e) {
-				console.error(e);
-			}
+		} catch (e) {
+			console.error("❌ 認証フロー失敗:", e);
 		}
 	}
 
 	return NextResponse.redirect(`${origin}${next}`);
 }
 
-import type {
-	CreateInitialSubscriptionError,
-	GetActiveSubscriptionError,
-} from "@/lib/error/subscription.error";
+import type { GetActiveSubscriptionError } from "@/lib/error/subscription.error";
 import { getActiveSubscription } from "@/lib/flow/getActiveSubscription";
 import type { PrismaService } from "@/lib/services/prismaService";
 import { hasTag } from "@/lib/utils/match";
-import { Match, Option } from "effect";
+import { Option } from "effect";
 
 const isRecordNotFound = hasTag("RecordNotFound");
 
@@ -92,6 +79,6 @@ const ensureSubscriptionExists = (
 		);
 
 		if (Option.isNone(existing)) {
-			yield* _(createInitialSubscription(userId)); // ← なければ作る
+			yield* _(createInitialSubscription(userId));
 		}
 	});
