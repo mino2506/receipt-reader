@@ -3,7 +3,12 @@
 import { createClient as createServerClient } from "@/lib/supabase/client.server";
 import { type NextRequest, NextResponse } from "next/server";
 
+import { createInitialSubscription } from "@/lib/flow/createInitialSubscription";
+import type { UserId } from "@/lib/model/user/user.schema";
+import { PrismaServiceLayer } from "@/lib/services/prismaService";
 import { upsertUser } from "@/lib/supabase/upsertUser";
+import { Effect, pipe } from "effect";
+import { runPromise } from "effect/Effect";
 
 /**
  * OAuth 認証後に Supabase のセッションを確立し、指定の `next` へリダイレクトする
@@ -40,8 +45,53 @@ export async function GET(request: NextRequest) {
 
 		if (user) {
 			await upsertUser(user);
+			console.log(
+				JSON.stringify(createInitialSubscription(user.id as UserId), null, 2),
+			);
+
+			try {
+				const result = await runPromise(
+					Effect.provide(
+						createInitialSubscription(user.id as UserId),
+						PrismaServiceLayer,
+					),
+				);
+				console.log("✅ 成功:", result);
+			} catch (e) {
+				console.error(e);
+			}
 		}
 	}
 
 	return NextResponse.redirect(`${origin}${next}`);
 }
+
+import type {
+	CreateInitialSubscriptionError,
+	GetActiveSubscriptionError,
+} from "@/lib/error/subscription.error";
+import { getActiveSubscription } from "@/lib/flow/getActiveSubscription";
+import type { PrismaService } from "@/lib/services/prismaService";
+import { hasTag } from "@/lib/utils/match";
+import { Match, Option } from "effect";
+
+const isRecordNotFound = hasTag("RecordNotFound");
+
+const ensureSubscriptionExists = (
+	userId: UserId,
+): Effect.Effect<void, GetActiveSubscriptionError, PrismaService> =>
+	Effect.gen(function* (_) {
+		const existing = yield* _(
+			getActiveSubscription(userId),
+			Effect.map(() => Option.some(true)),
+			Effect.catchAll((err) =>
+				isRecordNotFound(err)
+					? Effect.succeed(Option.none())
+					: Effect.fail(err),
+			),
+		);
+
+		if (Option.isNone(existing)) {
+			yield* _(createInitialSubscription(userId)); // ← なければ作る
+		}
+	});

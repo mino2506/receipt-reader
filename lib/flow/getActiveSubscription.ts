@@ -9,7 +9,7 @@ import type { PrismaService } from "@/lib/services/prismaService";
 import { fetchActiveSubscription } from "@/lib/services/subscription/fetchActiveSubscription";
 import { Effect, pipe } from "effect";
 
-export const getActiveSubscriptionEffect = (
+export const getActiveSubscription = (
 	userId: UserId,
 ): Effect.Effect<
 	SubscriptionResult,
