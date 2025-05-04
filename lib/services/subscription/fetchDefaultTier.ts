@@ -1,4 +1,4 @@
-import { toPrismaTaggedError } from "@/lib/domain/subscription/formatSubscriptionResult";
+import { toPrismaTaggedError } from "@/lib/domain/prisma/toPrismaTaggedError";
 import type { PrismaTaggedError } from "@/lib/error/prisma.error";
 import { PrismaService } from "@/lib/services/prismaService";
 import { Effect } from "effect";
