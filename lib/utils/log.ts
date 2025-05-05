@@ -1,12 +1,7 @@
 import { Effect, pipe } from "effect";
 
-export const log =
-	(label: string) =>
-	<T>(value: T): Effect.Effect<T> =>
-		pipe(
-			Effect.sync(() => console.log(`${label}:`, value)),
-			Effect.map(() => value),
-		);
+export const log = <T>(label: string) =>
+	Effect.tap((value) => Effect.sync(() => console.log(`${label}:`, value)));
 
 export const debug = (msg: string) =>
 	Effect.tap((v) =>

@@ -5,7 +5,8 @@ import { Effect } from "effect";
 import { ZodError } from "zod";
 
 export const toTierPasreError = (e: unknown): TierValidationError => {
-	if (e instanceof ZodError) return { _tag: "TierInvalid", cause: e };
+	if (e instanceof ZodError)
+		return { _tag: "TierInvalid", cause: e } satisfies TierValidationError;
 	return toUnknownError(e);
 };
 
