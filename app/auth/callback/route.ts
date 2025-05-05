@@ -1,13 +1,12 @@
 // app/auth/callback/route.ts
 
-import { createInitialSubscription } from "@/lib/flow/createInitialSubscription";
-import type { UserId } from "@/lib/model/user/user.schema";
+import { parseUserId } from "@/lib/domain/user/parseUser";
+import { ensureSubscriptionExists } from "@/lib/flow/ensureSubscriptionExists";
 import { PrismaServiceLayer } from "@/lib/services/prismaService";
 import { exchangeCodeForSessionEffect } from "@/lib/services/supabase/exchangeCodeForSessionEffect";
 import { getSupabaseUser } from "@/lib/services/supabase/getSupabaseUser";
 import { SupabaseServiceLayer } from "@/lib/services/supabase/supabaseService";
 import { saveUser } from "@/lib/services/supabase/upsertUser";
-import { debug, log } from "@/lib/utils/log";
 import { Effect, pipe } from "effect";
 import { runPromise } from "effect/Effect";
 import { type NextRequest, NextResponse } from "next/server";
@@ -37,48 +36,25 @@ export async function GET(request: NextRequest) {
 	console.log("\n");
 
 	if (code) {
-		try {
-			await runPromise(
-				pipe(
-					exchangeCodeForSessionEffect(code),
-					Effect.flatMap(() => getSupabaseUser()),
-					Effect.tap((user) => saveUser(user)),
-					Effect.tap((user) => ensureSubscriptionExists(user.id as UserId)),
-					Effect.provide(SupabaseServiceLayer),
-					Effect.provide(PrismaServiceLayer),
-				),
-			);
-		} catch (e) {
-			console.error("❌ 認証フロー失敗:", e);
-		}
+		await runPromise(
+			pipe(
+				exchangeCodeForSessionEffect(code),
+				Effect.flatMap(() => getSupabaseUser()),
+				Effect.tap((user) => saveUser(user)),
+				Effect.tap((user) => Effect.log(`User saved: ${user}`)),
+				Effect.flatMap((user) => parseUserId(user.id)),
+				Effect.tap((userId) => Effect.log(`UserId parsed: ${userId}`)),
+				Effect.tap((userId) => ensureSubscriptionExists(userId)),
+				Effect.tap((userId) => Effect.log(`Subscription ensured: ${userId}`)),
+				Effect.provide(SupabaseServiceLayer),
+				Effect.provide(PrismaServiceLayer),
+				Effect.matchEffect({
+					onSuccess: () => Effect.log("🎉 認証処理 完了"),
+					onFailure: (e) => Effect.logError("❌ 認証フロー失敗:", e),
+				}),
+			),
+		);
 	}
 
 	return NextResponse.redirect(`${origin}${next}`);
 }
-
-import type { GetActiveSubscriptionError } from "@/lib/error/subscription.error";
-import { getActiveSubscription } from "@/lib/flow/getActiveSubscription";
-import type { PrismaService } from "@/lib/services/prismaService";
-import { hasTag } from "@/lib/utils/match";
-import { Option } from "effect";
-
-const isRecordNotFound = hasTag("RecordNotFound");
-
-const ensureSubscriptionExists = (
-	userId: UserId,
-): Effect.Effect<void, GetActiveSubscriptionError, PrismaService> =>
-	Effect.gen(function* (_) {
-		const existing = yield* _(
-			getActiveSubscription(userId),
-			Effect.map(() => Option.some(true)),
-			Effect.catchAll((err) =>
-				isRecordNotFound(err)
-					? Effect.succeed(Option.none())
-					: Effect.fail(err),
-			),
-		);
-
-		if (Option.isNone(existing)) {
-			yield* _(createInitialSubscription(userId));
-		}
-	});
