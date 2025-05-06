@@ -1,31 +1,32 @@
 import { toPrismaTaggedError } from "@/lib/_domain/prisma/toPrismaTaggedError";
 import type { PrismaTaggedError } from "@/lib/error/prisma.error";
-import type { TierId } from "@/lib/model/user/tier.schema";
 import type { UserId } from "@/lib/model/user/user.schema";
 import { PrismaService } from "@/lib/services/prismaService";
 import { Effect } from "effect";
 
-export const createSubscription = (
+export const getGcvUsageCount = (
 	userId: UserId,
-	tierId: TierId,
-): Effect.Effect<unknown, PrismaTaggedError, PrismaService> =>
+): Effect.Effect<number, PrismaTaggedError, PrismaService> =>
 	Effect.gen(function* (_) {
 		const { prisma } = yield* _(PrismaService);
-		const subscription = yield* _(
+		const startOfMonth = new Date(
+			new Date().getFullYear(),
+			new Date().getMonth(),
+			1,
+		);
+
+		const count = yield* _(
 			Effect.tryPromise({
 				try: () =>
-					prisma.subscriptionHistory.create({
-						data: {
+					prisma.googleCloudVisionUsageLog.count({
+						where: {
 							userId,
-							tierId,
-							startedAt: new Date(),
-						},
-						include: {
-							tier: true,
+							createdAt: { gte: startOfMonth },
 						},
 					}),
 				catch: toPrismaTaggedError,
 			}),
 		);
-		return subscription;
+
+		return count;
 	});
