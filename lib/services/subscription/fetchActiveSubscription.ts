@@ -1,4 +1,4 @@
-import { toPrismaTaggedError } from "@/lib/domain/prisma/toPrismaTaggedError";
+import { toPrismaTaggedError } from "@/lib/_domain/prisma/toPrismaTaggedError";
 import type { GetActiveSubscriptionError } from "@/lib/error/subscription.error";
 import type { UserId } from "@/lib/model/user/user.schema";
 import { PrismaService } from "@/lib/services/prismaService";

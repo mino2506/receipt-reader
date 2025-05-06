@@ -1,5 +1,5 @@
-import { formatSubscriptionResult } from "@/lib/domain/subscription/formatSubscriptionResult";
-import { parseSubscriptionHistory } from "@/lib/domain/subscription/parseSubscriptionHistory";
+import { formatSubscriptionResult } from "@/lib/_domain/subscription/formatSubscriptionResult";
+import { parseSubscriptionHistory } from "@/lib/_domain/subscription/parseSubscriptionHistory";
 import type {
 	GetActiveSubscriptionError,
 	SubscriptionResult,

@@ -1,4 +1,4 @@
-import { toPrismaTaggedError } from "@/lib/domain/prisma/toPrismaTaggedError";
+import { toPrismaTaggedError } from "@/lib/_domain/prisma/toPrismaTaggedError";
 import type { PrismaTaggedError } from "@/lib/error/prisma.error";
 import { PrismaService } from "@/lib/services/prismaService";
 import type { User } from "@supabase/supabase-js";

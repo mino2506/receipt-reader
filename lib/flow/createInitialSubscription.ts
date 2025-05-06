@@ -1,5 +1,5 @@
-import { parseSubscriptionHistory } from "@/lib/domain/subscription/parseSubscriptionHistory";
-import { parseTier } from "@/lib/domain/subscription/parseTier";
+import { parseSubscriptionHistory } from "@/lib/_domain/subscription/parseSubscriptionHistory";
+import { parseTier } from "@/lib/_domain/subscription/parseTier";
 import type { CreateInitialSubscriptionError } from "@/lib/error/subscription.error";
 import type { SubscriptionHistory } from "@/lib/model/user/subscriptionHistory.schema";
 import type { UserId } from "@/lib/model/user/user.schema";

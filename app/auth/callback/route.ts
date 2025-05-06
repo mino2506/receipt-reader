@@ -1,6 +1,6 @@
 // app/auth/callback/route.ts
 
-import { parseUserId } from "@/lib/domain/user/parseUser";
+import { parseUserId } from "@/lib/_domain/user/parseUser";
 import { ensureSubscriptionExists } from "@/lib/flow/ensureSubscriptionExists";
 import { PrismaServiceLayer } from "@/lib/services/prismaService";
 import { exchangeCodeForSessionEffect } from "@/lib/services/supabase/exchangeCodeForSessionEffect";
