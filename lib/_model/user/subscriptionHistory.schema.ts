@@ -1,4 +1,4 @@
-import { CuidIdSchema, IsoDateSchema } from "@/lib/model/common.schema";
+import { CuidIdSchema, IsoDateSchema } from "@/lib/_model/common.schema";
 import { z } from "zod";
 import { TierIdSchema, TierSchema } from "./tier.schema";
 import { UserIdSchema } from "./user.schema";

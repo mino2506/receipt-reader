@@ -1,5 +1,5 @@
-import type { SubscriptionHistory } from "@/lib/model/user/subscriptionHistory.schema";
-import type { Tier } from "@/lib/model/user/tier.schema";
+import type { SubscriptionHistory } from "@/lib/_model/user/subscriptionHistory.schema";
+import type { Tier } from "@/lib/_model/user/tier.schema";
 import type { ZodError } from "zod";
 import type { UnknownError } from "./common.error";
 import type { PrismaTaggedError } from "./prisma.error";

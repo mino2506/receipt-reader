@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { Context, Effect, Layer } from "effect";
-import type { PrismaTaggedError } from "../error/prisma.error";
+import type { PrismaTaggedError } from "../_error/prisma.error";
 
 export class PrismaService extends Context.Tag("PrismaService")<
 	PrismaService,

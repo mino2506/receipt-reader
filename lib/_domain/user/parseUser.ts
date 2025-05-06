@@ -1,11 +1,11 @@
-import { toUnknownError } from "@/lib/error/common.error";
-import type { UserIdValidationError } from "@/lib/error/user.error";
+import { toUnknownError } from "@/lib/_error/common.error";
+import type { UserIdValidationError } from "@/lib/_error/user.error";
 import {
 	type User,
 	type UserId,
 	UserIdSchema,
 	UserSchema,
-} from "@/lib/model/user/user.schema";
+} from "@/lib/_model/user/user.schema";
 import { Effect } from "effect";
 import { ZodError } from "zod";
 

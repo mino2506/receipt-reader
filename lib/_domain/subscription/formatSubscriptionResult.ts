@@ -1,9 +1,9 @@
-import { toUnknownError } from "@/lib/error/common.error";
+import { toUnknownError } from "@/lib/_error/common.error";
 import type {
 	SubscriptionFormatError,
 	SubscriptionResult,
-} from "@/lib/error/subscription.error";
-import type { SubscriptionHistory } from "@/lib/model/user/subscriptionHistory.schema";
+} from "@/lib/_error/subscription.error";
+import type { SubscriptionHistory } from "@/lib/_model/user/subscriptionHistory.schema";
 import { Prisma } from "@prisma/client";
 import { Effect } from "effect";
 

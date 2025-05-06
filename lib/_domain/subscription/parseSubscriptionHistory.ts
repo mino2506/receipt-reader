@@ -1,9 +1,9 @@
-import { toUnknownError } from "@/lib/error/common.error";
-import type { SubscriptionHistoryValidationError } from "@/lib/error/subscription.error";
+import { toUnknownError } from "@/lib/_error/common.error";
+import type { SubscriptionHistoryValidationError } from "@/lib/_error/subscription.error";
 import {
 	type SubscriptionHistory,
 	SubscriptionHistorySchema,
-} from "@/lib/model/user/subscriptionHistory.schema";
+} from "@/lib/_model/user/subscriptionHistory.schema";
 import { Effect } from "effect";
 import { ZodError } from "zod";
 

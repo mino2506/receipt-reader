@@ -1,8 +1,8 @@
 import { Effect } from "effect";
 import { z } from "zod";
 
+import { IsoDateSchema, UuidIdSchema } from "@/lib/_model/common.schema";
 import { type Category, CategoryEnum } from "@/lib/api/receipt/common.schema";
-import { IsoDateSchema, UuidIdSchema } from "@/lib/model/common.schema";
 
 const ItemIdSchema = UuidIdSchema.brand("ItemId");
 
