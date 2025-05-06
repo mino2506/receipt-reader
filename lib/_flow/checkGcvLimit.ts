@@ -1,9 +1,9 @@
 import { getGcvUsageCount } from "@/lib/_domain/googleCloudVision/getGcvUsageCount";
-import type { GcvLimitExceededError } from "@/lib/error/googleCloudVision.error";
-import type { GetActiveSubscriptionError } from "@/lib/error/subscription.error";
-import { getActiveSubscription } from "@/lib/flow/getActiveSubscription";
-import type { UserId } from "@/lib/model/user/user.schema";
-import type { PrismaService } from "@/lib/services/prismaService";
+import type { GcvLimitExceededError } from "@/lib/_error/googleCloudVision.error";
+import type { GetActiveSubscriptionError } from "@/lib/_error/subscription.error";
+import { getActiveSubscription } from "@/lib/_flow/getActiveSubscription";
+import type { UserId } from "@/lib/_model/user/user.schema";
+import type { PrismaService } from "@/lib/_services/prismaService";
 import { Effect } from "effect";
 
 export const checkGcvLimit = (

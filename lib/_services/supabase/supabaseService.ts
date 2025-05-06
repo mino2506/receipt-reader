@@ -1,4 +1,4 @@
-import type { SupabaseInfraError } from "@/lib/error/supabase.error";
+import type { SupabaseInfraError } from "@/lib/_error/supabase.error";
 import { createClient as createServerClient } from "@/lib/supabase/client.server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { Context, Effect, Layer } from "effect";

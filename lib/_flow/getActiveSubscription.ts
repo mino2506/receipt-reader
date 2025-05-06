@@ -3,10 +3,10 @@ import { parseSubscriptionHistory } from "@/lib/_domain/subscription/parseSubscr
 import type {
 	GetActiveSubscriptionError,
 	SubscriptionResult,
-} from "@/lib/error/subscription.error";
-import type { UserId } from "@/lib/model/user/user.schema";
-import type { PrismaService } from "@/lib/services/prismaService";
-import { fetchActiveSubscription } from "@/lib/services/subscription/fetchActiveSubscription";
+} from "@/lib/_error/subscription.error";
+import type { UserId } from "@/lib/_model/user/user.schema";
+import type { PrismaService } from "@/lib/_services/prismaService";
+import { fetchActiveSubscription } from "@/lib/_services/subscription/fetchActiveSubscription";
 import { Effect, pipe } from "effect";
 
 export const getActiveSubscription = (

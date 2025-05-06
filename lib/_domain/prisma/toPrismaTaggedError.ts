@@ -1,4 +1,4 @@
-import type { PrismaTaggedError } from "@/lib/error/prisma.error";
+import type { PrismaTaggedError } from "@/lib/_error/prisma.error";
 import { Prisma } from "@prisma/client";
 
 export const toPrismaTaggedError = (e: unknown): PrismaTaggedError => {

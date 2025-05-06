@@ -1,8 +1,8 @@
 import type {
 	SupabaseSessionExchangeError,
 	SupabaseTaggedError,
-} from "@/lib/error/supabase.error";
-import { SupabaseService } from "@/lib/services/supabase/supabaseService";
+} from "@/lib/_error/supabase.error";
+import { SupabaseService } from "@/lib/_services/supabase/supabaseService";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { Effect } from "effect";
 

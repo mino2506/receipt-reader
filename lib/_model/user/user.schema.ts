@@ -1,4 +1,4 @@
-import { IsoDateSchema, UuidIdSchema } from "@/lib/model/common.schema";
+import { IsoDateSchema, UuidIdSchema } from "@/lib/_model/common.schema";
 import { z } from "zod";
 
 export const UserIdSchema = UuidIdSchema.brand("UserId");

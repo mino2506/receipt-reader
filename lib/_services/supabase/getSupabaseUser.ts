@@ -1,4 +1,4 @@
-import { SupabaseService } from "@/lib/services/supabase/supabaseService";
+import { SupabaseService } from "@/lib/_services/supabase/supabaseService";
 import { Effect } from "effect";
 
 export type SupabaseTaggedError =

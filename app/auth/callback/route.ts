@@ -1,12 +1,12 @@
 // app/auth/callback/route.ts
 
 import { parseUserId } from "@/lib/_domain/user/parseUser";
-import { ensureSubscriptionExists } from "@/lib/flow/ensureSubscriptionExists";
-import { PrismaServiceLayer } from "@/lib/services/prismaService";
-import { exchangeCodeForSessionEffect } from "@/lib/services/supabase/exchangeCodeForSessionEffect";
-import { getSupabaseUser } from "@/lib/services/supabase/getSupabaseUser";
-import { SupabaseServiceLayer } from "@/lib/services/supabase/supabaseService";
-import { saveUser } from "@/lib/services/supabase/upsertUser";
+import { ensureSubscriptionExists } from "@/lib/_flow/ensureSubscriptionExists";
+import { PrismaServiceLayer } from "@/lib/_services/prismaService";
+import { exchangeCodeForSessionEffect } from "@/lib/_services/supabase/exchangeCodeForSessionEffect";
+import { getSupabaseUser } from "@/lib/_services/supabase/getSupabaseUser";
+import { SupabaseServiceLayer } from "@/lib/_services/supabase/supabaseService";
+import { saveUser } from "@/lib/_services/supabase/upsertUser";
 import { Effect, pipe } from "effect";
 import { runPromise } from "effect/Effect";
 import { type NextRequest, NextResponse } from "next/server";

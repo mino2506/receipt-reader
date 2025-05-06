@@ -1,6 +1,6 @@
-import { type UnknownError, toUnknownError } from "@/lib/error/common.error";
-import type { TierValidationError } from "@/lib/error/subscription.error";
-import { type Tier, TierSchema } from "@/lib/model/user/tier.schema";
+import { type UnknownError, toUnknownError } from "@/lib/_error/common.error";
+import type { TierValidationError } from "@/lib/_error/subscription.error";
+import { type Tier, TierSchema } from "@/lib/_model/user/tier.schema";
 import { Effect } from "effect";
 import { ZodError } from "zod";
 
