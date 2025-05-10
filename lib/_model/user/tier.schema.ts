@@ -8,7 +8,7 @@ const MaxAiCallsSchema = z.number().int().nonnegative().brand("MaxAiCalls");
 const MaxOcrCallsSchema = z.number().int().nonnegative().brand("MaxOcrCalls");
 
 export const TierNameSchema = z
-	.enum(["free", "standard", "pro"])
+	.enum(["free", "standard", "pro", "developer"])
 	.brand("TierName");
 
 export const TierSchema = z.object({
