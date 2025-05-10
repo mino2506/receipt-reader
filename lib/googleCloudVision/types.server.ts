@@ -1,7 +1,6 @@
 "use server";
 
 import type { protos } from "@google-cloud/vision";
-import type { GCVFeatureType } from "./schema";
 
 /**
  * @deprecated
