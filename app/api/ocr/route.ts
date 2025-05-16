@@ -2,213 +2,97 @@
 
 import { parseUserId } from "@/lib/_domain/user/parseUser";
 import { checkGcvLimit } from "@/lib/_flow/checkGcvLimit";
+import {
+	type GCVRequest,
+	type GCVRequestBody,
+	GCVRequestSchema,
+} from "@/lib/_model/googleCloudVision/request.schema";
 import { saveGcvUsageLog } from "@/lib/_services/googleCloudVisionUsageLog/saveGcvUsageLog";
 import { PrismaServiceLayer } from "@/lib/_services/prismaService";
 import { getSupabaseUser } from "@/lib/_services/supabase/getSupabaseUser";
 import { SupabaseServiceLayer } from "@/lib/_services/supabase/supabaseService";
 import type { ApiResponseFromType } from "@/lib/api/common.schema";
 import {
-	type GCVRequest,
-	type GCVRequestBody,
-	GCVRequestSchema,
 	type GCVSingleResponse,
 	GCVSingleResponseSchema,
-	googleCloudVisionClient,
 } from "@/lib/googleCloudVision";
 import {
 	GcvService,
 	GcvServiceLayer,
 } from "@/lib/googleCloudVision/gcvService";
-import { getUser } from "@/lib/supabase/auth.server";
 import { Effect, pipe } from "effect";
 import { NextResponse } from "next/server";
 
 type OcrApiResponse = ApiResponseFromType<GCVSingleResponse>;
 
 export const POST = async (req: Request) => {
-	console.log("\n\n~~~📨📮   POOOOOOOOOST!!!🚀🚀🚀🆕🆕🆕\n");
-	console.log("📨 GCV OCR API called");
-
-	console.log("req:", JSON.stringify(req));
-
-	// // 🔐 認証チェック
-	// console.log("🔐 認証チェックを開始します。");
-	// const user = await getUser();
-	// if (user instanceof NextResponse) {
-	// 	return user;
-	// }
-	// console.log("🔐 認証チェックが成功しました。");
-
-	// try {
-	// 	await Effect.runPromise(
-	// 		pipe(
-	// 			parseUserId(user.id),
-	// 			Effect.flatMap((userId) => checkGcvLimit(userId)),
-	// 			Effect.provide(PrismaServiceLayer),
-	// 			Effect.matchEffect({
-	// 				onSuccess: () => Effect.log("🎉 利用回数チェック成功"),
-	// 				onFailure: (e) => Effect.logError("❌ 利用回数チェック失敗:", e),
-	// 			}),
-	// 		),
-	// 	);
-	// } catch (e) {
-	// 	return NextResponse.json<OcrApiResponse>(
-	// 		{
-	// 			success: false,
-	// 			error: {
-	// 				code: "limit_gcv",
-	// 				message: "利用回数上限を超えました",
-	// 				field: "gcv",
-	// 			},
-	// 		},
-	// 		{ status: 422 },
-	// 	);
-	// }
-
-	// const reqBody = await req.json();
-	// const requestToGCV = reqBody.request;
-	// console.log("requestToGCV:", requestToGCV);
-	// console.log("parseRequestBody:", parseRequestBody(requestToGCV));
-
-	console.log("Try OCR by Google Cloud Vision");
-
-	try {
-		const result = await Effect.runPromise(
-			pipe(
-				getSupabaseUser(),
-				Effect.tap((user) =>
-					Effect.log(
-						"🔐 認証チェック成功:",
-						`${JSON.stringify(user, null, 2)}`,
-					),
-				),
-				Effect.flatMap((user) =>
-					pipe(
-						parseUserId(user.id),
-						Effect.tap(() => Effect.log("✅ UserIdバリデーション成功")),
-						Effect.flatMap((userId) =>
-							pipe(
-								checkGcvLimit(userId),
-								Effect.tap(() => Effect.log("✅ 利用制限チェック成功")),
-								Effect.andThen(() =>
-									pipe(
-										parseRequestJson(req),
-										Effect.tap(() => Effect.log("✅ JSONパース成功")),
-										Effect.flatMap(parseRequestBody),
-										Effect.tap(() => Effect.log("✅ Bodyバリデーション成功")),
-										Effect.flatMap((parsed) => callGcv(parsed.request)),
-										Effect.tap(() => Effect.log("✅ GCV呼び出し成功")),
-										Effect.tapBoth({
-											onSuccess: () => saveGcvUsageLog(userId, true),
-											onFailure: () => saveGcvUsageLog(userId, false),
-										}),
-										Effect.tap(() => Effect.log("✅ GCVログ保存成功")),
-										Effect.flatMap((gcvRes) => parseGcvResponse(gcvRes)),
-										Effect.tap((parsedGcvRes) =>
-											Effect.log(
-												"✅ GCVレスポンスバリデーション成功:",
-												`${JSON.stringify(parsedGcvRes, null, 2)}`,
-											),
-										),
+	return await pipe(
+		pipe(
+			getSupabaseUser(),
+			Effect.flatMap((user) =>
+				pipe(
+					parseUserId(user.id),
+					Effect.flatMap((userId) =>
+						pipe(
+							checkGcvLimit(userId),
+							Effect.andThen(() =>
+								pipe(
+									parseRequestJson(req),
+									// Effect.flatMap(parseRequestBody),
+									Effect.flatMap((req) =>
+										callGcv(req!.request as GCVRequestBody),
 									),
+									Effect.tapBoth({
+										onSuccess: () => saveGcvUsageLog(userId, true),
+										onFailure: () => saveGcvUsageLog(userId, false),
+									}),
+									Effect.flatMap(parseGcvResponse),
 								),
 							),
 						),
 					),
 				),
-				Effect.provide(SupabaseServiceLayer),
-				Effect.provide(GcvServiceLayer),
-				Effect.provide(PrismaServiceLayer),
 			),
-		);
-		return NextResponse.json<OcrApiResponse>(
-			{
-				success: true,
-				data: result,
-				message: "OCR に成功しました",
+			Effect.provide(SupabaseServiceLayer),
+			Effect.provide(GcvServiceLayer),
+			Effect.provide(PrismaServiceLayer),
+		),
+		Effect.matchEffect({
+			onSuccess: (parsedGcvRes) =>
+				Effect.succeed(
+					NextResponse.json<OcrApiResponse>(
+						{
+							success: true,
+							data: parsedGcvRes,
+							message: "OCR に成功しました",
+						},
+						{ status: 200 },
+					),
+				),
+
+			onFailure: (e) => {
+				console.error(e);
+
+				const message = "message" in e ? e.message : "不明なエラー";
+				const status = matchStatusFromTag(e._tag);
+
+				return Effect.succeed(
+					NextResponse.json<OcrApiResponse>(
+						{
+							success: false,
+							error: {
+								code: e._tag ?? "unexpected_error",
+								message,
+								field: "gcv",
+							},
+						},
+						{ status },
+					),
+				);
 			},
-			{ status: 200 },
-		);
-	} catch (e) {
-		const message = e instanceof Error ? e.message : String(e);
-		return NextResponse.json<OcrApiResponse>(
-			{
-				success: false,
-				error: {
-					code: "gcv_execution_failed",
-					message: "Google Cloud Vision API の呼び出しに失敗しました",
-					hint: message,
-					field: "gcv",
-				},
-			},
-			{ status: 500 },
-		);
-	}
-
-	// try {
-	// 	console.log("Starting OCR by Google Cloud Vision");
-
-	// 	const [rawResponse] =
-	// 		await googleCloudVisionClient.annotateImage(requestToGCV);
-
-	// 	// ✅ GCVレスポンスの構造チェック（Zodでvalidate）
-	// 	const parsed = GCVSingleResponseSchema.safeParse(rawResponse);
-	// 	if (!parsed.success) {
-	// 		console.warn("GCV レスポンスの構造が不正:", parsed.error.flatten());
-
-	// 		return NextResponse.json<OcrApiResponse>(
-	// 			{
-	// 				success: false,
-	// 				error: {
-	// 					code: "invalid_gcv_response",
-	// 					message: "GCV のレスポンス形式が不正です",
-	// 					hint: parsed.error.message,
-	// 					field: "gcv",
-	// 				},
-	// 			},
-	// 			{ status: 422 },
-	// 		);
-	// 	}
-
-	// 	console.log("rawText: \n", parsed.data.fullTextAnnotation?.text);
-
-	// 	await Effect.runPromise(
-	// 		pipe(
-	// 			parseUserId(user.id),
-	// 			Effect.flatMap((userId) => saveGcvUsageLog(userId, true)),
-	// 			Effect.provide(PrismaServiceLayer),
-	// 			Effect.matchEffect({
-	// 				onSuccess: () => Effect.log("🎉 利用回数ログ成功"),
-	// 				onFailure: (e) => Effect.logError("❌ 利用回数ログ失敗:", e),
-	// 			}),
-	// 		),
-	// 	);
-
-	// 	// ✅ 正常レスポンス
-	// 	return NextResponse.json<OcrApiResponse>(
-	// 		{
-	// 			success: true,
-	// 			data: parsed.data,
-	// 			message: "OCR に成功しました",
-	// 		},
-	// 		{ status: 200 },
-	// 	);
-	// } catch (error) {
-	// 	const message = error instanceof Error ? error.message : String(error);
-
-	// 	return NextResponse.json<OcrApiResponse>(
-	// 		{
-	// 			success: false,
-	// 			error: {
-	// 				code: "gcv_execution_failed",
-	// 				message: "Google Cloud Vision API の呼び出しに失敗しました",
-	// 				hint: message,
-	// 				field: "gcv",
-	// 			},
-	// 		},
-	// 		{ status: 500 },
-	// 	);
-	// }
+		}),
+		Effect.runPromise,
+	);
 };
 
 type ParseGcvRequestJson = {
