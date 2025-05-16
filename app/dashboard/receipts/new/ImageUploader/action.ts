@@ -40,8 +40,11 @@ export async function tryParseAndFetchGCVFromClient(input: unknown) {
 		.join("; ");
 	// console.log("🍪", cookieHeader);
 
+	// console.log("🌟input:", JSON.stringify(input, null, 2));
 	const validated = validateImageInput(input);
+	// console.log("🌟validated:", JSON.stringify(validated, null, 2));
 	const request = createGCVRequest(validated);
+	// console.log("🌟request:", JSON.stringify(request, null, 2));
 	return await fetchGCVResult(request, cookieHeader);
 }
 
