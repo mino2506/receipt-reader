@@ -1,9 +1,15 @@
 // app/auth/callback/route.ts
 
-import { createClient as createServerClient } from "@/lib/supabase/client.server";
+import { parseUserId } from "@/lib/_domain/user/parseUser";
+import { ensureSubscriptionExists } from "@/lib/_flow/ensureSubscriptionExists";
+import { PrismaServiceLayer } from "@/lib/_services/prismaService";
+import { exchangeCodeForSessionEffect } from "@/lib/_services/supabase/exchangeCodeForSessionEffect";
+import { getSupabaseUser } from "@/lib/_services/supabase/getSupabaseUser";
+import { SupabaseServiceLayer } from "@/lib/_services/supabase/supabaseService";
+import { saveUser } from "@/lib/_services/supabase/upsertUser";
+import { Effect, pipe } from "effect";
+import { runPromise } from "effect/Effect";
 import { type NextRequest, NextResponse } from "next/server";
-
-import { upsertUser } from "@/lib/supabase/upsertUser";
 
 /**
  * OAuth 認証後に Supabase のセッションを確立し、指定の `next` へリダイレクトする
@@ -30,17 +36,24 @@ export async function GET(request: NextRequest) {
 	console.log("\n");
 
 	if (code) {
-		const supabase = await createServerClient();
-
-		await supabase.auth.exchangeCodeForSession(code);
-
-		const {
-			data: { user },
-		} = await supabase.auth.getUser();
-
-		if (user) {
-			await upsertUser(user);
-		}
+		await runPromise(
+			pipe(
+				exchangeCodeForSessionEffect(code),
+				Effect.flatMap(() => getSupabaseUser()),
+				Effect.tap((user) => saveUser(user)),
+				Effect.tap((user) => Effect.log(`User saved: ${user}`)),
+				Effect.flatMap((user) => parseUserId(user.id)),
+				Effect.tap((userId) => Effect.log(`UserId parsed: ${userId}`)),
+				Effect.tap((userId) => ensureSubscriptionExists(userId)),
+				Effect.tap((userId) => Effect.log(`Subscription ensured: ${userId}`)),
+				Effect.provide(SupabaseServiceLayer),
+				Effect.provide(PrismaServiceLayer),
+				Effect.matchEffect({
+					onSuccess: () => Effect.log("🎉 認証処理 完了"),
+					onFailure: (e) => Effect.logError("❌ 認証フロー失敗:", e),
+				}),
+			),
+		);
 	}
 
 	return NextResponse.redirect(`${origin}${next}`);
