@@ -1,5 +1,3 @@
-import { z } from "zod";
-import { GCVFeatureType } from "./schema";
 import { type GCVRequest, GCVRequestSchema } from "./schema";
 
 export function isGCVRequest(data: unknown): boolean {
