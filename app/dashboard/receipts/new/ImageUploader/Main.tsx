@@ -15,6 +15,7 @@ import {
 	groupWordsWithDeskew,
 } from "@/lib/googleCloudVision/formatGCVResponse";
 import type { GCVSingleResponse } from "@/lib/googleCloudVision/schema";
+import { runGcv } from "./action";
 
 import {
 	parseReceiptToJsonWithAi,
@@ -88,6 +89,12 @@ export default function ImageUploader() {
 		try {
 			const result: ApiResponseFromType<GCVSingleResponse> =
 				await tryParseAndFetchGCVFromClient(base64);
+			const effect = await runGcv({
+				type: "base64",
+				data: base64.replace(/^data:.*;base64,/, ""),
+			});
+			alert(JSON.stringify(base64.replace(/^data:.*;base64,/, "")));
+			alert(JSON.stringify(effect));
 			if (!result.success) return showError(result.error.message);
 			const pages = extractPagesFromGCV(result.data);
 			const lines = pages.flatMap((page) =>
@@ -233,19 +240,6 @@ export default function ImageUploader() {
 					)}
 				</div>
 			</div>
-			{/* {(receipt ?? optimisticReceipt) && (
-				<ReceiptDetail
-					receipt={receipt ?? (optimisticReceipt as ReceiptWithItemDetails)}
-				/>
-			)}
-			{plainText && (
-				<div className="mt-4 text-sm whitespace-pre-wrap font-mono">
-					{plainText}
-				</div>
-			)}
-			<div>
-				<pre>{JSON.stringify(receipt, null, 2)}</pre>
-			</div> */}
 		</div>
 	);
 }

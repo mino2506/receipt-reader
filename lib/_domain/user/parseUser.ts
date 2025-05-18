@@ -9,7 +9,7 @@ import {
 import { Effect } from "effect";
 import { ZodError } from "zod";
 
-export const tuUserIdParseError = (e: unknown): UserIdValidationError => {
+export const toUserIdParseError = (e: unknown): UserIdValidationError => {
 	if (e instanceof ZodError)
 		return { _tag: "UserIdInvalid", cause: e } satisfies UserIdValidationError;
 	return toUnknownError(e);
@@ -23,5 +23,5 @@ export const parseUserId = (
 			const result = UserIdSchema.parse(userId);
 			return result;
 		},
-		catch: tuUserIdParseError,
+		catch: toUserIdParseError,
 	});

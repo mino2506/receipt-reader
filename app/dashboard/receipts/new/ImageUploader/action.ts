@@ -19,12 +19,17 @@ import {
 	type OpenAiReceiptData,
 	OpenAiReceiptDataSchema,
 } from "@/app/dashboard/receipts/new/ImageUploader/schema";
+import { runGoogleCloudVision } from "@/lib/_flow/runGoogleCloudVision";
 import type { ApiResponseFromType } from "@/lib/api/common.schema";
 import {
 	OpenAIApiResponseSchema,
 	OpenAIRequestSchema,
 } from "@/lib/openai/schema";
 import { formatZodError } from "@/lib/zod/error";
+
+export async function runGcv(input: unknown) {
+	return await runGoogleCloudVision(input);
+}
 
 /**
  * クライアントから直接使えるGCVラッパー（画像検証＋OCR呼び出し）
