@@ -16,10 +16,6 @@ import {
 	type GCVSingleResponse,
 	GCVSingleResponseSchema,
 } from "@/lib/googleCloudVision";
-import {
-	GcvService,
-	GcvServiceLayer,
-} from "@/lib/googleCloudVision/gcvService";
 import { Effect, pipe } from "effect";
 import { NextResponse } from "next/server";
 
@@ -38,7 +34,7 @@ export const POST = async (req: Request) => {
 							Effect.andThen(() =>
 								pipe(
 									parseRequestJson(req),
-									// Effect.flatMap(parseRequestBody),
+									// Effect.flatMap(validateRequestBody),
 									Effect.flatMap((req) =>
 										callGcv(req!.request as GCVRequestBody),
 									),
@@ -46,7 +42,7 @@ export const POST = async (req: Request) => {
 										onSuccess: () => saveGcvUsageLog(userId, true),
 										onFailure: () => saveGcvUsageLog(userId, false),
 									}),
-									Effect.flatMap(parseGcvResponse),
+									Effect.flatMap(validateGcvResponse),
 								),
 							),
 						),
@@ -111,14 +107,14 @@ const parseRequestJson = (
 		}),
 	});
 
-type ParseRequestBodyError = {
+type ValidateRequestBodyError = {
 	_tag: "InvalidRequestError";
 	message: string;
 };
 
-const parseRequestBody = (
+const validateRequestBody = (
 	json: unknown,
-): Effect.Effect<GCVRequest, ParseRequestBodyError, never> =>
+): Effect.Effect<GCVRequest, ValidateRequestBodyError, never> =>
 	Effect.try({
 		try: () => GCVRequestSchema.parse(json),
 		catch: (e) => ({
@@ -126,6 +122,40 @@ const parseRequestBody = (
 			message: `リクエストボディの構造が不正です: ${String(e)}`,
 		}),
 	});
+
+import { googleCloudVisionClient } from "@/lib/googleCloudVision/client";
+import type { protos } from "@google-cloud/vision";
+import { Context, Layer } from "effect";
+
+export type GcvInfraError = {
+	_tag: "GcvInitError";
+	cause: unknown;
+};
+
+export type AnnotateImageResponse =
+	protos.google.cloud.vision.v1.IAnnotateImageResponse;
+
+export class GcvService extends Context.Tag("GcvService")<
+	GcvService,
+	{
+		clientName: string;
+		annotateImage: (req: GCVRequestBody) => Promise<[AnnotateImageResponse]>;
+	}
+>() {}
+
+const toGcvInfraError = (e: unknown): GcvInfraError =>
+	({ _tag: "GcvInitError", cause: e }) satisfies GcvInfraError;
+
+const makeGcvService = Effect.try({
+	try: () => ({
+		clientName: "default",
+		annotateImage: (req: GCVRequestBody) =>
+			googleCloudVisionClient.annotateImage(req),
+	}),
+	catch: toGcvInfraError,
+});
+
+export const GcvServiceLayer = Layer.effect(GcvService, makeGcvService);
 
 type CallGcvError = {
 	_tag: "GcvExecutionError";
@@ -151,14 +181,14 @@ const callGcv = (
 		return response;
 	});
 
-type ParseGcvResponse = {
+type ValidateGcvResponse = {
 	_tag: "InvalidResponseError";
 	message: string;
 };
 
-const parseGcvResponse = (
+const validateGcvResponse = (
 	response: unknown,
-): Effect.Effect<GCVSingleResponse, ParseGcvResponse, never> =>
+): Effect.Effect<GCVSingleResponse, ValidateGcvResponse, never> =>
 	Effect.try({
 		try: () => GCVSingleResponseSchema.parse(response),
 		catch: (e) => ({
