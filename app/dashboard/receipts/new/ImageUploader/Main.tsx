@@ -13,6 +13,7 @@ import { convertToBase64 } from "@/utils/base64";
 import {
 	extractPagesFromGCV,
 	groupWordsWithDeskew,
+	parseGCVResponse,
 } from "@/lib/googleCloudVision/formatGCVResponse";
 import type { GCVSingleResponse } from "@/lib/googleCloudVision/schema";
 import { runGcv } from "./action";
@@ -87,20 +88,25 @@ export default function ImageUploader() {
 
 	const runOCR = async (base64: string) => {
 		try {
-			const result: ApiResponseFromType<GCVSingleResponse> =
-				await tryParseAndFetchGCVFromClient(base64);
-			const effect = await runGcv({
+			// const result: ApiResponseFromType<GCVSingleResponse> =
+			// 	await tryParseAndFetchGCVFromClient(base64);
+			const result = await runGcv({
 				type: "base64",
 				data: base64.replace(/^data:.*;base64,/, ""),
 			});
-			alert(JSON.stringify(base64.replace(/^data:.*;base64,/, "")));
-			alert(JSON.stringify(effect));
-			if (!result.success) return showError(result.error.message);
-			const pages = extractPagesFromGCV(result.data);
-			const lines = pages.flatMap((page) =>
-				groupWordsWithDeskew(page.words, page.size.height, 0.025, 0),
-			);
-			return lines.join("\n");
+			// alert(JSON.stringify(base64.replace(/^data:.*;base64,/, "")));
+			// alert(JSON.stringify(effect));
+			if (!result.success && "error" in result) {
+				return showError(result.error._tag);
+			}
+			if (result.success && "data" in result) {
+				const parsed = parseGCVResponse(result.data);
+				const pages = extractPagesFromGCV(parsed);
+				const lines = pages.flatMap((page) =>
+					groupWordsWithDeskew(page.words, page.size.height, 0.025, 0),
+				);
+				return lines.join("\n");
+			}
 		} catch (error) {
 			showError(`通信エラーが発生しました。${String(error)}`);
 		}
