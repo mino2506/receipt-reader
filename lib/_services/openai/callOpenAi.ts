@@ -61,13 +61,16 @@ export const callOpenAiWithFunctionCall = (
 			}),
 		);
 
-		const functionCall = response.choices?.[0]?.message?.function_call;
+		const toolCall = response.choices?.[0]?.message?.tool_calls?.[0];
+		const args = toolCall?.function?.arguments;
 
-		if (!functionCall?.arguments) {
+		if (!args) {
 			return yield* Effect.fail({
 				_tag: "OpenAiEmptyResponseError",
 			} satisfies CallOpenAiError);
 		}
 
-		return functionCall.arguments;
+		console.log("args: ", args);
+
+		return args;
 	});
