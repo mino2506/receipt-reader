@@ -1,27 +1,11 @@
 import type { UnknownError } from "@/lib/_error/common.error";
 import type { OpenAiService } from "@/lib/_services/openai/openaiService";
-import { formatZodError } from "@/lib/zod/error";
+import { type JsonParseError, parseJson } from "@/lib/_utils/parseJson";
 import { Effect, pipe } from "effect";
 import type { ChatCompletionCreateParamsNonStreaming } from "openai/resources/index.mjs";
 import { ZodError, z } from "zod/v4";
-import {
-	type CallOpenAiError,
-	callOpenAi,
-	callOpenAiWithFunctionCall,
-} from "./callOpenAi";
-
-type JsonParseError = { _tag: "JsonParseError"; cause: unknown };
-
-export const parseJSON = (
-	jsonString: string,
-): Effect.Effect<unknown, JsonParseError, never> =>
-	Effect.try({
-		try: () => JSON.parse(jsonString),
-		catch: (cause): JsonParseError => ({
-			_tag: "JsonParseError",
-			cause,
-		}),
-	});
+import { type CallOpenAiError, callOpenAiWithFunctionCall } from "./callOpenAi";
+import { buildFunctionCallPrompt } from "./promptBuilder";
 
 export type ExtractRawItemsValidationError =
 	| { _tag: "InvalidExtractRawItems"; cause: ZodError }
@@ -34,8 +18,11 @@ export type ExtractRawItemsError =
 
 export const RawItemSchema = z.object({
 	lineIndex: z.number(),
-	text: z.string().min(1),
+	interpretedText: z.string().min(1),
 });
+
+export type RawItem = z.infer<typeof RawItemSchema>;
+
 export const ExtractRawItemsSchema = z.object({
 	rawItems: z.array(RawItemSchema),
 });
@@ -44,29 +31,17 @@ export type ExtractRawItems = z.infer<typeof ExtractRawItemsSchema>;
 export const buildExtractRawItemsPrompt = (
 	lines: string[],
 ): Effect.Effect<ChatCompletionCreateParamsNonStreaming, never, never> =>
-	Effect.gen(function* (_) {
-		const systemPrompt = `
+	buildFunctionCallPrompt({
+		systemPrompt: `
 あなたは日本のレシートのOCR結果から、商品明細の行だけを抽出するアシスタントです。
 ユーザーから提供されたOCRテキストに対し、関数 "extract_raw_items" を使って構造化してください。
-`.trim();
-		const userPrompt = lines.map((line, i) => `${i}: ${line}`).join("\n");
-
-		return {
-			model: "gpt-4",
-			messages: [
-				{ role: "system", content: systemPrompt },
-				{ role: "user", content: userPrompt },
-			],
-			functions: [
-				{
-					name: "extract_raw_items",
-					description: "レシートから商品らしい行を抽出する",
-					strict: true,
-					parameters: z.toJSONSchema(ExtractRawItemsSchema),
-				},
-			],
-			function_call: { name: "extract_raw_items" },
-		};
+`.trim(),
+		userPrompt: lines.map((line, i) => `${i}: ${line}`).join("\n"),
+		tool: {
+			name: "extract_raw_items",
+			description: "レシートから商品らしい行を抽出する",
+			parameters: ExtractRawItemsSchema,
+		},
 	});
 
 export const validateExtractRawItems = (
@@ -86,6 +61,6 @@ export const extractRawItems = (
 	pipe(
 		buildExtractRawItemsPrompt(lines),
 		Effect.flatMap((body) => callOpenAiWithFunctionCall(body)),
-		Effect.flatMap((res) => parseJSON(res)),
+		Effect.flatMap((res) => parseJson(res)),
 		Effect.flatMap((json) => validateExtractRawItems(json)),
 	);
