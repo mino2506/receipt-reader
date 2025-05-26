@@ -43,3 +43,31 @@ export const callOpenAi = (
 
 		return content;
 	});
+
+export const callOpenAiWithFunctionCall = (
+	body: ChatCompletionCreateParamsNonStreaming,
+	options: RequestOptions = defaultOpenAiOptions,
+): Effect.Effect<string, CallOpenAiError, OpenAiService> =>
+	Effect.gen(function* (_) {
+		const { client } = yield* _(OpenAiService);
+
+		const response = yield* _(
+			Effect.tryPromise({
+				try: () => client.chat.completions.create(body, options),
+				catch: (cause): CallOpenAiError => ({
+					_tag: "OpenAiResponseError",
+					cause,
+				}),
+			}),
+		);
+
+		const functionCall = response.choices?.[0]?.message?.function_call;
+
+		if (!functionCall?.arguments) {
+			return yield* Effect.fail({
+				_tag: "OpenAiEmptyResponseError",
+			} satisfies CallOpenAiError);
+		}
+
+		return functionCall.arguments;
+	});

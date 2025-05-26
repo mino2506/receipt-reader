@@ -3,8 +3,25 @@ import type { OpenAiService } from "@/lib/_services/openai/openaiService";
 import { formatZodError } from "@/lib/zod/error";
 import { Effect, pipe } from "effect";
 import type { ChatCompletionCreateParamsNonStreaming } from "openai/resources/index.mjs";
-import { ZodError, z } from "zod";
-import { type CallOpenAiError, callOpenAi } from "./callOpenAi";
+import { ZodError, z } from "zod/v4";
+import {
+	type CallOpenAiError,
+	callOpenAi,
+	callOpenAiWithFunctionCall,
+} from "./callOpenAi";
+
+type JsonParseError = { _tag: "JsonParseError"; cause: unknown };
+
+export const parseJSON = (
+	jsonString: string,
+): Effect.Effect<unknown, JsonParseError, never> =>
+	Effect.try({
+		try: () => JSON.parse(jsonString),
+		catch: (cause): JsonParseError => ({
+			_tag: "JsonParseError",
+			cause,
+		}),
+	});
 
 export type ExtractRawItemsValidationError =
 	| { _tag: "InvalidExtractRawItems"; cause: ZodError }
@@ -12,42 +29,26 @@ export type ExtractRawItemsValidationError =
 
 export type ExtractRawItemsError =
 	| CallOpenAiError
+	| JsonParseError
 	| ExtractRawItemsValidationError;
 
-const RawItemSchema = z.object({
+export const RawItemSchema = z.object({
 	lineIndex: z.number(),
 	text: z.string().min(1),
 });
-
-export const ExtractRawItemsSchema = z.array(RawItemSchema);
-export type RawItem = z.infer<typeof RawItemSchema>;
-
-export const validateExtractRawItems = (
-	rawItems: unknown,
-): Effect.Effect<RawItem[], ExtractRawItemsValidationError, never> =>
-	Effect.try({
-		try: () => ExtractRawItemsSchema.parse(rawItems),
-		catch: (cause) =>
-			cause instanceof ZodError
-				? { _tag: "InvalidExtractRawItems", cause }
-				: { _tag: "UnknownError", cause },
-	});
+export const ExtractRawItemsSchema = z.object({
+	rawItems: z.array(RawItemSchema),
+});
+export type ExtractRawItems = z.infer<typeof ExtractRawItemsSchema>;
 
 export const buildExtractRawItemsPrompt = (
 	lines: string[],
 ): Effect.Effect<ChatCompletionCreateParamsNonStreaming, never, never> =>
 	Effect.gen(function* (_) {
 		const systemPrompt = `
-あなたは日本のレシートのOCR結果から、商品明細の行だけを抽出するAIです。
-
-以下のルールで、商品らしい行だけをJSON配列で出力してください：
-- 形式: [{ "lineIndex": number, "text": string }]
-- 金額や数量が含まれている行を優先
-- 割引や合計、ポイントなどの行は除外
-- 商品名と数字が混在している行を対象
-- その他の説明や装飾は一切不要
-	`.trim();
-
+あなたは日本のレシートのOCR結果から、商品明細の行だけを抽出するアシスタントです。
+ユーザーから提供されたOCRテキストに対し、関数 "extract_raw_items" を使って構造化してください。
+`.trim();
 		const userPrompt = lines.map((line, i) => `${i}: ${line}`).join("\n");
 
 		return {
@@ -56,15 +57,35 @@ export const buildExtractRawItemsPrompt = (
 				{ role: "system", content: systemPrompt },
 				{ role: "user", content: userPrompt },
 			],
-			temperature: 0.2,
-			max_tokens: 1000,
+			functions: [
+				{
+					name: "extract_raw_items",
+					description: "レシートから商品らしい行を抽出する",
+					strict: true,
+					parameters: z.toJSONSchema(ExtractRawItemsSchema),
+				},
+			],
+			function_call: { name: "extract_raw_items" },
 		};
 	});
 
-export const extractRawItems = (lines: string[]) =>
+export const validateExtractRawItems = (
+	rawItems: unknown,
+): Effect.Effect<ExtractRawItems, ExtractRawItemsValidationError, never> =>
+	Effect.try({
+		try: () => ExtractRawItemsSchema.parse(rawItems),
+		catch: (cause) =>
+			cause instanceof ZodError
+				? { _tag: "InvalidExtractRawItems", cause }
+				: { _tag: "UnknownError", cause },
+	});
+
+export const extractRawItems = (
+	lines: string[],
+): Effect.Effect<ExtractRawItems, ExtractRawItemsError, OpenAiService> =>
 	pipe(
 		buildExtractRawItemsPrompt(lines),
-		Effect.flatMap((body) => callOpenAi(body)),
-		// TODO: Add JSON parsing logic here
-		Effect.flatMap((res) => validateExtractRawItems(res)),
+		Effect.flatMap((body) => callOpenAiWithFunctionCall(body)),
+		Effect.flatMap((res) => parseJSON(res)),
+		Effect.flatMap((json) => validateExtractRawItems(json)),
 	);
