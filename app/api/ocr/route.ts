@@ -35,9 +35,10 @@ export const POST = async (req: Request) => {
 								pipe(
 									parseRequestJson(req),
 									// Effect.flatMap(validateRequestBody),
-									Effect.flatMap((req) =>
-										callGcv(req!.request as GCVRequestBody),
-									),
+									Effect.flatMap((req) => {
+										const parsed = GCVRequestSchema.parse(req);
+										return callGcv(parsed.request as GCVRequestBody);
+									}),
 									Effect.tapBoth({
 										onSuccess: () => saveGcvUsageLog(userId, true),
 										onFailure: () => saveGcvUsageLog(userId, false),
