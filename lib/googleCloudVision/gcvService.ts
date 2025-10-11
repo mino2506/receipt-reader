@@ -1,5 +1,5 @@
+import type { GcvRequest } from "@/lib/_flow/runGoogleCloudVision";
 import { googleCloudVisionClient } from "@/lib/googleCloudVision/client";
-import type { GCVRequestBody } from "@/lib/googleCloudVision/schema";
 import type { protos } from "@google-cloud/vision";
 import { Context, Effect, Layer } from "effect";
 
@@ -15,7 +15,7 @@ export class GcvService extends Context.Tag("GcvService")<
 	GcvService,
 	{
 		clientName: string;
-		annotateImage: (req: GCVRequestBody) => Promise<[AnnotateImageResponse]>;
+		annotateImage: (req: GcvRequest) => Promise<[AnnotateImageResponse]>;
 	}
 >() {}
 
@@ -25,7 +25,7 @@ const toGcvInfraError = (e: unknown): GcvInfraError =>
 const makeGcvService = Effect.try({
 	try: () => ({
 		clientName: "default",
-		annotateImage: (req: GCVRequestBody) =>
+		annotateImage: (req: GcvRequest) =>
 			googleCloudVisionClient.annotateImage(req),
 	}),
 	catch: toGcvInfraError,
