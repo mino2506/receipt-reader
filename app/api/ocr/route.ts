@@ -127,15 +127,15 @@ import { googleCloudVisionClient } from "@/lib/googleCloudVision/client";
 import type { protos } from "@google-cloud/vision";
 import { Context, Layer } from "effect";
 
-export type GcvInfraError = {
+type GcvInfraError = {
 	_tag: "GcvInitError";
 	cause: unknown;
 };
 
-export type AnnotateImageResponse =
+type AnnotateImageResponse =
 	protos.google.cloud.vision.v1.IAnnotateImageResponse;
 
-export class GcvService extends Context.Tag("GcvService")<
+class GcvService extends Context.Tag("GcvService")<
 	GcvService,
 	{
 		clientName: string;
@@ -155,7 +155,7 @@ const makeGcvService = Effect.try({
 	catch: toGcvInfraError,
 });
 
-export const GcvServiceLayer = Layer.effect(GcvService, makeGcvService);
+const GcvServiceLayer = Layer.effect(GcvService, makeGcvService);
 
 type CallGcvError = {
 	_tag: "GcvExecutionError";
