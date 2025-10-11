@@ -1,6 +1,6 @@
 {
 	"name": "receipt-reader",
-	"version": "0.1.0-alpha",
+	"version": "0.1.1-alpha",
 	"private": true,
 	"scripts": {
 		"dev": "next dev --turbopack",
@@ -48,7 +48,7 @@
 		"react-dom": "^19.0.0",
 		"tailwind-merge": "3.2.0",
 		"tw-animate-css": "1.2.8",
-		"zod": "3.24.2"
+		"zod": "3.25.28"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "1.9.4",

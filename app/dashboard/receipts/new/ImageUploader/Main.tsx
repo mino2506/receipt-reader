@@ -13,8 +13,10 @@ import { convertToBase64 } from "@/utils/base64";
 import {
 	extractPagesFromGCV,
 	groupWordsWithDeskew,
+	parseGCVResponse,
 } from "@/lib/googleCloudVision/formatGCVResponse";
 import type { GCVSingleResponse } from "@/lib/googleCloudVision/schema";
+import { runAIParse, runGcv } from "./action";
 
 import {
 	parseReceiptToJsonWithAi,
@@ -86,14 +88,21 @@ export default function ImageUploader() {
 
 	const runOCR = async (base64: string) => {
 		try {
-			const result: ApiResponseFromType<GCVSingleResponse> =
-				await tryParseAndFetchGCVFromClient(base64);
-			if (!result.success) return showError(result.error.message);
-			const pages = extractPagesFromGCV(result.data);
-			const lines = pages.flatMap((page) =>
-				groupWordsWithDeskew(page.words, page.size.height, 0.025, 0),
-			);
-			return lines.join("\n");
+			const result = await runGcv({
+				type: "base64",
+				data: base64.replace(/^data:.*;base64,/, ""),
+			});
+			if (!result.success && "error" in result) {
+				return showError(result.error._tag);
+			}
+			if (result.success && "data" in result) {
+				const parsed = parseGCVResponse(result.data);
+				const pages = extractPagesFromGCV(parsed);
+				const lines = pages.flatMap((page) =>
+					groupWordsWithDeskew(page.words, page.size.height, 0.025, 0),
+				);
+				return lines.join("\n");
+			}
 		} catch (error) {
 			showError(`通信エラーが発生しました。${String(error)}`);
 		}
@@ -169,8 +178,53 @@ export default function ImageUploader() {
 		}
 	};
 
+	const [debug, setDebug] = useState<string | number>("");
+	const parseReceiptWithAI2 = async () => {
+		const linesMock = [
+			"以下はレシートのOCR結果です。各行は上から順に並んでいます。",
+			"---",
+			"セブン",
+			"CIVENHOLDINGS - イレブン",
+			"電話",
+			":",
+			"2021 年",
+			"08 月 20 日 ( 金 ) 14:51 青 120",
+			"領 収 書",
+			// "メルカリ 宅配 ビニール 袋 5 枚 入",
+			"7 プレミアム ジャスミン 茶 128",
+			"600ml 伊藤園 * 93",
+			"お ~ いお茶 350ml 100",
+			"小計 ( 税 抜 8 % ) 来客 用 ¥ 193",
+			"消費 税 等 ( 8 % ) ¥ 15",
+			"小計 ( 税 抜 10 % ) 128",
+			"¥",
+			"消費 税 等 ( 10 % ) ¥ 12",
+			"合計 ¥ 348",
+			"( 税率 8 % 対象 ¥ 208 )",
+			"10 % 対象 ¥ 140 )",
+			"( 税率",
+			"( 内 消費 税 等 8 % ¥ 15 )",
+			"( 内 消費 税 等 10 % ¥ 12 )",
+			"¥ 348",
+			"QUICPay 支払 。",
+			"お 買上 明細 は 上記 の とおり です",
+			"マーク は 軽減 税率 対象 です 。",
+			"[ * ]",
+			"クレジット 売上 票",
+			"( お客様 控 )",
+			"20 日",
+			"4 年 09 月",
+		];
+		const test = await runAIParse(linesMock);
+		setDebug(JSON.stringify(test, null, 2));
+	};
+
 	return (
 		<div>
+			<div>
+				<Button onClick={parseReceiptWithAI2}>debug</Button>
+				<pre>{debug}</pre>
+			</div>
 			<div className="flex justify-between items-center w-full">
 				<CameraCaptureDialog
 					onSubmit={(image) => {
@@ -233,19 +287,6 @@ export default function ImageUploader() {
 					)}
 				</div>
 			</div>
-			{/* {(receipt ?? optimisticReceipt) && (
-				<ReceiptDetail
-					receipt={receipt ?? (optimisticReceipt as ReceiptWithItemDetails)}
-				/>
-			)}
-			{plainText && (
-				<div className="mt-4 text-sm whitespace-pre-wrap font-mono">
-					{plainText}
-				</div>
-			)}
-			<div>
-				<pre>{JSON.stringify(receipt, null, 2)}</pre>
-			</div> */}
 		</div>
 	);
 }
