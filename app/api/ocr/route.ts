@@ -36,7 +36,7 @@ export const POST = async (req: Request) => {
 									parseRequestJson(req),
 									// Effect.flatMap(validateRequestBody),
 									Effect.flatMap((req) => {
-										const parsed = GCVRequestSchema.parse(req);
+										const parsed = GCVRequestSchema.parse(req); // TODO: USE pipe
 										return callGcv(parsed.request as GCVRequestBody);
 									}),
 									Effect.tapBoth({
