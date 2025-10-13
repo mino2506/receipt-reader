@@ -20,19 +20,23 @@ export default function Dashboard() {
 
 	if (loading) return <div>読み込み中...</div>;
 
+	const env = process.env.NODE_ENV;
+
 	if (session) {
 		return (
 			<div className="w-full flex flex-col items-center p-1 bg-background">
-				<Button
-					onClick={async () => {
-						const res = await fetch("http://localhost:3001/test");
-						// const res = await fetch("http://127.0.0.1:3001/test");
-						const json = await res.json();
-						alert(JSON.stringify(json, null, 2));
-					}}
-				>
-					Fetch Local Server
-				</Button>
+				{env === "development" && (
+					<Button
+						onClick={async () => {
+							const res = await fetch("http://localhost:3001/test");
+							// const res = await fetch("http://127.0.0.1:3001/test");
+							const json = await res.json();
+							alert(JSON.stringify(json, null, 2));
+						}}
+					>
+						Fetch Local Server
+					</Button>
+				)}
 				<AllReceiptsTable />
 			</div>
 		);

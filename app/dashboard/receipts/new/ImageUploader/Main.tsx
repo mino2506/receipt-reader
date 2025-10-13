@@ -219,12 +219,17 @@ export default function ImageUploader() {
 		setDebug(JSON.stringify(test, null, 2));
 	};
 
+	const env = process.env.NODE_ENV;
+
 	return (
 		<div>
-			<div>
-				<Button onClick={parseReceiptWithAI2}>debug</Button>
-				<pre>{debug}</pre>
-			</div>
+			{env === "development" && (
+				<div>
+					<Button onClick={parseReceiptWithAI2}>debug</Button>
+					<pre>{debug}</pre>
+				</div>
+			)}
+
 			<div className="flex justify-between items-center w-full">
 				<CameraCaptureDialog
 					onSubmit={(image) => {
