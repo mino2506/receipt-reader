@@ -1,5 +1,5 @@
 import type { CreateStore } from "@/lib/api/receipt/create.schema";
-import type { Prisma, PrismaClient } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 
 export async function upsertStore(
 	tx: Prisma.TransactionClient,

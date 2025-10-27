@@ -70,6 +70,7 @@ export async function fetchGCVResult(
 	const url = `${process.env.NEXT_PUBLIC_SITE_ORIGIN}${API_ENDPOINTS.OCR}`;
 	console.log("fetchGCVResult from", url);
 
+	// console.log("🌟GCV request:", JSON.stringify({ request: input }, null, 2));
 	try {
 		const res = await fetch(url, {
 			method: "POST",
@@ -92,6 +93,7 @@ export async function fetchGCVResult(
 		}
 
 		const json = await res.json();
+		// console.log("🌟GCV response:", JSON.stringify(json, null, 2));
 
 		// ✅ 成功か確認
 		if (!json.success || !json.data) {

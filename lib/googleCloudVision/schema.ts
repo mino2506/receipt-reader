@@ -38,8 +38,10 @@ export enum GCVFeatureType {
  */
 export const GCVRequestFeatureSchema = z.object({
 	type: z
-		.enum(enumKeys(GCVFeatureType))
-		.transform((key) => GCVFeatureType[key]),
+		.union([z.enum(enumKeys(GCVFeatureType)), z.nativeEnum(GCVFeatureType)])
+		.transform((value) =>
+			typeof value === "string" ? GCVFeatureType[value] : value,
+		),
 });
 
 /**

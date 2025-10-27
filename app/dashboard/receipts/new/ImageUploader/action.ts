@@ -19,12 +19,79 @@ import {
 	type OpenAiReceiptData,
 	OpenAiReceiptDataSchema,
 } from "@/app/dashboard/receipts/new/ImageUploader/schema";
+import { metadata } from "@/app/layout";
+import { runGoogleCloudVision } from "@/lib/_flow/runGoogleCloudVision";
+import { analyzeRawItemDetail } from "@/lib/_services/openai/analyzeRawItemDetail";
+import { extractMetaData } from "@/lib/_services/openai/extractMetaData";
+import { extractRawItems } from "@/lib/_services/openai/extractRawItems";
+import { OpenAiServiceLayer } from "@/lib/_services/openai/openaiService";
 import type { ApiResponseFromType } from "@/lib/api/common.schema";
 import {
 	OpenAIApiResponseSchema,
 	OpenAIRequestSchema,
 } from "@/lib/openai/schema";
 import { formatZodError } from "@/lib/zod/error";
+import { Effect, pipe } from "effect";
+
+export async function runGcv(input: unknown) {
+	return await runGoogleCloudVision(input);
+}
+
+export async function runAIParse(lines: string[]) {
+	const flow = pipe(
+		Effect.all(
+			[
+				extractMetaData(lines),
+				pipe(
+					extractRawItems(lines),
+					Effect.flatMap((data) =>
+						Effect.all(data.rawItems.map(analyzeRawItemDetail), {
+							concurrency: "unbounded",
+						}),
+					),
+				),
+			],
+			{
+				concurrency: "unbounded",
+			},
+		).pipe(
+			Effect.flatMap((data) => {
+				const [meta, items] = data;
+				return Effect.succeed({
+					...meta,
+					items: items.map((data) => {
+						const { price, ...rest } = data.item;
+						return {
+							...rest,
+							unitPrice: price / rest.amount,
+							subtotalPrice: price,
+						};
+					}),
+				});
+			}),
+		),
+		Effect.provide(OpenAiServiceLayer),
+	).pipe(
+		Effect.matchEffect({
+			onSuccess: (data) => {
+				const result = { success: true, data };
+				Effect.log(result);
+				console.log(result);
+				return Effect.succeed(result);
+			},
+			onFailure: (error) => {
+				const result = { success: false, error };
+				Effect.log(result);
+				console.log(result);
+				return Effect.succeed(result);
+			},
+		}),
+	);
+
+	const result = await Effect.runPromise(flow);
+
+	return result;
+}
 
 /**
  * クライアントから直接使えるGCVラッパー（画像検証＋OCR呼び出し）
@@ -40,8 +107,11 @@ export async function tryParseAndFetchGCVFromClient(input: unknown) {
 		.join("; ");
 	// console.log("🍪", cookieHeader);
 
+	// console.log("🌟input:", JSON.stringify(input, null, 2));
 	const validated = validateImageInput(input);
+	// console.log("🌟validated:", JSON.stringify(validated, null, 2));
 	const request = createGCVRequest(validated);
+	// console.log("🌟request:", JSON.stringify(request, null, 2));
 	return await fetchGCVResult(request, cookieHeader);
 }
 
