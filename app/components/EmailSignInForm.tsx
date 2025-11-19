@@ -2,7 +2,7 @@
 
 "use client";
 
-import { signInWithEmail } from "@/lib/supabase/auth";
+import { signInWithEmail, signUpWithEmail } from "@/lib/supabase/auth";
 import { createClient as createBrowserClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -31,6 +31,17 @@ export default function EmailSignInForm() {
 			return;
 		}
 		if (data.session) {
+			router.push("/dashboard");
+		}
+	};
+
+	const handleEmailSignUp = async () => {
+		const { data, error } = await signUpWithEmail(email, password);
+		if (error) {
+			setError(error.message);
+			return;
+		}
+		if (data.user) {
 			router.push("/dashboard");
 		}
 	};
@@ -84,7 +95,7 @@ export default function EmailSignInForm() {
 			<div className="w-full max-w-xs mx-auto m-3">
 				<button
 					type="button"
-					onClick={handleEmailSignIn}
+					onClick={handleEmailSignUp}
 					className="flex items-center justify-center h-11 w-full px-4 py-2 text-gray-800 border rounded-lg shadow-sm bg-red-400 hover:bg-red-300"
 				>
 					<span className="font-bold">E-Mail で 登録</span>
