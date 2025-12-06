@@ -14,17 +14,17 @@ import { createClient as createServerClient } from "./client.server";
  * if (!session) router.push("/login");
  */
 export async function getClientSession(): Promise<Session | null> {
-	const supabase = createBrowserClient();
-	const {
-		data: { session },
-		error,
-	} = await supabase.auth.getSession();
+  const supabase = createBrowserClient();
+  const {
+    data: { session },
+    error,
+  } = await supabase.auth.getSession();
 
-	if (error) {
-		console.error("セッション取得エラー:", error.message);
-	}
+  if (error) {
+    console.error("セッション取得エラー:", error.message);
+  }
 
-	return session;
+  return session;
 }
 
 /**
@@ -38,13 +38,33 @@ export async function getClientSession(): Promise<Session | null> {
  * const { data, error } = await signInWithEmail("test@example.com", "password123");
  */
 export async function signInWithEmail(email: string, password: string) {
-	const supabase = createBrowserClient();
-	const { data, error } = await supabase.auth.signInWithPassword({
-		email,
-		password,
-	});
+  const supabase = createBrowserClient();
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
 
-	return { data, error };
+  return { data, error };
+}
+
+/**
+ * クライアント側でメールアドレスとパスワードによるサインアップを行う
+ *
+ * @param email - サインアップ用のメールアドレス
+ * @param password - サインアップ用のパスワード
+ * @returns - 認証結果オブジェクト。`data.user` にユーザー情報、`error` にエラー情報
+ *
+ * @example
+ * const { data, error } = await signUpWithEmail("
+ */
+export async function signUpWithEmail(email: string, password: string) {
+  const supabase = createBrowserClient();
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+  });
+
+  return { data, error };
 }
 
 /**
@@ -58,18 +78,18 @@ export async function signInWithEmail(email: string, password: string) {
  * await signInWithGoogle("https://example.com/profile"); // 明示的に指定
  */
 export async function signInWithGoogle(redirectUrl?: string) {
-	const path = process.env.NEXT_PUBLIC_DEFAULT_REDIRECT_PATH ?? "/dashboard";
-	const defaultRedirect = `${window.location.origin}${path}`;
+  const path = process.env.NEXT_PUBLIC_DEFAULT_REDIRECT_PATH ?? "/dashboard";
+  const defaultRedirect = `${window.location.origin}${path}`;
 
-	const supabase = createBrowserClient();
-	const { data, error } = await supabase.auth.signInWithOAuth({
-		provider: "google",
-		options: {
-			redirectTo: redirectUrl ?? defaultRedirect,
-		},
-	});
+  const supabase = createBrowserClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: redirectUrl ?? defaultRedirect,
+    },
+  });
 
-	return { data, error };
+  return { data, error };
 }
 
 /**
@@ -82,7 +102,7 @@ export async function signInWithGoogle(redirectUrl?: string) {
  * if (error) console.error("サインアウト失敗:", error.message);
  */
 export async function signOut() {
-	const supabase = createBrowserClient();
-	const { error } = await supabase.auth.signOut();
-	return { error };
+  const supabase = createBrowserClient();
+  const { error } = await supabase.auth.signOut();
+  return { error };
 }
